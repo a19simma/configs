@@ -3,10 +3,10 @@ local lsp = require("lsp-zero")
 lsp.preset("recommended")
 
 lsp.ensure_installed({
-  'gopls',
   'omnisharp',
+  'gopls',
   'tsserver',
-  'rust_analyzer'
+  'rust_analyzer',
 })
 
 -- Fix Undefined global 'vim'
@@ -61,8 +61,6 @@ lsp.on_attach(function(client, bufnr)
   vim.keymap.set("n", "<leader>vrn", function() vim.lsp.buf.rename() end, opts)
   vim.keymap.set("i", "<C-h>", function() vim.lsp.buf.signature_help() end, opts)
 end)
-
-require('lspconfig').lua_ls.setup(lsp.nvim_lua_ls())
 
 lsp.setup()
 
