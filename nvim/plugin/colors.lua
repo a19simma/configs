@@ -21,13 +21,11 @@ require('kanagawa').setup({
     end,
     theme = "wave",              -- Load "wave" theme when 'background' option is not set
     background = {               -- map the value of 'background' option to a theme
-        dark = "dragon",           -- try "dragon" !
+        dark = "wave",           -- try "dragon" !
         light = "lotus"
     },
 })
 
-vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
-vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
 -- setup must be called before loading
-vim.cmd("colorscheme kanagawa-dragon")
-vim.cmd("highlight LineNr ctermbg=NONE")
+vim.cmd("colorscheme kanagawa-wave")
+
