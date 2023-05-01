@@ -16,8 +16,8 @@
 # alias rm='rm -i'
 # alias cp='cp -i'
 # alias mv='mv -i'
-/usr/bin/keychain -q --nogui $HOME/.ssh/ed25519/main-key
-source $HOME/.keychain/DESKTOP-T8RC9SH-sh
+# /usr/bin/keychain -q --nogui $HOME/.ssh/ed25519/main-key
+# source $HOME/.keychain/DESKTOP-T8RC9SH-sh
 
 # go
 export PATH=/usr/local/go/bin:$PATH
