@@ -13,6 +13,26 @@
         - gnupg
         - lsb-release
         - apt-transport-https
+        - neovim
+
+    - name: copy neovim config
+      copy:
+        src: ../nvim/
+        dest: ~/.config/nvim/
+
+    - name: copy bashrc
+      copy:
+        src: ../bash/.bashrc
+        dest: ~/.bashrc
+
+    - name: install k9s
+      shell: curl -sS https://webi.sh/k9s | sh
+
+    - name: install kubens
+      shell: curl -sS https://webi.sh/kubens | sh
+
+    - name: install kubectx
+      shell: curl -sS https://webi.sh/kubectx | sh
 
     - name: create apt keyring
       ansible.builtin.file:
@@ -46,6 +66,37 @@
         - containerd.io
         - docker-compose-plugin
       notify: apply containerd config file
+    
+    - name: download minikube
+      get_url:
+        url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        dest: /tmp/
+
+    - name: install minikube
+      shell: install /tmp/minikube-linux-amd64 /usr/local/bin/minikube
+        
+    - name: add key
+      ansible.builtin.apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        keyring: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+        state: present
+
+    - name: add repo
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
+        state: present
+
+    - name: apt update
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: install kubernetes
+      ansible.builtin.apt:
+        name: '{{ item }}'
+        state: present
+      loop:
+        - kubectl
+
   handlers:
     - name: apply containerd config file
       ansible.builtin.shell: containerd config default > /etc/containerd/config.toml
