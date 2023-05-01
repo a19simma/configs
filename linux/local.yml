@@ -1,11 +1,62 @@
----
-- hosts: all
-
+- name: Install docker and containerd
+  hosts: '*'
+  gather_facts: yes
   tasks:
-    - name: "install packages"
+    - name: install dependencies
       ansible.builtin.apt:
         name: '{{ item }}'
         state: present
       loop:
-        - 'jq'
-    
+        - nfs-common
+        - ca-certificates
+        - curl
+        - gnupg
+        - lsb-release
+        - apt-transport-https
+
+    - name: create apt keyring
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: a+rwx
+        recurse: yes
+
+    - name: add key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+        keyring: /etc/apt/keyrings/docker.gpg
+
+    - name: add repo
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: apt update
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: install docker and containerd
+      ansible.builtin.apt:
+        name: '{{ item }}'
+        state: present
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-compose-plugin
+      notify: apply containerd config file
+  handlers:
+    - name: apply containerd config file
+      ansible.builtin.shell: containerd config default > /etc/containerd/config.toml
+      notify:
+        - replace systemdgroup
+        - restart containerd
+
+    - name: replace systemdgroup
+      ansible.builtin.shell: sed -i -e 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+
+    - name: restart containerd
+      ansible.builtin.service:
+        name: containerd
+        state: restarted
