@@ -26,6 +26,9 @@ export PATH=/usr/local/go/bin:$PATH
 export BUN_INSTALL="$HOME/.bun"
 export PATH=$BUN_INSTALL/bin:$PATH
 
+# webinstalls
+export PATH=/root/.local/bin:$PATH
+
 eval "$(oh-my-posh init bash --config 'https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/negligible.omp.json')"
 
 bind 'set bell-style none'
