@@ -2,6 +2,10 @@
 - hosts: all
 
   tasks:
-    - name: test
-      debug:
-        msg: hello world
+    - name: "install packages"
+      ansible.builtin.apt:
+        name: '{{ item }}'
+        state: present
+      loop:
+        - 'jq'
+    
