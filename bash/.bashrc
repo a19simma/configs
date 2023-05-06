@@ -16,12 +16,12 @@
 # alias rm='rm -i'
 # alias cp='cp -i'
 # alias mv='mv -i'
-# /usr/bin/keychain -q --nogui $HOME/.ssh/ed25519/main-key
-# source $HOME/.keychain/DESKTOP-T8RC9SH-sh
+/usr/bin/keychain -q --nogui $HOME/.ssh/keys/main-key
+source $HOME/.keychain/DESKTOP-T8RC9SH-sh
 
 # go
-export PATH=/usr/local/go/bin:$PATH
-
+export PATH=/usr/local/go/bin:/usr/bin/go/bin:$PATH
+export GOPATH=/usr/bin/go
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH=$BUN_INSTALL/bin:$PATH
@@ -29,6 +29,10 @@ export PATH=$BUN_INSTALL/bin:$PATH
 # webinstalls
 export PATH=/root/.local/bin:$PATH
 
-eval "$(oh-my-posh init bash --config 'https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/negligible.omp.json')"
-
 bind 'set bell-style none'
+
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+eval "$(starship init bash)"
+

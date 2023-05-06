@@ -5,6 +5,16 @@
 export ZSH="$HOME/.oh-my-zsh"
 source ~/repos/zsh-autocomplete/zsh-autocomplete.plugin.zsh     
 unsetopt beep
+unsetopt autocd
+# go
+export PATH=/usr/local/go/bin:/usr/bin/go/bin:$PATH
+export GOPATH=/usr/bin/go
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH=$BUN_INSTALL/bin:$PATH
+
+# webinstalls
+export PATH=/root/.local/bin:$PATH
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
@@ -101,3 +111,4 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 # 
 eval "$(starship init zsh)"
+export PATH=$PATH
