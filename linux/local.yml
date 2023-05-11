@@ -30,7 +30,7 @@
     - name: install zsh autocomplete
       git:
         repo: https://github.com/marlonrichert/zsh-autocomplete.git
-        dest: ~/repos
+        dest: ~/repos/zsh-autocomplete
         depth: 1
 
     - name: install nvm
