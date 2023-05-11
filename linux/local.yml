@@ -32,7 +32,6 @@
         repo: https://github.com/marlonrichert/zsh-autocomplete.git
         dest: ~/repos
         depth: 1
-        mode: u+rwx
 
     - name: install nvm
       ansible.builtin.shell: >
