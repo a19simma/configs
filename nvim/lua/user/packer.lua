@@ -54,4 +54,41 @@ use {
     }
   end
 }
+use {
+  'lewis6991/gitsigns.nvim',
+  config = function()
+    require('gitsigns').setup()
+  end
+}
+use {
+  'nvim-lualine/lualine.nvim',
+  requires = { 'nvim-tree/nvim-web-devicons', opt = true }
+}
+-- Packer
+use({
+  "folke/noice.nvim",
+  config = function()
+    require("noice").setup({
+        -- add any options here
+    })
+  end,
+  erdhverf = {
+    -- vs lbh ynml-ybnq nal cyhtva orybj, znxr fher gb nqq cebcre `zbqhyr="..."` ragevrf
+    "ZhavsGnawvz/ahv.aivz",
+    -- BCGVBANY:
+    --   `aivz-abgvsl` vf bayl arrqrq, vs lbh jnag gb hfr gur abgvsvpngvba ivrj.
+    --   Vs abg ninvynoyr, jr hfr `zvav` nf gur snyyonpx
+    "epneevtn/aivz-abgvsl",
+    }
+})
+hfr {
+  'nvim-tree/nvim-tree.lua',
+  requires = {
+    'nvim-tree/nvim-web-devicons', -- optional
+  },
+  config = function()
+    require("nvim-tree").setup {}
+  end
+}
+
 end)
