@@ -1,11 +1,44 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/playbook
 - name: Install docker and containerd
   hosts: '*'
-  gather_facts: yes
+  gather_facts: true
   tasks:
+    - name: create apt keyring
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: a+rwx
+        recurse: yes
+
+    - name: add key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+        keyring: /etc/apt/keyrings/docker.gpg
+
+    - name: add repo
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+        state: present
+        update_cache: false
+
+    - name: add key
+      ansible.builtin.apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        keyring: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+        state: present
+
+    - name: add repo
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
+        state: present
+        update_cache: false
+
     - name: install dependencies
       ansible.builtin.apt:
         name: '{{ item }}'
         state: present
+        force: true
       loop:
         - nfs-common
         - ca-certificates
@@ -14,6 +47,7 @@
         - lsb-release
         - apt-transport-https
         - zsh
+        - kubectl
 
     - name: create repo folder
       file:
@@ -21,17 +55,29 @@
         state: directory
         mode: u+rwx
 
-    - name: install oh-my-zsh
-      shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    - name: create zsh-plugins folders
+      file:
+        path: '~/.zsh/{{ item }}' 
+        state: directory
+        mode: u+rwx
+      loop:
+          - 'zsh-autosuggestions'
+          - 'zsh-completions'
+          - 'zsh-syntax-highlighting'
+
+
+    - name: install zsh plugins
+      git:
+        repo: 'https://github.com/zsh-users/{{ item }}.git' 
+        dest: '~/.zsh/{{ item }}'
+        depth: 1
+      loop:
+        - zsh-autosuggestions
+        - zsh-completions
+        - zsh-syntax-highlighting
 
     - name: change default shell
       shell: chsh -s /bin/zsh
-
-    - name: install zsh autocomplete
-      git:
-        repo: https://github.com/marlonrichert/zsh-autocomplete.git
-        dest: ~/repos/zsh-autocomplete
-        depth: 1
 
     - name: install nvm
       ansible.builtin.shell: >
@@ -39,17 +85,11 @@
       args:
         creates: "{{ ansible_env.HOME }}/.nvm/nvm.sh"
 
-    - name: 
+    - name: download nvim
       get_url:
         url: https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
         dest: /usr/bin/nvim
         mode: u+x
-
-    - name: install neovim packer
-      git:
-        repo: https://github.com/wbthomason/packer.nvim
-        dest: ~/.local/share/nvim/site/pack/packer/start/packer.nvim
-        depth: 1
 
     - name: copy neovim config
       copy:
@@ -75,28 +115,6 @@
     - name: install kubectx
       shell: curl -sS https://webi.sh/kubectx | sh
 
-    - name: create apt keyring
-      ansible.builtin.file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: a+rwx
-        recurse: yes
-
-    - name: add key
-      ansible.builtin.apt_key:
-        url: https://download.docker.com/linux/debian/gpg
-        state: present
-        keyring: /etc/apt/keyrings/docker.gpg
-
-    - name: add repo
-      ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
-        state: present
-
-    - name: apt update
-      ansible.builtin.apt:
-        update_cache: yes
-
     - name: install docker and containerd
       ansible.builtin.apt:
         name: '{{ item }}'
@@ -115,28 +133,6 @@
 
     - name: install minikube
       shell: install /tmp/minikube-linux-amd64 /usr/local/bin/minikube
-        
-    - name: add key
-      ansible.builtin.apt_key:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        keyring: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
-        state: present
-
-    - name: add repo
-      ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
-        state: present
-
-    - name: apt update
-      ansible.builtin.apt:
-        update_cache: yes
-
-    - name: install kubernetes
-      ansible.builtin.apt:
-        name: '{{ item }}'
-        state: present
-      loop:
-        - kubectl
 
   handlers:
     - name: apply containerd config file
