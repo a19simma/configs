@@ -1,5 +1,5 @@
 # Powershell
-Remove-Item -Path "$env:USERPROFILE\Documents\PowerShell\Microsoft.PowerShell_profile.ps1" -Force > $null
+Remove-Item -Path "$env:USERPROFILE\Documents\PowerShell" -Recurse -Force > $null
 New-Item -ItemType Junction -Path "$env:USERPROFILE\Documents\PowerShell" -Target "$env:USERPROFILE\Documents\configs\PowerShell" -Force > $null
 
 Remove-Item -Path "$env:USERPROFILE\.wezterm.lua" -Force > $null
