@@ -1,9 +1,7 @@
 Import-Module posh-git
 Import-Module PSReadLine
-oh-my-posh init pwsh --config "$env:POSH_THEMES_PATH/negligible.omp.json" | Invoke-Expression
+Invoke-Expression (&starship init powershell)
 
-Enable-PoshTransientPrompt
- 
 Set-PSReadLineOption -EditMode Windows
 Set-PSReadLineOption -BellStyle None
 Set-PSReadLineOption -PredictionSource History
