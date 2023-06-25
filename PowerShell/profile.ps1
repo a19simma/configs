@@ -6,3 +6,4 @@ Set-PSReadLineOption -EditMode Windows
 Set-PSReadLineOption -BellStyle None
 Set-PSReadLineOption -PredictionSource History
 Set-PSReadLineOption -PredictionViewStyle ListView
+Invoke-Expression (& { (zoxide init powershell | Out-String) })
