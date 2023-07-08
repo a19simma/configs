@@ -247,6 +247,8 @@ vim.keymap.set("n", "<leader>f", vim.lsp.buf.format)
 vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
 vim.keymap.set("n", "<leader>Y", [["+Y]])
 -- [[ Basic Keymaps ]]
+vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
+vim.keymap.set("n", "<leader>Y", [["+Y]])
 
 -- Keymaps for better default experience
 -- See `:help vim.keymap.set()`
