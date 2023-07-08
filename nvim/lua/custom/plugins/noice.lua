@@ -2,7 +2,7 @@ return {
   "folke/noice.nvim",
   config = function()
     require("noice").setup({
-        -- add any options here
+      -- add any options here
     })
   end,
 }
