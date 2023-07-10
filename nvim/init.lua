@@ -232,20 +232,18 @@ vim.o.updatetime = 250
 vim.o.timeout = true
 vim.o.timeoutlen = 300
 vim.o.tabstop = 4
-vim.o.softtabstop = 0
 
+vim.opt.colorcolumn = "120"
+vim.opt.scrolloff = 12
+vim.opt.signcolumn = "yes"
 -- Set completeopt to have a better completion experience
 vim.o.completeopt = 'menuone,noselect'
 
 -- NOTE: You should make sure your terminal supports this
 vim.o.termguicolors = true
-vim.opt.colorcolumn = "80"
 vim.opt.nu = true
 vim.opt.relativenumber = true
-vim.opt.tabstop = 4
 vim.keymap.set("n", "<leader>f", vim.lsp.buf.format)
-vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
-vim.keymap.set("n", "<leader>Y", [["+Y]])
 -- [[ Basic Keymaps ]]
 vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
 vim.keymap.set("n", "<leader>Y", [["+Y]])
