@@ -13,5 +13,21 @@ return {
       desc =
       "Continue debugger"
     },
+    {
+      "<F10>",
+      "<cmd>DapStepOver<CR>",
+      desc =
+      "Step Over"
+    },
+    {
+      "<F11>",
+      "<cmd>DapStepInto<CR>",
+      desc = "StepInto"
+    },
+    {
+      "<F12>",
+      "<cmd>DapStepOut<CR>",
+      desc = "StepOut"
+    }
   },
 }

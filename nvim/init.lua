@@ -430,7 +430,6 @@ local servers = {
   clangd = {},
   gopls = {},
   rust_analyzer = {},
-  tsserver = {},
   omnisharp = {},
   yamlls = {},
   astro = {
@@ -438,8 +437,7 @@ local servers = {
       tsdk = vim.fs.normalize '~/.local/share/nvim/mason/packages/typescript-language-server/node_modules/typescript/lib/tsserver.js',
     }
   },
-
-
+  volar = {},
   lua_ls = {
     Lua = {
       workspace = { checkThirdParty = false },
@@ -476,6 +474,10 @@ mason_lspconfig.setup_handlers {
       settings = servers[server_name],
     }
   end,
+}
+
+require('lspconfig').volar.setup {
+  filetypes = { 'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue', 'json' }
 }
 
 -- [[ Configure nvim-cmp ]]

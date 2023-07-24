@@ -48,6 +48,7 @@
         - apt-transport-https
         - zsh
         - kubectl
+        - zoxide
 
     - name: create repo folder
       file:
