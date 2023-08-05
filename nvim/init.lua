@@ -135,8 +135,8 @@ require('lazy').setup({
     -- See `:help lualine.txt`
     opts = {
       options = {
-        icons_enabled = false,
-        theme = 'onedark',
+        icons_enabled = true,
+        theme = 'codedark',
         component_separators = '|',
         section_separators = '',
       },
@@ -212,7 +212,6 @@ vim.o.mouse = 'a'
 -- Sync clipboard between OS and Neovim.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
-vim.o.clipboard = 'unnamedplus'
 
 -- Enable break indent
 vim.o.breakindent = true
@@ -241,6 +240,9 @@ vim.o.completeopt = 'menuone,noselect'
 
 -- NOTE: You should make sure your terminal supports this
 vim.o.termguicolors = true
+
+vim.opt.colorcolumn = "100"
+
 vim.opt.nu = true
 vim.opt.relativenumber = true
 vim.keymap.set("n", "<leader>f", vim.lsp.buf.format)
