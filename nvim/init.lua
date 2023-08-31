@@ -444,6 +444,7 @@ local servers = {
       tsdk = vim.fs.normalize '~/.local/share/nvim/mason/packages/typescript-language-server/node_modules/typescript/lib/tsserver.js',
     }
   },
+  tsserver = {},
   volar = {},
   lua_ls = {
     Lua = {
@@ -483,9 +484,6 @@ mason_lspconfig.setup_handlers {
   end,
 }
 
-require('lspconfig').volar.setup {
-  filetypes = { 'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue', 'json' }
-}
 
 -- [[ Configure nvim-cmp ]]
 -- See `:help cmp`
@@ -536,4 +534,18 @@ cmp.setup {
   },
 }
 
+vim.g.clipboard = {
+  name = 'WslClipboard',
+  copy = {
+    ['+'] = 'clip.exe',
+    ['*'] = 'clip.exe',
+  },
+  paste = {
+    ['+'] = 'powershell.exe -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+    ['*'] = 'powershell.exe -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+  },
+  cache_enabled = 0,
+}
+
+vim.cmd [[colorscheme moonfly]]
 -- The line beneath this is called `modeline`. See `:help modeline`

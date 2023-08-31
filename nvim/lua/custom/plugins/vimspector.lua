@@ -18,6 +18,7 @@ return {
             nmap <F11> <cmd>call vimspector#StepOver()<cr>")
             nmap <F12> <cmd>call vimspector#StepOut()<cr>")
             nmap <F10> <cmd>call vimspector#StepInto()<cr>")
+            nmap <F6> <cmd>call vimspector#Continue()<cr>")
         ]])
         map('n', "Db", ":call vimspector#ToggleBreakpoint()<cr>")
         map('n', "Dw", ":call vimspector#AddWatch()<cr>")
