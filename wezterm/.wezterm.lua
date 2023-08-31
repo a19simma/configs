@@ -15,7 +15,7 @@ config.window_decorations = "RESIZE"
 
 -- For example, changing the color scheme:
 config.font = wezterm.font_with_fallback({ 'JetBrains Mono', 'Hack', 'Symbols Nerd Font', 'Noto Sans CJK TC' })
-config.color_scheme = 'Darcula (base16)'
+config.color_scheme = 'Dracula+'
 config.default_prog = { 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' }
 config.window_background_opacity = 0.85
 config.adjust_window_size_when_changing_font_size = false
@@ -44,17 +44,6 @@ config.ssh_domains = {
             identityfile = 'C:\\Users\\simon\\main-key',
         },
     },
-    {
-        name = 'ix',
-        remote_address = 'INEX-FPFMKN3.int.inexchange.com:6922',
-        username = 'simon.malm',
-        ssh_option = {
-            identityfile = 'C:\\Users\\simon\\main-key',
-        },
-    },
-}
-
-config.ssh_domains = {
     {
         name = 'ix',
         remote_address = 'INEX-FPFMKN3.int.inexchange.com:6922',
