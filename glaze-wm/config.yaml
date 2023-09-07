@@ -45,23 +45,23 @@ bar:
 
 workspaces:
   - name: "1"
-    bind_to_monitor: 1
+    bind_to_monitor: 2
   - name: "2"
-    bind_to_monitor: 2
+    bind_to_monitor: 1
   - name: "3"
-    bind_to_monitor: 2
+    bind_to_monitor: 1
   - name: "4"
-    bind_to_monitor: 2
+    bind_to_monitor: 1
   - name: "5"
-    bind_to_monitor: 2
+    bind_to_monitor: 1
   - name: "6"
-    bind_to_monitor: 2
+    bind_to_monitor: 1
   - name: "7"
-    bind_to_monitor: 2
+    bind_to_monitor: 1
   - name: "8"
-    bind_to_monitor: 2
+    bind_to_monitor: 1
   - name: "9"
-    bind_to_monitor: 2
+    bind_to_monitor: 1
 
 window_rules:
   # Task Manager requires admin privileges to manage and should be ignored unless running
@@ -78,6 +78,11 @@ window_rules:
     match_process_name: "steam"
   - command: "ignore"
     match_process_name: "vmware"
+  - command: "ignore"
+    match_process_name: "VirtualBox"
+  - command: "ignore"
+    match_process_name: "VirtualBoxVM"
+
 
 binding_modes:
   - name: "resize"

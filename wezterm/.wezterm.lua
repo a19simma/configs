@@ -20,7 +20,8 @@ config.default_prog = { 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' }
 config.window_background_opacity = 0.85
 config.adjust_window_size_when_changing_font_size = false
 
-config.enable_tab_bar = false
+config.enable_tab_bar = true
+config.tab_bar_at_bottom = true
 
 config.keys = { {
     key = 'w',
