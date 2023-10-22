@@ -133,10 +133,8 @@ require('lazy').setup({
     'lukas-reineke/indent-blankline.nvim',
     -- Enable `lukas-reineke/indent-blankline.nvim`
     -- See `:help indent_blankline.txt`
-    opts = {
-      char = '┊',
-      show_trailing_blankline_indent = false,
-    },
+    main = "ibl",
+    opts = { indent = { highlight = { "WhiteSpace" } } },
   },
 
   -- "gc" to comment visual regions/lines
@@ -236,7 +234,9 @@ vim.opt.colorcolumn = "100"
 vim.opt.nu = true
 vim.opt.relativenumber = true
 vim.keymap.set("n", "<leader>f", vim.lsp.buf.format)
--- [[ Basic Keymaps ]]
+
+vim.keymap.set("x", "<leader>p", [["_dP]])
+
 vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
 vim.keymap.set("n", "<leader>Y", [["+Y]])
 
@@ -362,6 +362,17 @@ require('nvim-treesitter.configs').setup {
   },
 }
 
+local treesitter_parser_config = require "nvim-treesitter.parsers".get_parser_configs()
+treesitter_parser_config.templ = {
+  install_info = {
+    url = "https://github.com/vrischmann/tree-sitter-templ.git",
+    files = { "src/parser.c", "src/scanner.c" },
+    branch = "master",
+  },
+}
+
+vim.treesitter.language.register('templ', 'templ')
+
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
@@ -436,8 +447,13 @@ local servers = {
       workspace = { checkThirdParty = false },
       telemetry = { enable = false },
     },
-  },
+  }
 }
+vim.filetype.add({
+  extension = {
+    templ = "templ",
+  },
+})
 
 vim.api.nvim_create_autocmd("BufWritePre", {
   callback = function()
@@ -469,6 +485,7 @@ mason_lspconfig.setup_handlers {
   end,
 }
 
+require("lspconfig").templ.setup { on_attach = on_attach }
 
 -- [[ Configure nvim-cmp ]]
 -- See `:help cmp`
@@ -534,3 +551,5 @@ vim.g.clipboard = {
 
 vim.cmd [[colorscheme moonfly]]
 -- The line beneath this is called `modeline`. See `:help modeline`
+
+vim.lsp.set_log_level("off")
