@@ -15,21 +15,48 @@ config.window_decorations = "RESIZE"
 
 -- For example, changing the color scheme:
 config.font = wezterm.font_with_fallback({ 'JetBrains Mono', 'Hack', 'Symbols Nerd Font', 'Noto Sans CJK TC' })
-config.color_scheme = 'Dracula+'
+config.color_scheme = 'rose pine (base64)'
+config.colors = {
+    background = 'black',
+    selection_bg = '#bcbcbc',
+}
 config.default_prog = { 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' }
-config.window_background_opacity = 0.85
+config.window_background_opacity = 1
 config.adjust_window_size_when_changing_font_size = false
 
 config.enable_tab_bar = true
+config.use_fancy_tab_bar = false
 config.tab_bar_at_bottom = true
 
-config.keys = { {
-    key = 'w',
-    mods = 'CTRL|SHIFT',
-    action = wezterm.action.CloseCurrentPane {
-        confirm = true
+config.keys = {
+    {
+        key = 'w',
+        mods = 'CTRL|SHIFT',
+        action = wezterm.action.CloseCurrentPane {
+            confirm = true
+        },
+    },
+    {
+        key = 'l',
+        mods = 'CTRL|SHIFT',
+        action = wezterm.action.ActivatePaneDirection 'Right',
+    },
+    {
+        key = 'h',
+        mods = 'CTRL|SHIFT',
+        action = wezterm.action.ActivatePaneDirection 'Left',
+    },
+    {
+        key = 'k',
+        mods = 'CTRL|SHIFT',
+        action = wezterm.action.ActivatePaneDirection 'Up',
+    },
+    {
+        key = 'j',
+        mods = 'CTRL|SHIFT',
+        action = wezterm.action.ActivatePaneDirection 'Down',
     }
-} }
+}
 
 config.wsl_domains = { {
     name = 'wsl',
