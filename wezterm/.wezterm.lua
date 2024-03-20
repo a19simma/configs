@@ -25,7 +25,7 @@ config.window_background_opacity = 1
 config.adjust_window_size_when_changing_font_size = false
 
 config.enable_tab_bar = true
-config.use_fancy_tab_bar = false
+config.use_fancy_tab_bar = true
 config.tab_bar_at_bottom = true
 
 config.keys = {
