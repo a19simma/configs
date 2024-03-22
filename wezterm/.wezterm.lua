@@ -14,11 +14,11 @@ config.window_decorations = "RESIZE"
 -- This is where you actually apply your config choices
 
 -- For example, changing the color scheme:
-config.font = wezterm.font_with_fallback({ 'JetBrains Mono', 'Hack', 'Symbols Nerd Font', 'Noto Sans CJK TC' })
-config.color_scheme = 'rose pine (base64)'
+config.font = wezterm.font_with_fallback({ 'Monaspace Krypton', 'JetBrains Mono', 'Hack', 'Symbols Nerd Font',
+    'Noto Sans CJK TC' })
+config.color_scheme = 'Moonfly (Gogh)'
 config.colors = {
-    background = 'black',
-    selection_bg = '#bcbcbc',
+    -- selection_bg = '#bcbcbc',
 }
 config.default_prog = { 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' }
 config.window_background_opacity = 1

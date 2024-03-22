@@ -8,12 +8,12 @@ New-Item -ItemType SymbolicLink  -Path "$env:USERPROFILE\.wezterm.lua" -Target "
 Remove-Item -Path "$env:USERPROFILE\.ideavimrc" -Force > $null
 New-Item -ItemType SymbolicLink  -Path "$env:USERPROFILE\.ideavimrc" -Target "$env:USERPROFILE\Documents\configs\intellij\.ideavimrc" -Force > $null
 
+Remove-Item -Path "$env:USERPROFILE\AppData\Roaming\Code\User\settings.json" -Force > $null
+New-Item -ItemType SymbolicLink  -Path "$env:USERPROFILE\AppData\Roaming\Code\User\settings.json" -Target "$env:USERPROFILE\Documents\configs\vscode\settings.json" -Force > $null
+
 Remove-Item -Path "$env:USERPROFILE\.glaze-wm\config.yaml" -Force > $null
 New-Item -ItemType SymbolicLink  -Path "$env:USERPROFILE\.glaze-wm\config.yaml" -Target "$env:USERPROFILE\Documents\configs\glaze-wm\config.yaml" -Force > $null
 
 Remove-Item -Path "$HOME\Appdata\Local\nvim-data" -Recurse  -Force > $null
 Remove-Item -Path "$HOME\Appdata\Local\nvim" -Recurse  -Force > $null
 New-Item -ItemType Junction  -Path "$HOME\Appdata\Local\nvim" -Target "$env:USERPROFILE\Documents\configs\nvim" -Force > $null
-
-
-

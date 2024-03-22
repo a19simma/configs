@@ -1,0 +1,8 @@
+{
+    "security.workspace.trust.untrustedFiles": "open",
+    "explorer.confirmDelete": false,
+    "editor.lineNumbers": "relative",
+    "redhat.telemetry.enabled": false,
+    "git.openRepositoryInParentFolders": "never"
+    test
+}

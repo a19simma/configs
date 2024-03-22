@@ -373,6 +373,16 @@ treesitter_parser_config.templ = {
 
 vim.treesitter.language.register('templ', 'templ')
 
+treesitter_parser_config.powershell = {
+    install_info = {
+        url = "https://github.com/airbus-cert/tree-sitter-powershell",
+        files = { "src/parser.c", "src/scanner.c" },
+        branch = "main"
+    }
+}
+
+vim.treesitter.language.register('powershell', 'ps1')
+
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
