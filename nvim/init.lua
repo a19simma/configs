@@ -559,7 +559,7 @@ vim.g.clipboard = {
     cache_enabled = 0,
 }
 
-vim.cmd [[colorscheme moonfly]]
+vim.cmd [[colorscheme kanagawa]]
 -- The line beneath this is called `modeline`. See `:help modeline`
 
 vim.lsp.set_log_level("off")
