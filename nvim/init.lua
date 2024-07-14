@@ -440,17 +440,10 @@ end
 --  Add any additional override configuration in the following tables. They will be passed to
 --  the `settings` field of the server config. You must look up that documentation yourself.
 local servers = {
-    clangd = {},
     gopls = {},
     rust_analyzer = {},
-    csharp_ls = {},
     yamlls = {},
-    astro = {
-        typescript = {
-            tsdk = vim.fs.normalize '~/.local/share/nvim/mason/packages/typescript-language-server/node_modules/typescript/lib/tsserver.js',
-        }
-    },
-    tsserver = {},
+    -- tsserver = {},
     volar = {},
     lua_ls = {
         Lua = {
@@ -495,7 +488,13 @@ mason_lspconfig.setup_handlers {
     end,
 }
 
-require("lspconfig").templ.setup { on_attach = on_attach }
+local lsp = require("lspconfig")
+lsp.templ.setup { on_attach = on_attach }
+lsp.volar.setup({
+    on_attach = on_attach,
+    enable = true, -- "take over mode" for typescript files as well: https://github.com/johnsoncodehk/volar/discussions/471
+    filetypes = { "typescript", "javascript", "vue" },
+})
 
 -- [[ Configure nvim-cmp ]]
 -- See `:help cmp`
@@ -563,3 +562,5 @@ vim.cmd [[colorscheme kanagawa]]
 -- The line beneath this is called `modeline`. See `:help modeline`
 
 vim.lsp.set_log_level("off")
+vim.keymap.set("v", "<leader>64d", "@\"=system('base64 -w 0 --decode', @\")<cr>gvP")
+vim.keymap.set("v", "<leader>64e", "y:let @\"=system('base64 -w 0', @\")<cr>gvP")
