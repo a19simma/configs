@@ -3,42 +3,11 @@
   hosts: '*'
   gather_facts: true
   tasks:
-    - name: create apt keyring
-      ansible.builtin.file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: a+rwx
-        recurse: yes
-
-    - name: add key
-      ansible.builtin.apt_key:
-        url: https://download.docker.com/linux/debian/gpg
-        state: present
-        keyring: /etc/apt/keyrings/docker.gpg
-
-    - name: add repo
-      ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
-        state: present
-        update_cache: false
-
-    - name: add key
-      ansible.builtin.apt_key:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        keyring: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
-        state: present
-
-    - name: add repo
-      ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
-        state: present
-        update_cache: false
-
     - name: install dependencies
+      become: true
       ansible.builtin.apt:
         name: '{{ item }}'
         state: present
-        force: true
       loop:
         - nfs-common
         - ca-certificates
@@ -47,12 +16,17 @@
         - lsb-release
         - apt-transport-https
         - zsh
-        - kubectl
         - zoxide
 
     - name: create repo folder
       file:
         path: ~/repos 
+        state: directory
+        mode: u+rwx
+
+    - name: create repo folder
+      file:
+        path: ~/.zsh
         state: directory
         mode: u+rwx
 
@@ -78,19 +52,8 @@
         - zsh-syntax-highlighting
 
     - name: change default shell
+      become: true
       shell: chsh -s /bin/zsh
-
-    - name: install nvm
-      ansible.builtin.shell: >
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
-      args:
-        creates: "{{ ansible_env.HOME }}/.nvm/nvm.sh"
-
-    - name: download nvim
-      get_url:
-        url: https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
-        dest: /usr/bin/nvim
-        mode: u+x
 
     - name: copy neovim config
       copy:
@@ -100,52 +63,17 @@
     - name: copy bashrc
       copy:
         src: ../bash/.bashrc
-        dest: /etc/profile
+        dest: ~/.bashrc
 
     - name: copy zshrc
       copy:
         src: ../zsh/.zshrc
         dest: ~/.zshrc
 
-    - name: install k9s
-      shell: curl -sS https://webi.sh/k9s | sh
-
-    - name: install kubens
-      shell: curl -sS https://webi.sh/kubens | sh
-
-    - name: install kubectx
-      shell: curl -sS https://webi.sh/kubectx | sh
-
-    - name: install docker and containerd
-      ansible.builtin.apt:
+   - community.general.homebrew:
         name: '{{ item }}'
         state: present
       loop:
-        - docker-ce
-        - docker-ce-cli
-        - containerd.io
-        - docker-compose-plugin
-      notify: apply containerd config file
-    
-    - name: download minikube
-      get_url:
-        url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-        dest: /tmp/
-
-    - name: install minikube
-      shell: install /tmp/minikube-linux-amd64 /usr/local/bin/minikube
-
-  handlers:
-    - name: apply containerd config file
-      ansible.builtin.shell: containerd config default > /etc/containerd/config.toml
-      notify:
-        - replace systemdgroup
-        - restart containerd
-
-    - name: replace systemdgroup
-      ansible.builtin.shell: sed -i -e 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
-
-    - name: restart containerd
-      ansible.builtin.service:
-        name: containerd
-        state: restarted
+        - kubectx
+        - starship
+        

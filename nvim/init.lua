@@ -96,21 +96,6 @@ require('lazy').setup({
             'folke/neodev.nvim',
         },
     },
-    {
-        -- Autocompletion
-        'hrsh7th/nvim-cmp',
-        dependencies = {
-            -- Snippet Engine & its associated nvim-cmp source
-            'L3MON4D3/LuaSnip',
-            'saadparwaiz1/cmp_luasnip',
-
-            -- Adds LSP completion capabilities
-            'hrsh7th/cmp-nvim-lsp',
-
-            -- Adds a number of user-friendly snippets
-            'rafamadriz/friendly-snippets',
-        },
-    },
 
     -- Useful plugin to show you pending keybinds.
     { 'folke/which-key.nvim',          opts = {} },
@@ -121,7 +106,7 @@ require('lazy').setup({
         opts = {
             options = {
                 icons_enabled = true,
-                theme = 'codedark',
+                theme = 'kanagawa',
                 component_separators = '|',
                 section_separators = '',
             },
@@ -261,19 +246,19 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 
 -- [[ Configure Telescope ]]
 -- See `:help telescope` and `:help telescope.setup()`
-local trouble = require("trouble.providers.telescope")
-require('telescope').setup {
-    defaults = {
-        mappings = {
-            i = {
-                ['<C-u>'] = false,
-                ['<C-d>'] = false,
-                ["<c-t>"] = trouble.open_with_trouble,
-            },
-            n = { ["<c-t>"] = trouble.open_with_trouble },
-        },
-    },
-}
+-- local trouble = require("trouble.providers.telescope")
+-- require('telescope').setup {
+--     defaults = {
+--         mappings = {
+--             i = {
+--                 ['<C-u>'] = false,
+--                 ['<C-d>'] = false,
+--                 ["<c-t>"] = trouble.open_with_trouble,
+--             },
+--             n = { ["<c-t>"] = trouble.open_with_trouble },
+--         },
+--     },
+-- }
 
 -- Enable telescope fzf native, if installed
 pcall(require('telescope').load_extension, 'fzf')
@@ -443,8 +428,6 @@ local servers = {
     gopls = {},
     rust_analyzer = {},
     yamlls = {},
-    -- tsserver = {},
-    volar = {},
     lua_ls = {
         Lua = {
             workspace = { checkThirdParty = false },
@@ -490,11 +473,6 @@ mason_lspconfig.setup_handlers {
 
 local lsp = require("lspconfig")
 lsp.templ.setup { on_attach = on_attach }
-lsp.volar.setup({
-    on_attach = on_attach,
-    enable = true, -- "take over mode" for typescript files as well: https://github.com/johnsoncodehk/volar/discussions/471
-    filetypes = { "typescript", "javascript", "vue" },
-})
 
 -- [[ Configure nvim-cmp ]]
 -- See `:help cmp`
@@ -558,8 +536,6 @@ vim.g.clipboard = {
     cache_enabled = 0,
 }
 
-vim.cmd [[colorscheme kanagawa]]
--- The line beneath this is called `modeline`. See `:help modeline`
 
 vim.lsp.set_log_level("off")
 vim.keymap.set("v", "<leader>64d", "@\"=system('base64 -w 0 --decode', @\")<cr>gvP")
