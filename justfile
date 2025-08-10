@@ -17,6 +17,7 @@ sync-to-local:
     ln -sf "$(pwd)/zsh/.zshrc" ~/.zshrc
     @echo "✅ Repo configs linked to local system"
 
+# Hello 
 # Setup Bitwarden CLI
 setup-bitwarden:
     @echo "Setting up Bitwarden CLI..."
