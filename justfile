@@ -40,3 +40,26 @@ create-tavily-api-key:
 # Create Morph API key in Bitwarden
 create-morph-api-key:
     @./scripts/create-morph-key.sh
+
+# Copy local files to repo (sync from system to repo)
+sync-from-local:
+    @echo "Syncing configs from local system to repo..."
+    cp ~/.zshrc ./zsh/.zshrc
+    cp -R ~/.config/nvim ./
+    @echo "✅ Local configs synced to repo"
+
+# Install all dependencies
+install-deps:
+    @echo "Installing dependencies with brew..."
+    brew install gitleaks jq bitwarden-cli just
+    @echo "✅ All dependencies installed"
+
+# Security checks using GitLeaks
+check-secrets:
+    @if command -v gitleaks >/dev/null 2>&1; then \
+        echo "Running GitLeaks scan..."; \
+        gitleaks detect --config .gitleaks.toml --verbose; \
+    else \
+        echo "❌ GitLeaks not installed. Run: just install-deps"; \
+        exit 1; \
+    fi
