@@ -43,5 +43,5 @@ alias setup-claude='export BW_SESSION=$(bw unlock --raw) && export AVANTE_ANTHRO
 alias setup-gemini='export BW_SESSION=$(bw unlock --raw) && export AVANTE_GEMINI_API_KEY=$(bw get password "Gemini API Key")'
 alias setup-tavily='export BW_SESSION=$(bw unlock --raw) && export TAVILY_API_KEY=$(bw get password "Tavily API Key")'
 alias setup-morph='export BW_SESSION=$(bw unlock --raw) && export MORPH_API_KEY=$(bw get password "Morph API Key")'
-alias setup-all-keys='export BW_SESSION=$(bw unlock --raw) && export AVANTE_ANTHROPIC_API_KEY=$(bw get password "Anthropic API Key") && export AVANTE_GEMINI_API_KEY=$(bw get password "Gemini API Key") && export TAVILY_API_KEY=$(bw get password "Tavily API Key") && export MORPH_API_KEY=$(bw get password "Morph API Key")'
+alias setup-all-keys='export BW_SESSION=$(bw unlock --raw) && export ANTHROPIC_API_KEY=$(bw get password "Anthropic API Key") && export GEMINI_API_KEY=$(bw get password "Gemini API Key") && export TAVILY_API_KEY=$(bw get password "Tavily API Key") && export MORPH_API_KEY=$(bw get password "Morph API Key")'
 

@@ -753,6 +753,14 @@ require("lazy").setup({
 		cmd = { "ConformInfo" },
 		keys = {
 			{
+				"A-y",
+				function()
+					require("minuet").make_blink_map()
+				end,
+				mode = "i",
+				desc = "",
+			},
+			{
 				"<leader>f",
 				function()
 					require("conform").format({ async = true, lsp_format = "fallback" })
@@ -865,9 +873,16 @@ require("lazy").setup({
 			},
 
 			sources = {
-				default = { "lsp", "path", "snippets", "lazydev" },
+				default = { "lsp", "path", "snippets", "lazydev", "minuet" },
 				providers = {
 					lazydev = { module = "lazydev.integrations.blink", score_offset = 100 },
+					minuet = {
+						name = "minuet",
+						module = "minuet.blink",
+						async = true,
+						timeout_ms = 3000,
+						score_offset = 50, -- Gives minuet higher priority among suggestions
+					},
 				},
 			},
 
