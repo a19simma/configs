@@ -45,3 +45,20 @@ alias setup-tavily='export BW_SESSION=$(bw unlock --raw) && export TAVILY_API_KE
 alias setup-morph='export BW_SESSION=$(bw unlock --raw) && export MORPH_API_KEY=$(bw get password "Morph API Key")'
 alias setup-all-keys='export BW_SESSION=$(bw unlock --raw) && export ANTHROPIC_API_KEY=$(bw get password "Anthropic API Key") && export GEMINI_API_KEY=$(bw get password "Gemini API Key") && export TAVILY_API_KEY=$(bw get password "Tavily API Key") && export MORPH_API_KEY=$(bw get password "Morph API Key")'
 
+# Tmux aliases
+alias t='tmux'
+alias tclear='tmux kill-window -a'
+alias tdev='tmux new-session -d -s main \; send-keys "nvim ." Enter \; new-window \; send-keys "opencode ." Enter \; new-window \; send-keys "claude" Enter \; new-window \; send-keys "lazygit" Enter \; new-window \; attach-session -t main'
+
+# Fuzzy tmux session selector
+tm() {
+  local session=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | fzf)
+  if [ -n "$session" ]; then
+    if [ -n "$TMUX" ]; then
+      tmux switch-client -t "$session"
+    else
+      tmux attach -t "$session"
+    fi
+  fi
+}
+
