@@ -53,22 +53,47 @@ deploy-windows:
         New-Item -ItemType Directory -Path "$env:USERPROFILE\.config" -Force
     }
     
-    # Create symlinks for nvim and alacritty
-    if (!(Test-Path -Path "$env:USERPROFILE\.config\nvim")) {
-        New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\nvim" -Target "$(Get-Location)\neovim\.config\nvim" -Force
+    # Create symlinks for nvim and alacritty (try with fallback to copying)
+    try {
+        if (!(Test-Path -Path "$env:USERPROFILE\.config\nvim")) {
+            New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\nvim" -Target "$(Get-Location)\neovim\.config\nvim" -Force
+            Write-Host "✅ Created nvim symlink"
+        }
+    } catch {
+        Write-Host "⚠️  Symlink creation requires admin privileges. Copying nvim config instead..."
+        if (!(Test-Path -Path "$env:USERPROFILE\.config\nvim")) {
+            Copy-Item -Path "$(Get-Location)\neovim\.config\nvim" -Destination "$env:USERPROFILE\.config\nvim" -Recurse -Force
+        }
     }
     
-    if (!(Test-Path -Path "$env:USERPROFILE\.config\alacritty")) {
-        New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\alacritty" -Target "$(Get-Location)\alacritty\.config\alacritty" -Force
+    try {
+        if (!(Test-Path -Path "$env:USERPROFILE\.config\alacritty")) {
+            New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\alacritty" -Target "$(Get-Location)\alacritty\.config\alacritty" -Force
+            Write-Host "✅ Created alacritty symlink"
+        }
+    } catch {
+        Write-Host "⚠️  Symlink creation requires admin privileges. Copying alacritty config instead..."
+        if (!(Test-Path -Path "$env:USERPROFILE\.config\alacritty")) {
+            Copy-Item -Path "$(Get-Location)\alacritty\.config\alacritty" -Destination "$env:USERPROFILE\.config\alacritty" -Recurse -Force
+        }
     }
     
-    # Copy PowerShell profiles
+    # Copy PowerShell profiles (create directories if needed)
     if (Test-Path -Path ".\PowerShell\Microsoft.PowerShell_profile.ps1") {
+        # Create PowerShell profile directory if it doesn't exist
+        $profileDir = Split-Path $PROFILE -Parent
+        if (!(Test-Path -Path $profileDir)) {
+            New-Item -ItemType Directory -Path $profileDir -Force
+            Write-Host "✅ Created PowerShell profile directory"
+        }
+        
         Copy-Item -Path ".\PowerShell\Microsoft.PowerShell_profile.ps1" -Destination "$PROFILE" -Force
+        Write-Host "✅ Copied PowerShell profile"
     }
     
     if (Test-Path -Path ".\PowerShell\profile.ps1") {
         Copy-Item -Path ".\PowerShell\profile.ps1" -Destination "$(Split-Path $PROFILE)\profile.ps1" -Force
+        Write-Host "✅ Copied PowerShell profile.ps1"
     }
     
     Write-Host "✅ Windows configs deployed successfully"
@@ -170,8 +195,16 @@ install-deps-windows:
     # Change to home directory to avoid bucket confusion
     Set-Location $env:USERPROFILE
     
-    # Install packages
-    scoop install git curl jq just bitwarden-cli gitleaks starship nushell bat fzf
+    # Install packages (try nushell with --skip to continue if it fails)
+    scoop install git curl jq just bitwarden-cli gitleaks starship bat fzf
+    
+    # Try to install nushell separately, continue if it fails
+    try {
+        scoop install nushell
+        Write-Host "✅ Nushell installed successfully"
+    } catch {
+        Write-Host "⚠️  Nushell installation failed, but continuing..."
+    }
     
     Write-Host "✅ Windows dependencies installed"
 
