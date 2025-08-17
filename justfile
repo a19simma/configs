@@ -64,7 +64,7 @@ deploy-windows:
     # Function to restart script with admin privileges
     function Request-AdminElevation {
         if (!(Test-Administrator)) {
-            Write-Host "🔐 Requesting administrator privileges for symlink creation..." -ForegroundColor Yellow
+            Write-Host "Requesting administrator privileges for symlink creation..." -ForegroundColor Yellow
             Write-Host "   This allows creating symlinks instead of copying files." -ForegroundColor Gray
             
             $currentScript = $MyInvocation.MyCommand.Path
@@ -110,15 +110,15 @@ deploy-windows:
         if ($useSymlinks) {
             try {
                 New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\nvim" -Target "$(Get-Location)\neovim\.config\nvim" -Force
-                Write-Host "✅ Created nvim symlink" -ForegroundColor Green
+                Write-Host "Created nvim symlink" -ForegroundColor Green
             } catch {
-                Write-Host "⚠️  Symlink creation failed, copying instead..." -ForegroundColor Yellow
+                Write-Host "Symlink creation failed, copying instead..." -ForegroundColor Yellow
                 Copy-Item -Path "$(Get-Location)\neovim\.config\nvim" -Destination "$env:USERPROFILE\.config\nvim" -Recurse -Force
-                Write-Host "✅ Copied nvim config" -ForegroundColor Green
+                Write-Host "Copied nvim config" -ForegroundColor Green
             }
         } else {
             Copy-Item -Path "$(Get-Location)\neovim\.config\nvim" -Destination "$env:USERPROFILE\.config\nvim" -Recurse -Force
-            Write-Host "✅ Copied nvim config" -ForegroundColor Green
+            Write-Host "Copied nvim config" -ForegroundColor Green
         }
     }
     
@@ -127,15 +127,15 @@ deploy-windows:
         if ($useSymlinks) {
             try {
                 New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\alacritty" -Target "$(Get-Location)\alacritty\.config\alacritty" -Force
-                Write-Host "✅ Created alacritty symlink" -ForegroundColor Green
+                Write-Host "Created alacritty symlink" -ForegroundColor Green
             } catch {
-                Write-Host "⚠️  Symlink creation failed, copying instead..." -ForegroundColor Yellow
+                Write-Host "Symlink creation failed, copying instead..." -ForegroundColor Yellow
                 Copy-Item -Path "$(Get-Location)\alacritty\.config\alacritty" -Destination "$env:USERPROFILE\.config\alacritty" -Recurse -Force
-                Write-Host "✅ Copied alacritty config" -ForegroundColor Green
+                Write-Host "Copied alacritty config" -ForegroundColor Green
             }
         } else {
             Copy-Item -Path "$(Get-Location)\alacritty\.config\alacritty" -Destination "$env:USERPROFILE\.config\alacritty" -Recurse -Force
-            Write-Host "✅ Copied alacritty config" -ForegroundColor Green
+            Write-Host "Copied alacritty config" -ForegroundColor Green
         }
     }
     
@@ -144,15 +144,15 @@ deploy-windows:
         if ($useSymlinks) {
             try {
                 New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.wezterm.lua" -Target "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Force
-                Write-Host "✅ Created wezterm symlink" -ForegroundColor Green
+                Write-Host "Created wezterm symlink" -ForegroundColor Green
             } catch {
-                Write-Host "⚠️  Symlink creation failed, copying instead..." -ForegroundColor Yellow
+                Write-Host "Symlink creation failed, copying instead..." -ForegroundColor Yellow
                 Copy-Item -Path "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Destination "$env:USERPROFILE\.wezterm.lua" -Force
-                Write-Host "✅ Copied wezterm config" -ForegroundColor Green
+                Write-Host "Copied wezterm config" -ForegroundColor Green
             }
         } else {
             Copy-Item -Path "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Destination "$env:USERPROFILE\.wezterm.lua" -Force
-            Write-Host "✅ Copied wezterm config" -ForegroundColor Green
+            Write-Host "Copied wezterm config" -ForegroundColor Green
         }
     }
 
@@ -162,13 +162,13 @@ deploy-windows:
     if (Test-Path -Path "$profileDir\profile.ps1") {
         # Quick fix for existing profile.ps1 to stop errors
         (Get-Content "$profileDir\profile.ps1") -replace '\$PSStyle\.FileInfo\.Directory = \$PSStyle\.Background\.FromRgb\(0x1f1f28\)', 'if ($PSStyle -and $PSStyle.FileInfo -and $PSStyle.Background) { try { $PSStyle.FileInfo.Directory = $PSStyle.Background.FromRgb(0x1f1f28) } catch { } }' | Set-Content "$profileDir\profile.ps1"
-        Write-Host "✅ Fixed existing profile.ps1"
+        Write-Host "Fixed existing profile.ps1" -ForegroundColor Green
     }
     
     if (Test-Path -Path "$PROFILE") {
         # Quick fix for existing Microsoft.PowerShell_profile.ps1 to stop errors
         (Get-Content "$PROFILE") -replace '\$PSStyle\.FileInfo\.Directory = \$PSStyle\.Background\.FromRgb\(0x1f1f28\)', 'if ($PSStyle -and $PSStyle.FileInfo -and $PSStyle.Background) { try { $PSStyle.FileInfo.Directory = $PSStyle.Background.FromRgb(0x1f1f28) } catch { } }' | Set-Content "$PROFILE"
-        Write-Host "✅ Fixed existing Microsoft.PowerShell_profile.ps1"
+        Write-Host "Fixed existing Microsoft.PowerShell_profile.ps1" -ForegroundColor Green
     }
     
     # Copy PowerShell profiles (create directories if needed)
@@ -176,19 +176,19 @@ deploy-windows:
         # Create PowerShell profile directory if it doesn't exist
         if (!(Test-Path -Path $profileDir)) {
             New-Item -ItemType Directory -Path $profileDir -Force
-            Write-Host "✅ Created PowerShell profile directory"
+            Write-Host "Created PowerShell profile directory" -ForegroundColor Green
         }
         
         Copy-Item -Path ".\PowerShell\Microsoft.PowerShell_profile.ps1" -Destination "$PROFILE" -Force
-        Write-Host "✅ Copied PowerShell profile"
+        Write-Host "Copied PowerShell profile" -ForegroundColor Green
     }
     
     if (Test-Path -Path ".\PowerShell\profile.ps1") {
         Copy-Item -Path ".\PowerShell\profile.ps1" -Destination "$(Split-Path $PROFILE)\profile.ps1" -Force
-        Write-Host "✅ Copied PowerShell profile.ps1"
+        Write-Host "Copied PowerShell profile.ps1" -ForegroundColor Green
     }
     
-    Write-Host "✅ Windows configs deployed successfully"
+    Write-Host "Windows configs deployed successfully" -ForegroundColor Green
 
 # Remove Windows configs
 remove-windows:
@@ -218,7 +218,7 @@ remove-windows:
         Remove-Item -Path "$(Split-Path $PROFILE)\profile.ps1" -Force
     }
     
-    Write-Host "✅ Windows configs removed successfully"
+    Write-Host "Windows configs removed successfully" -ForegroundColor Green
 
 # Hello 
 # Setup Bitwarden CLI
@@ -295,7 +295,7 @@ install-deps-windows:
     # Install packages (try nushell with --skip to continue if it fails)
     scoop install git jq just bitwarden-cli gitleaks starship bat fzf nu gcc
     
-    Write-Host "✅ Windows dependencies installed"
+    Write-Host "Windows dependencies installed" -ForegroundColor Green
 
 # Bootstrap fresh Unix/Linux/macOS system
 bootstrap-unix:
