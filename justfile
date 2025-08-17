@@ -196,15 +196,7 @@ install-deps-windows:
     Set-Location $env:USERPROFILE
     
     # Install packages (try nushell with --skip to continue if it fails)
-    scoop install git curl jq just bitwarden-cli gitleaks starship bat fzf
-    
-    # Try to install nushell separately, continue if it fails
-    try {
-        scoop install nushell
-        Write-Host "✅ Nushell installed successfully"
-    } catch {
-        Write-Host "⚠️  Nushell installation failed, but continuing..."
-    }
+    scoop install git curl jq just bitwarden-cli gitleaks starship bat fzf nu
     
     Write-Host "✅ Windows dependencies installed"
 
