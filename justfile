@@ -119,7 +119,7 @@ install-deps-windows:
     @echo "Installing dependencies with Scoop..."
     @powershell -Command "if (!(Get-Command scoop -ErrorAction SilentlyContinue)) { Write-Host 'Installing Scoop...'; Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh') }"
     @powershell -Command "if (!(scoop bucket list | Select-String -Pattern 'extras' -Quiet)) { scoop bucket add extras }"
-    @powershell -Command "scoop install git curl jq just bitwarden-cli gitleaks starship nushell bat fzf"
+    @powershell -Command "cd $env:USERPROFILE; scoop install git curl jq just bitwarden-cli gitleaks starship nushell bat fzf"
     @echo "✅ Windows dependencies installed"
 
 # Bootstrap fresh Unix/Linux/macOS system
