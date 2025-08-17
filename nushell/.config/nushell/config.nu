@@ -46,6 +46,7 @@ if ("~/.cache/starship/init.nu" | path exists) {
 }
 
 # Initialize Zoxide if available  
-if ("~/.zoxide.nu" | path exists) {
+if (which zoxide | is-not-empty) {
+    zoxide init nushell | save -f ~/.zoxide.nu
     source ~/.zoxide.nu
 }
