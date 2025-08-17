@@ -1,5 +1,13 @@
 Write-Host "💡 To complete setup, run: Bootstrap-Configs" -ForegroundColor Yellow
 
+# Load Windows-specific environment variables
+if ($IsWindows -or $env:OS -eq "Windows_NT") {
+    $windowsEnvPath = Join-Path $PSScriptRoot "env-windows.ps1"
+    if (Test-Path $windowsEnvPath) {
+        . $windowsEnvPath
+    }
+}
+
 # Safe import with error handling
 try { Import-Module posh-git -ErrorAction SilentlyContinue } catch { }
 try { Import-Module PSReadLine -ErrorAction SilentlyContinue } catch { }

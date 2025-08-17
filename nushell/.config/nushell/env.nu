@@ -4,6 +4,14 @@
 # Basic environment variables
 $env.EDITOR = "nvim"
 
+# Load Windows-specific environment variables
+if $nu.os-info.name == "windows" {
+    let windows_env = ($nu.config-path | path dirname | path join "env-windows.nu")
+    if ($windows_env | path exists) {
+        source $windows_env
+    }
+}
+
 # Starship prompt
 $env.STARSHIP_SHELL = "nu"
 
