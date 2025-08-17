@@ -45,22 +45,58 @@ fix-symlinks:
 
 # Deploy configs on Windows (PowerShell/cmd)
 deploy-windows:
-    @echo "Deploying Windows configurations..."
-    @powershell -Command "if (!(Test-Path -Path \"$env:USERPROFILE\\.config\")) { New-Item -ItemType Directory -Path \"$env:USERPROFILE\\.config\" -Force }"
-    @powershell -Command "if (!(Test-Path -Path \"$env:USERPROFILE\\.config\\nvim\")) { New-Item -ItemType SymbolicLink -Path \"$env:USERPROFILE\\.config\\nvim\" -Target \"$(Get-Location)\\neovim\\.config\\nvim\" -Force }"
-    @powershell -Command "if (!(Test-Path -Path \"$env:USERPROFILE\\.config\\alacritty\")) { New-Item -ItemType SymbolicLink -Path \"$env:USERPROFILE\\.config\\alacritty\" -Target \"$(Get-Location)\\alacritty\\.config\\alacritty\" -Force }"
-    @powershell -Command "if (Test-Path -Path \".\\PowerShell\\Microsoft.PowerShell_profile.ps1\") { Copy-Item -Path \".\\PowerShell\\Microsoft.PowerShell_profile.ps1\" -Destination \"$PROFILE\" -Force }"
-    @powershell -Command "if (Test-Path -Path \".\\PowerShell\\profile.ps1\") { Copy-Item -Path \".\\PowerShell\\profile.ps1\" -Destination \"$(Split-Path $PROFILE)\\profile.ps1\" -Force }"
-    @echo "✅ Windows configs deployed successfully"
+    #!powershell
+    Write-Host "Deploying Windows configurations..."
+    
+    # Create .config directory if it doesn't exist
+    if (!(Test-Path -Path "$env:USERPROFILE\.config")) {
+        New-Item -ItemType Directory -Path "$env:USERPROFILE\.config" -Force
+    }
+    
+    # Create symlinks for nvim and alacritty
+    if (!(Test-Path -Path "$env:USERPROFILE\.config\nvim")) {
+        New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\nvim" -Target "$(Get-Location)\neovim\.config\nvim" -Force
+    }
+    
+    if (!(Test-Path -Path "$env:USERPROFILE\.config\alacritty")) {
+        New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\alacritty" -Target "$(Get-Location)\alacritty\.config\alacritty" -Force
+    }
+    
+    # Copy PowerShell profiles
+    if (Test-Path -Path ".\PowerShell\Microsoft.PowerShell_profile.ps1") {
+        Copy-Item -Path ".\PowerShell\Microsoft.PowerShell_profile.ps1" -Destination "$PROFILE" -Force
+    }
+    
+    if (Test-Path -Path ".\PowerShell\profile.ps1") {
+        Copy-Item -Path ".\PowerShell\profile.ps1" -Destination "$(Split-Path $PROFILE)\profile.ps1" -Force
+    }
+    
+    Write-Host "✅ Windows configs deployed successfully"
 
 # Remove Windows configs
 remove-windows:
-    @echo "Removing Windows configurations..."
-    @powershell -Command "if (Test-Path -Path \"$env:USERPROFILE\\.config\\nvim\") { Remove-Item -Path \"$env:USERPROFILE\\.config\\nvim\" -Force -Recurse }"
-    @powershell -Command "if (Test-Path -Path \"$env:USERPROFILE\\.config\\alacritty\") { Remove-Item -Path \"$env:USERPROFILE\\.config\\alacritty\" -Force -Recurse }"
-    @powershell -Command "if (Test-Path -Path \"$PROFILE\") { Remove-Item -Path \"$PROFILE\" -Force }"
-    @powershell -Command "if (Test-Path -Path \"$(Split-Path $PROFILE)\\profile.ps1\") { Remove-Item -Path \"$(Split-Path $PROFILE)\\profile.ps1\" -Force }"
-    @echo "✅ Windows configs removed successfully"
+    #!powershell
+    Write-Host "Removing Windows configurations..."
+    
+    # Remove symlinks
+    if (Test-Path -Path "$env:USERPROFILE\.config\nvim") {
+        Remove-Item -Path "$env:USERPROFILE\.config\nvim" -Force -Recurse
+    }
+    
+    if (Test-Path -Path "$env:USERPROFILE\.config\alacritty") {
+        Remove-Item -Path "$env:USERPROFILE\.config\alacritty" -Force -Recurse
+    }
+    
+    # Remove PowerShell profiles
+    if (Test-Path -Path "$PROFILE") {
+        Remove-Item -Path "$PROFILE" -Force
+    }
+    
+    if (Test-Path -Path "$(Split-Path $PROFILE)\profile.ps1") {
+        Remove-Item -Path "$(Split-Path $PROFILE)\profile.ps1" -Force
+    }
+    
+    Write-Host "✅ Windows configs removed successfully"
 
 # Hello 
 # Setup Bitwarden CLI
@@ -116,11 +152,28 @@ install-system-deps:
 
 # Install dependencies on Windows using Scoop
 install-deps-windows:
-    @echo "Installing dependencies with Scoop..."
-    @powershell -Command "if (!(Get-Command scoop -ErrorAction SilentlyContinue)) { Write-Host 'Installing Scoop...'; Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh') }"
-    @powershell -Command "if (!(scoop bucket list | Select-String -Pattern 'extras' -Quiet)) { scoop bucket add extras }"
-    @powershell -Command "cd $env:USERPROFILE; scoop install git curl jq just bitwarden-cli gitleaks starship nushell bat fzf"
-    @echo "✅ Windows dependencies installed"
+    #!powershell
+    Write-Host "Installing dependencies with Scoop..."
+    
+    # Install Scoop if not present
+    if (!(Get-Command scoop -ErrorAction SilentlyContinue)) {
+        Write-Host 'Installing Scoop...'
+        Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+    }
+    
+    # Add extras bucket if not present
+    if (!(scoop bucket list | Select-String -Pattern 'extras' -Quiet)) {
+        scoop bucket add extras
+    }
+    
+    # Change to home directory to avoid bucket confusion
+    Set-Location $env:USERPROFILE
+    
+    # Install packages
+    scoop install git curl jq just bitwarden-cli gitleaks starship nushell bat fzf
+    
+    Write-Host "✅ Windows dependencies installed"
 
 # Bootstrap fresh Unix/Linux/macOS system
 bootstrap-unix:
