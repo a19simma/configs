@@ -6,9 +6,8 @@ $env.EDITOR = "nvim"
 
 # Load Windows-specific environment variables
 if $nu.os-info.name == "windows" {
-    let windows_env = ($nu.config-path | path dirname | path join "env-windows.nu")
-    if ($windows_env | path exists) {
-        source $windows_env
+    try {
+        source env-windows.nu
     }
 }
 
@@ -21,9 +20,8 @@ if not ("~/.cache/starship/init.nu" | path expand | path exists) {
     starship init nu | save -f ~/.cache/starship/init.nu
 }
 
-if not ("~/.zoxide.nu" | path expand | path exists) {
-    zoxide init nushell | save -f ~/.zoxide.nu
-}
+# Initialize zoxide
+zoxide init nushell | save -f ~/.zoxide.nu
 
 # Configuration management commands (work from any directory)
 def --env install-deps [] {
