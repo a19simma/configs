@@ -1,0 +1,31 @@
+GIT QUICK REFERENCE
+
+Basic Commands:
+  git status            Show working tree status
+  git add <file>        Stage file for commit
+  git add .             Stage all changes
+  git commit -m "msg"   Commit with message
+  git push              Push to remote
+  git pull              Pull from remote
+
+Branch Management:
+  git branch            List branches
+  git checkout -b <name> Create and switch to branch
+  git checkout <name>   Switch to branch
+  git merge <branch>    Merge branch into current
+
+History & Info:
+  git log --oneline     Show commit history
+  git diff              Show unstaged changes
+  git diff --staged     Show staged changes
+  git show <commit>     Show commit details
+
+Undo Operations:
+  git reset HEAD~1      Undo last commit (keep changes)
+  git reset --hard HEAD~1 Undo last commit (lose changes)
+  git checkout -- <file> Discard file changes
+
+Remote Operations:
+  git remote -v         Show remotes
+  git fetch             Fetch from remote
+  git clone <url>       Clone repository

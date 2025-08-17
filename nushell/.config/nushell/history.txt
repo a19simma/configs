@@ -1,0 +1,28 @@
+nu -c "echo Hello"
+exit
+ls
+tmux --help
+help
+help commands
+help
+ls
+sys host
+help
+exit
+klogs
+kubectx
+kubns
+kubens
+klogs
+kedit
+kdesc
+exit
+kdesc
+exit
+kdebug
+kscv
+ksvc
+exit
+kdebug
+klogs-failing
+kpods-failing

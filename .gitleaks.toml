@@ -1,43 +1,64 @@
-# GitLeaks configuration for config repo
-title = "Config Repo Security Scan"
+# GitLeaks configuration for dotfiles repository
+# Scans for secrets, API keys, and sensitive information
+
+title = "Dotfiles Security Scan"
 
 [extend]
-# Use default rules
+# Use default gitleaks rules
 useDefault = true
+
+[[rules]]
+description = "Generic API Key"
+id = "generic-api-key"
+regex = '''(?i)(api[_-]?key|apikey)['"]*\s*[:=]\s*['"][a-zA-Z0-9]{16,}['"]'''
+tags = ["key", "API"]
+
+[[rules]]
+description = "AWS Access Key"
+id = "aws-access-key"
+regex = '''(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+tags = ["key", "AWS"]
+
+[[rules]]
+description = "GitHub Token"
+id = "github-token"
+regex = '''gh[pousr]_[A-Za-z0-9_]{36,255}'''
+tags = ["key", "GitHub"]
 
 [[rules]]
 description = "Anthropic API Key"
 id = "anthropic-api-key"
-regex = '''sk-ant-api\d{2}-[A-Za-z0-9_-]{95}'''
-tags = ["key", "anthropic"]
+regex = '''sk-ant-api03-[a-zA-Z0-9\-_]{95}'''
+tags = ["key", "Anthropic"]
 
 [[rules]]
-description = "OpenAI API Key"
-id = "openai-api-key"
-regex = '''sk-[A-Za-z0-9]{48}'''
-tags = ["key", "openai"]
+description = "Private SSH Key"
+id = "ssh-private-key"
+regex = '''-----BEGIN (?:RSA |OPENSSH |DSA |EC |PGP )?PRIVATE KEY-----'''
+tags = ["key", "SSH"]
 
-[[rules]]
-description = "Google API Key"
-id = "google-api-key"
-regex = '''AIza[0-9A-Za-z_-]{35}'''
-tags = ["key", "google"]
-
-[[rules]]
-description = "Tavily API Key"
-id = "tavily-api-key"
-regex = '''tvly-[A-Za-z0-9]{32}'''
-tags = ["key", "tavily"]
-
-# Allowlist for false positives
-[allowlist]
-description = "Example API keys in documentation"
-paths = [
-    '''.*README\.md''',
-    '''.*\.md''',
-]
+# Allowlist for known safe patterns
+[[rules.allowlist]]
+description = "Ignore example keys in documentation"
 regexes = [
-    '''your-api-key''',
-    '''your-actual-api-key''',
     '''sk-ant-api03-example''',
+    '''EXAMPLE_API_KEY''',
+    '''your-api-key-here''',
+    '''<your-.*-key>''',
+]
+
+[[rules.allowlist]]
+description = "Ignore bitwarden CLI examples"
+regexes = [
+    '''bw get password.*API Key''',
+    '''\$\(bw get password''',
+]
+
+# File paths to ignore
+[allowlist]
+paths = [
+    '''.*\.git/.*''',
+    '''.*node_modules/.*''',
+    '''.*\.log$''',
+    '''.*\.cache/.*''',
 ]

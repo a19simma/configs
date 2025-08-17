@@ -1,0 +1,46 @@
+{
+    "buckets": [
+        {
+            "Name": "main",
+            "Source": "https://github.com/ScoopInstaller/Main"
+        },
+        {
+            "Name": "extras",
+            "Source": "https://github.com/ScoopInstaller/Extras"
+        }
+    ],
+    "apps": [
+        {
+            "Source": "main",
+            "Name": "git"
+        },
+        {
+            "Source": "main", 
+            "Name": "curl"
+        },
+        {
+            "Source": "main",
+            "Name": "jq"
+        },
+        {
+            "Source": "main",
+            "Name": "just"
+        },
+        {
+            "Source": "extras",
+            "Name": "bitwarden-cli"
+        },
+        {
+            "Source": "main",
+            "Name": "gitleaks"
+        },
+        {
+            "Source": "extras",
+            "Name": "starship"
+        },
+        {
+            "Source": "main",
+            "Name": "stow"
+        }
+    ]
+}

@@ -1,0 +1,61 @@
+Kubectl FZF Commands - Interactive Kubernetes Management
+=======================================================
+
+Pod Operations:
+  kpods         - List all pods with fzf selection
+  kexec         - Execute into pod (interactive shell)
+  klogs         - View pod logs with follow (-f)
+  klogsr        - View recent pod logs (last 200 lines)
+  klogs-failing - Show logs from failing pods only
+  kpods-failing - List all failing pods with detailed status
+
+Resource Management:
+  kdesc         - Describe resources (pods, services, deployments, etc.)
+  kedit         - Edit resources interactively
+  ktop          - Resource usage (pods/nodes)
+  kget-all      - Get all resources in namespace
+
+Deployments & Scaling:
+  krollout      - Rollout management (status, history, restart, undo, pause, resume)
+  krestart      - Quick restart deployments/statefulsets
+  kscale        - Scale deployments/statefulsets interactively
+  kdeploy-watch - Watch rollout progress
+
+Configuration:
+  kcm           - ConfigMap management (view, edit, describe)
+  ksec          - Secret management (describe, view-keys, decode, edit)
+
+Port Forwarding:
+  kpf <local> <remote> - Port forward to selected pod
+  kpf-stop      - Stop all port forwards
+  kpf-list      - List active port forwards
+
+Events & CRDs:
+  kevents       - View cluster events (sorted by time)
+  kevents-watch - Watch cluster events in real-time
+  kcrd          - Describe Custom Resource Definitions
+
+Cleanup:
+  kclean-evicted   - Clean up evicted pods (with confirmation)
+  kclean-completed - Clean up completed jobs and pods
+  kjobs            - Job management (logs, describe, delete, pods)
+  kcron-trigger    - Manually trigger CronJobs
+
+Advanced Operations:
+  knodes        - Node operations (describe, drain, uncordon, top)
+  ksvc          - Service inspection (describe, endpoints, port-check)
+  kdebug        - Create debug pod or attach debug container
+  
+Debug Images Available:
+  - busybox         - Lightweight utilities
+  - alpine          - Small Linux with package manager
+  - ubuntu          - Full Ubuntu environment
+  - nicolaka/netshoot - Network troubleshooting toolkit
+  - curlimages/curl - HTTP client tools
+
+Tips:
+- All commands use fzf for interactive selection
+- Most output uses 'bat' for syntax highlighting when available
+- Destructive operations require confirmation
+- Debug containers share network namespace with target pod
+- Use Ctrl+C to cancel any fzf selection

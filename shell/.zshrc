@@ -1,3 +1,5 @@
+echo "💡 To complete setup, run: bootstrap-configs"
+
 # If you come from bash you might have to change your $PATH.
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
@@ -144,6 +146,33 @@ update-go() {
   echo "Go updated to $latest"
   echo "Please restart your shell or run: source ~/.zshrc"
 }
+
+# Bootstrap function for fresh systems (installs just first)
+bootstrap-configs() {
+    echo "🚀 Bootstrapping configuration management..."
+    
+    # Install just if not present
+    if ! command -v just >/dev/null 2>&1; then
+        echo "Installing just..."
+        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin
+        export PATH="$HOME/.local/bin:$PATH"
+    fi
+    
+    # Navigate to configs and run bootstrap
+    if [ -d ~/repos/configs ]; then
+        cd ~/repos/configs && just bootstrap-unix
+    else
+        echo "❌ ~/repos/configs not found. Please clone the repository first:"
+        echo "git clone <your-repo-url> ~/repos/configs"
+    fi
+}
+
+# Configuration management aliases (work from any directory)
+alias install-deps='(cd ~/repos/configs && just install-deps)'
+alias deploy-configs='(cd ~/repos/configs && just stow-deploy)'
+alias remove-configs='(cd ~/repos/configs && just stow-remove)'
+alias fix-symlinks='(cd ~/repos/configs && just fix-symlinks)'
+alias help='(cd ~/repos/configs && just help)'
 
 # User command keybinds - using Meh key (Ctrl+Alt+Shift) as prefix to avoid tmux conflicts
 bindkey -s '^[[1;8m' 'tm\n'

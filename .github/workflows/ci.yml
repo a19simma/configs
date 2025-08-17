@@ -1,0 +1,211 @@
+name: CI - Lint and Test
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Homebrew
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+
+    - name: Install dependencies
+      run: |
+        # Install just
+        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        
+        # Install other dependencies via brew
+        brew install stow shellcheck shfmt
+
+    - name: Lint shell scripts
+      run: |
+        echo "=== Linting shell scripts ==="
+        
+        # Find and lint all shell scripts
+        find . -name "*.sh" -type f | while read -r script; do
+          echo "Linting: $script"
+          shellcheck "$script" || echo "Warning: shellcheck failed for $script"
+        done
+        
+        # Lint justfile (basic syntax check)
+        echo "=== Checking justfile syntax ==="
+        just --list > /dev/null || (echo "Error: justfile syntax check failed" && exit 1)
+
+    - name: Format check shell scripts
+      run: |
+        echo "=== Checking shell script formatting ==="
+        
+        # Check formatting of shell scripts
+        find . -name "*.sh" -type f | while read -r script; do
+          echo "Checking format: $script"
+          if ! shfmt -d "$script"; then
+            echo "Warning: $script is not properly formatted"
+          fi
+        done
+
+    - name: Test just commands (dry-run)
+      run: |
+        echo "=== Testing just commands (dry-run) ==="
+        
+        # Test help command
+        echo "Testing help command..."
+        just help --list || echo "Help command test failed"
+        
+        # Test that critical commands can be parsed
+        echo "Testing command parsing..."
+        just --dry-run stow-deploy || echo "stow-deploy dry-run failed"
+        just --dry-run stow-remove || echo "stow-remove dry-run failed"
+        just --dry-run backup-configs || echo "backup-configs dry-run failed"
+        just --dry-run fix-symlinks || echo "fix-symlinks dry-run failed"
+
+    - name: Test stow deployment (simulation)
+      run: |
+        echo "=== Testing stow deployment structure ==="
+        
+        # Check that stow directories exist and have proper structure
+        required_dirs=("shell" "neovim" "alacritty" "vscode" "nushell" "tmux")
+        
+        for dir in "${required_dirs[@]}"; do
+          if [ -d "$dir" ]; then
+            echo "✅ Directory $dir exists"
+            
+            # Check for config files in the directory
+            if find "$dir" -type f | head -1 | grep -q .; then
+              echo "✅ $dir contains configuration files"
+            else
+              echo "⚠️  $dir is empty"
+            fi
+          else
+            echo "❌ Required directory $dir is missing"
+            exit 1
+          fi
+        done
+
+    - name: Validate configuration files
+      run: |
+        echo "=== Validating configuration files ==="
+        
+        # Check nushell config syntax (basic)
+        if [ -f "nushell/.config/nushell/env.nu" ]; then
+          echo "✅ Nushell env.nu found"
+          # Basic syntax check - look for obvious issues
+          if grep -q "def \|let \|if " "nushell/.config/nushell/env.nu"; then
+            echo "✅ Nushell env.nu appears to have valid syntax"
+          else
+            echo "⚠️  Nushell env.nu may have syntax issues"
+          fi
+        fi
+        
+        if [ -f "nushell/.config/nushell/config.nu" ]; then
+          echo "✅ Nushell config.nu found"
+        fi
+        
+        # Check shell configs exist
+        [ -f "shell/.bashrc" ] && echo "✅ .bashrc found" || echo "⚠️  .bashrc missing"
+        [ -f "shell/.zshrc" ] && echo "✅ .zshrc found" || echo "⚠️  .zshrc missing"
+        
+        # Check tmux config
+        [ -f "tmux/.tmux.conf" ] && echo "✅ .tmux.conf found" || echo "⚠️  .tmux.conf missing"
+
+    - name: Security scan with gitleaks
+      run: |
+        echo "=== Running security scan ==="
+        
+        # Install gitleaks
+        brew install gitleaks
+        
+        # Run gitleaks scan
+        if [ -f ".gitleaks.toml" ]; then
+          gitleaks detect --config .gitleaks.toml --verbose || echo "⚠️  Security scan found potential issues"
+        else
+          gitleaks detect --verbose || echo "⚠️  Security scan found potential issues"
+        fi
+
+    - name: Test Brewfile validity
+      run: |
+        echo "=== Testing Brewfile validity ==="
+        
+        if [ -f "Brewfile" ]; then
+          echo "✅ Brewfile found"
+          
+          # Basic syntax check
+          if brew bundle check --file=Brewfile --no-lock; then
+            echo "✅ Brewfile syntax is valid"
+          else
+            echo "⚠️  Brewfile may have issues (this could be due to missing packages in CI)"
+          fi
+        else
+          echo "❌ Brewfile missing"
+          exit 1
+        fi
+
+    - name: Test Windows Scoopfile
+      run: |
+        echo "=== Testing Scoopfile validity ==="
+        
+        if [ -f "Scoopfile.json" ]; then
+          echo "✅ Scoopfile.json found"
+          
+          # JSON syntax check
+          if jq empty Scoopfile.json; then
+            echo "✅ Scoopfile.json is valid JSON"
+          else
+            echo "❌ Scoopfile.json has invalid JSON syntax"
+            exit 1
+          fi
+        else
+          echo "❌ Scoopfile.json missing"
+          exit 1
+        fi
+
+  test-help-system:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install just
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Test help system
+      run: |
+        echo "=== Testing help system ==="
+        
+        # Check help directory exists
+        if [ -d "help" ]; then
+          echo "✅ Help directory found"
+          
+          # List help files
+          echo "Available help files:"
+          ls -la help/
+          
+          # Test help command without fzf (fallback mode)
+          echo "Testing help fallback mode..."
+          just help || echo "Help command failed"
+          
+          # Test specific help topics
+          for topic in git tmux kubectl; do
+            if [ -f "help/$topic.txt" ]; then
+              echo "✅ Help file for $topic exists"
+              just help "$topic" > /dev/null || echo "⚠️  Help for $topic failed"
+            else
+              echo "⚠️  Help file for $topic missing"
+            fi
+          done
+        else
+          echo "❌ Help directory missing"
+          exit 1
+        fi

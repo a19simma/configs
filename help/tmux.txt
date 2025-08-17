@@ -1,0 +1,35 @@
+TMUX QUICK REFERENCE
+
+Session Management:
+  tmux new -s <name>    Create new session with name
+  tmux ls               List all sessions
+  tmux attach -t <name> Attach to session
+  C-t d                 Detach from session
+
+Window Management:
+  C-t c                 Create new window
+  C-t space             Next window
+  C-t bspace            Previous window
+  C-t t                 Next window (custom)
+  C-t T                 Previous window (custom)
+  C-t &                 Kill current window
+
+Pane Management:
+  C-t v                 Split window vertically
+  C-t s                 Split window horizontally
+  C-t h/j/k/l          Navigate panes (vim-style)
+  C-t x                 Kill current pane
+  C-t z                 Toggle pane zoom
+
+Copy Mode:
+  C-t [                 Enter copy mode
+  v                     Begin selection (in copy mode)
+  y                     Copy selection
+  C-t ]                 Paste
+
+Configuration:
+  C-t R                 Reload tmux config
+  C-t :                 Command prompt
+  C-t q                 Display pane numbers
+
+Note: Prefix key is C-t (Ctrl+t), not the default C-b
