@@ -61,116 +61,42 @@ deploy-windows:
         return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     }
     
-    # Function to restart script with admin privileges
-    function Request-AdminElevation {
-        if (!(Test-Administrator)) {
-            Write-Host "Requesting administrator privileges for symlink creation..." -ForegroundColor Yellow
-            Write-Host "   This allows creating symlinks instead of copying files." -ForegroundColor Gray
-            
-            $currentScript = $MyInvocation.MyCommand.Path
-            if (!$currentScript) {
-                # If running from justfile, restart the deploy command with admin
-                Start-Process pwsh -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "cd '$PWD'; just deploy-windows" -Verb RunAs -Wait
-                return $true
-            }
-        }
-        return $false
+    # Require administrator privileges for deployment
+    if (!(Test-Administrator)) {
+        Write-Host "Administrator privileges required for symlink deployment." -ForegroundColor Red
+        Write-Host "Restarting with elevated permissions..." -ForegroundColor Yellow
+        Start-Process pwsh -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "cd '$PWD'; just deploy-windows" -Verb RunAs -Wait
+        return
     }
     
-    # Check if we should request elevation for symlinks
-    $shouldElevate = $false
-    $configsToCheck = @(
-        "$env:USERPROFILE\.config\nvim",
-        "$env:USERPROFILE\.config\alacritty", 
-        "$env:USERPROFILE\.wezterm.lua",
-        "$env:APPDATA\nushell"
-    )
+    Write-Host "Running with administrator privileges - creating symlinks..." -ForegroundColor Green
     
-    foreach ($config in $configsToCheck) {
-        if (!(Test-Path -Path $config)) {
-            $shouldElevate = $true
-            break
-        }
+    # Remove existing configs and create fresh symlinks
+    $configs = @{
+        "$env:USERPROFILE\.config\nvim" = "$(Get-Location)\neovim\.config\nvim"
+        "$env:USERPROFILE\.config\alacritty" = "$(Get-Location)\alacritty\.config\alacritty" 
+        "$env:USERPROFILE\.wezterm.lua" = "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua"
+        "$env:APPDATA\nushell" = "$(Get-Location)\nushell\.config\nushell"
     }
     
-    # If we need to create symlinks and we're not admin, ask for elevation
-    if ($shouldElevate -and !(Test-Administrator)) {
-        $choice = Read-Host "Create symlinks (requires admin) or copy files? [S]ymlinks/[C]opy (default: Copy)"
-        if ($choice -eq "S" -or $choice -eq "s") {
-            if (Request-AdminElevation) {
-                return  # Exit this instance as the elevated one will take over
-            }
+    foreach ($config in $configs.GetEnumerator()) {
+        $target = $config.Key
+        $source = $config.Value
+        
+        # Remove existing config (file or directory)
+        if (Test-Path -Path $target) {
+            Write-Host "Removing existing config: $target" -ForegroundColor Yellow
+            Remove-Item -Path $target -Force -Recurse -ErrorAction SilentlyContinue
         }
-        Write-Host "Proceeding with file copying (no admin required)..." -ForegroundColor Yellow
-    }
-    
-    $useSymlinks = Test-Administrator
-    
-    # Create nvim config
-    if (!(Test-Path -Path "$env:USERPROFILE\.config\nvim")) {
-        if ($useSymlinks) {
-            try {
-                New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\nvim" -Target "$(Get-Location)\neovim\.config\nvim" -Force
-                Write-Host "Created nvim symlink" -ForegroundColor Green
-            } catch {
-                Write-Host "Symlink creation failed, copying instead..." -ForegroundColor Yellow
-                Copy-Item -Path "$(Get-Location)\neovim\.config\nvim" -Destination "$env:USERPROFILE\.config\nvim" -Recurse -Force
-                Write-Host "Copied nvim config" -ForegroundColor Green
-            }
-        } else {
-            Copy-Item -Path "$(Get-Location)\neovim\.config\nvim" -Destination "$env:USERPROFILE\.config\nvim" -Recurse -Force
-            Write-Host "Copied nvim config" -ForegroundColor Green
-        }
-    }
-    
-    # Create alacritty config
-    if (!(Test-Path -Path "$env:USERPROFILE\.config\alacritty")) {
-        if ($useSymlinks) {
-            try {
-                New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\alacritty" -Target "$(Get-Location)\alacritty\.config\alacritty" -Force
-                Write-Host "Created alacritty symlink" -ForegroundColor Green
-            } catch {
-                Write-Host "Symlink creation failed, copying instead..." -ForegroundColor Yellow
-                Copy-Item -Path "$(Get-Location)\alacritty\.config\alacritty" -Destination "$env:USERPROFILE\.config\alacritty" -Recurse -Force
-                Write-Host "Copied alacritty config" -ForegroundColor Green
-            }
-        } else {
-            Copy-Item -Path "$(Get-Location)\alacritty\.config\alacritty" -Destination "$env:USERPROFILE\.config\alacritty" -Recurse -Force
-            Write-Host "Copied alacritty config" -ForegroundColor Green
-        }
-    }
-    
-    # Create wezterm config
-    if (!(Test-Path -Path "$env:USERPROFILE\.wezterm.lua")) {
-        if ($useSymlinks) {
-            try {
-                New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.wezterm.lua" -Target "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Force
-                Write-Host "Created wezterm symlink" -ForegroundColor Green
-            } catch {
-                Write-Host "Symlink creation failed, copying instead..." -ForegroundColor Yellow
-                Copy-Item -Path "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Destination "$env:USERPROFILE\.wezterm.lua" -Force
-                Write-Host "Copied wezterm config" -ForegroundColor Green
-            }
-        } else {
-            Copy-Item -Path "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Destination "$env:USERPROFILE\.wezterm.lua" -Force
-            Write-Host "Copied wezterm config" -ForegroundColor Green
-        }
-    }
-    
-    # Create nushell config (Windows uses APPDATA\nushell)
-    if (!(Test-Path -Path "$env:APPDATA\nushell")) {
-        if ($useSymlinks) {
-            try {
-                New-Item -ItemType SymbolicLink -Path "$env:APPDATA\nushell" -Target "$(Get-Location)\nushell\.config\nushell" -Force
-                Write-Host "Created nushell symlink" -ForegroundColor Green
-            } catch {
-                Write-Host "Symlink creation failed, copying instead..." -ForegroundColor Yellow
-                Copy-Item -Path "$(Get-Location)\nushell\.config\nushell" -Destination "$env:APPDATA\nushell" -Recurse -Force
-                Write-Host "Copied nushell config" -ForegroundColor Green
-            }
-        } else {
-            Copy-Item -Path "$(Get-Location)\nushell\.config\nushell" -Destination "$env:APPDATA\nushell" -Recurse -Force
-            Write-Host "Copied nushell config" -ForegroundColor Green
+        
+        # Create symlink
+        try {
+            New-Item -ItemType SymbolicLink -Path $target -Target $source -Force | Out-Null
+            Write-Host "Created symlink: $target -> $source" -ForegroundColor Green
+        } catch {
+            Write-Host "Failed to create symlink for: $target" -ForegroundColor Red
+            Write-Host "Error: $_" -ForegroundColor Red
+            exit 1
         }
     }
 
