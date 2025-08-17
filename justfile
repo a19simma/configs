@@ -13,13 +13,13 @@ backup-configs:
 # Deploy dotfiles using GNU Stow
 stow-deploy:
     @echo "Deploying dotfiles with GNU Stow..."
-    stow -t ~ shell neovim alacritty vscode nushell tmux
+    stow -t ~ shell neovim alacritty vscode nushell tmux wezterm
     @echo "✅ Dotfiles deployed successfully"
 
 # Remove dotfiles using GNU Stow
 stow-remove:
     @echo "Removing dotfiles with GNU Stow..."
-    stow -t ~ -D shell neovim alacritty vscode nushell tmux
+    stow -t ~ -D shell neovim alacritty vscode nushell tmux wezterm
     @echo "✅ Dotfiles removed successfully"
 
 # Fix existing symlinks and files that block stow
@@ -40,7 +40,7 @@ fix-symlinks:
     @if [ -d ~/.config/alacritty ] && [ ! -L ~/.config/alacritty ]; then mv ~/.config/alacritty ~/.config/alacritty.backup; fi
     @if [ -d ~/.config/Code ] && [ ! -L ~/.config/Code ]; then mv ~/.config/Code ~/.config/Code.backup; fi
     # Deploy with stow
-    stow -t ~ shell neovim alacritty vscode nushell tmux
+    stow -t ~ shell neovim alacritty vscode nushell tmux wezterm
     @echo "✅ Symlinks fixed and dotfiles deployed"
 
 # Deploy configs on Windows (PowerShell/cmd)
@@ -79,16 +79,16 @@ deploy-windows:
         }
     }
 
-    Write-Host "✅ Adding symlink for wezterm"
+    # Create symlinks for wezterm config (try with fallback to copying)
     try {
         if (!(Test-Path -Path "$env:USERPROFILE\.wezterm.lua")) {
-            New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.wezterm.lua" -Target "$(Get-Location)\wezterm\.config\.wezterm.lua" -Force
-            Write-Host "✅ Created wezterm\.config symlink"
+            New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.wezterm.lua" -Target "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Force
+            Write-Host "✅ Created wezterm symlink"
         }
     } catch {
-        Write-Host "⚠️  Symlink creation requires admin privileges. Copying wezterm\.config config instead..."
+        Write-Host "⚠️  Symlink creation requires admin privileges. Copying wezterm config instead..."
         if (!(Test-Path -Path "$env:USERPROFILE\.wezterm.lua")) {
-            Copy-Item -Path "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Destination "$env:USERPROFILE\.wezterm.lua" -Recurse -Force
+            Copy-Item -Path "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Destination "$env:USERPROFILE\.wezterm.lua" -Force
         }
     }
 
@@ -138,6 +138,11 @@ remove-windows:
     
     if (Test-Path -Path "$env:USERPROFILE\.config\alacritty") {
         Remove-Item -Path "$env:USERPROFILE\.config\alacritty" -Force -Recurse
+    }
+    
+    # Remove wezterm config
+    if (Test-Path -Path "$env:USERPROFILE\.wezterm.lua") {
+        Remove-Item -Path "$env:USERPROFILE\.wezterm.lua" -Force
     }
     
     # Remove PowerShell profiles
@@ -224,7 +229,7 @@ install-deps-windows:
     Set-Location $env:USERPROFILE
     
     # Install packages (try nushell with --skip to continue if it fails)
-    scoop install git jq just bitwarden-cli gitleaks starship bat fzf nu
+    scoop install git jq just bitwarden-cli gitleaks starship bat fzf nu gcc
     
     Write-Host "✅ Windows dependencies installed"
 
