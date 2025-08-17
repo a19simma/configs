@@ -82,7 +82,8 @@ deploy-windows:
     $configsToCheck = @(
         "$env:USERPROFILE\.config\nvim",
         "$env:USERPROFILE\.config\alacritty", 
-        "$env:USERPROFILE\.wezterm.lua"
+        "$env:USERPROFILE\.wezterm.lua",
+        "$env:APPDATA\nushell"
     )
     
     foreach ($config in $configsToCheck) {
@@ -155,6 +156,23 @@ deploy-windows:
             Write-Host "Copied wezterm config" -ForegroundColor Green
         }
     }
+    
+    # Create nushell config (Windows uses APPDATA\nushell)
+    if (!(Test-Path -Path "$env:APPDATA\nushell")) {
+        if ($useSymlinks) {
+            try {
+                New-Item -ItemType SymbolicLink -Path "$env:APPDATA\nushell" -Target "$(Get-Location)\nushell\.config\nushell" -Force
+                Write-Host "Created nushell symlink" -ForegroundColor Green
+            } catch {
+                Write-Host "Symlink creation failed, copying instead..." -ForegroundColor Yellow
+                Copy-Item -Path "$(Get-Location)\nushell\.config\nushell" -Destination "$env:APPDATA\nushell" -Recurse -Force
+                Write-Host "Copied nushell config" -ForegroundColor Green
+            }
+        } else {
+            Copy-Item -Path "$(Get-Location)\nushell\.config\nushell" -Destination "$env:APPDATA\nushell" -Recurse -Force
+            Write-Host "Copied nushell config" -ForegroundColor Green
+        }
+    }
 
     
     # Fix existing PowerShell profiles first to stop errors
@@ -207,6 +225,11 @@ remove-windows:
     # Remove wezterm config
     if (Test-Path -Path "$env:USERPROFILE\.wezterm.lua") {
         Remove-Item -Path "$env:USERPROFILE\.wezterm.lua" -Force
+    }
+    
+    # Remove nushell config
+    if (Test-Path -Path "$env:APPDATA\nushell") {
+        Remove-Item -Path "$env:APPDATA\nushell" -Force -Recurse
     }
     
     # Remove PowerShell profiles
@@ -293,9 +316,36 @@ install-deps-windows:
     Set-Location $env:USERPROFILE
     
     # Install packages (try nushell with --skip to continue if it fails)
-    scoop install git jq just bitwarden-cli gitleaks starship bat fzf nu gcc
+    # Install core packages first
+    scoop install git jq just gitleaks starship bat fzf nu
+    
+    # Try to install bitwarden-cli separately (often fails)
+    try {
+        scoop install bitwarden-cli
+        Write-Host "Installed bitwarden-cli" -ForegroundColor Green
+    } catch {
+        Write-Host "bitwarden-cli installation failed, skipping..." -ForegroundColor Yellow
+    }
+    
+    # Install C compiler toolchain
+    try {
+        scoop install mingw
+        Write-Host "Installed MinGW C compiler" -ForegroundColor Green
+    } catch {
+        try {
+            scoop install llvm
+            Write-Host "Installed LLVM/Clang compiler" -ForegroundColor Green
+        } catch {
+            Write-Host "C compiler installation failed. Install manually if needed." -ForegroundColor Yellow
+        }
+    }
     
     Write-Host "Windows dependencies installed" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Manual installation alternatives if needed:" -ForegroundColor Cyan
+    Write-Host "  C Compiler: winget install Microsoft.VisualStudio.2022.BuildTools" -ForegroundColor Gray
+    Write-Host "  Alternative: Download MinGW-w64 from winlibs.com" -ForegroundColor Gray
+    Write-Host "  Bitwarden: winget install Bitwarden.CLI" -ForegroundColor Gray
 
 # Bootstrap fresh Unix/Linux/macOS system
 bootstrap-unix:

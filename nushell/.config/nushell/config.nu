@@ -5,10 +5,38 @@ $env.config = {
     show_banner: false
     edit_mode: emacs
     buffer_editor: "nvim"
+    cursor_shape: {
+        emacs: line
+        vi_insert: line 
+        vi_normal: block
+    }
+    use_ansi_coloring: true
+    bracketed_paste: true
+    render_right_prompt_on_last_line: false
+    table: {
+        mode: rounded
+        index_mode: always
+        show_empty: true
+        padding: { left: 1, right: 1 }
+        trim: {
+            methodology: wrapping
+            wrapping_try_keep_words: true
+        }
+    }
+    completions: {
+        case_sensitive: false
+        quick: true
+        partial: true
+        algorithm: "fuzzy"
+    }
 }
 
-# Initialize Starship prompt
-use ~/.cache/starship/init.nu
+# Initialize Starship prompt if available
+if ("~/.cache/starship/init.nu" | path exists) {
+    use ~/.cache/starship/init.nu
+}
 
-# Initialize Zoxide
-source ~/.zoxide.nu
+# Initialize Zoxide if available  
+if ("~/.zoxide.nu" | path exists) {
+    source ~/.zoxide.nu
+}
