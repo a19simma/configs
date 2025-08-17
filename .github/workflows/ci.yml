@@ -205,3 +205,155 @@ jobs:
           echo "❌ Help directory missing"
           exit 1
         fi
+
+  test-windows-scripts:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      shell: powershell
+      run: |
+        # Install Scoop
+        Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+        if (!(Get-Command scoop -ErrorAction SilentlyContinue)) {
+          Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+        }
+        
+        # Install just
+        scoop install just
+        
+        # Add scoop to PATH for subsequent steps
+        echo "$env:USERPROFILE\scoop\shims" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Test Windows justfile commands
+      shell: powershell
+      run: |
+        echo "=== Testing Windows justfile commands ==="
+        
+        # Test that justfile syntax is valid
+        just --list
+        
+        # Test dry-run of Windows commands
+        echo "Testing deploy-windows syntax..."
+        just --dry-run deploy-windows
+        
+        echo "Testing remove-windows syntax..."
+        just --dry-run remove-windows
+        
+        echo "Testing install-deps-windows syntax..."
+        just --dry-run install-deps-windows
+
+    - name: Test PowerShell profiles
+      shell: powershell
+      run: |
+        echo "=== Testing PowerShell profiles ==="
+        
+        # Test PowerShell profile syntax
+        if (Test-Path "PowerShell/Microsoft.PowerShell_profile.ps1") {
+          echo "✅ Microsoft.PowerShell_profile.ps1 found"
+          
+          # Test syntax by trying to parse the file
+          try {
+            $null = [System.Management.Automation.Language.Parser]::ParseFile("PowerShell/Microsoft.PowerShell_profile.ps1", [ref]$null, [ref]$null)
+            echo "✅ Microsoft.PowerShell_profile.ps1 syntax is valid"
+          } catch {
+            echo "❌ Microsoft.PowerShell_profile.ps1 has syntax errors: $_"
+            exit 1
+          }
+        }
+        
+        if (Test-Path "PowerShell/profile.ps1") {
+          echo "✅ profile.ps1 found"
+          
+          # Test syntax by trying to parse the file
+          try {
+            $null = [System.Management.Automation.Language.Parser]::ParseFile("PowerShell/profile.ps1", [ref]$null, [ref]$null)
+            echo "✅ profile.ps1 syntax is valid"
+          } catch {
+            echo "❌ profile.ps1 has syntax errors: $_"
+            exit 1
+          }
+        }
+
+    - name: Test Scoopfile validity
+      shell: powershell
+      run: |
+        echo "=== Testing Scoopfile validity ==="
+        
+        if (Test-Path "Scoopfile.json") {
+          echo "✅ Scoopfile.json found"
+          
+          # Test JSON syntax
+          try {
+            $scoopfile = Get-Content "Scoopfile.json" -Raw | ConvertFrom-Json
+            echo "✅ Scoopfile.json is valid JSON"
+            
+            # Test that it contains expected structure
+            if ($scoopfile.apps) {
+              echo "✅ Scoopfile.json contains apps array"
+              echo "Apps to install: $($scoopfile.apps.Count)"
+            } else {
+              echo "⚠️  Scoopfile.json doesn't contain apps array"
+            }
+          } catch {
+            echo "❌ Scoopfile.json has invalid JSON syntax: $_"
+            exit 1
+          }
+        } else {
+          echo "❌ Scoopfile.json missing"
+          exit 1
+        fi
+
+    - name: Test config file structure
+      shell: powershell
+      run: |
+        echo "=== Testing Windows config file structure ==="
+        
+        # Check that required directories exist
+        $required_dirs = @("PowerShell", "wezterm", "neovim", "alacritty", "vscode")
+        
+        foreach ($dir in $required_dirs) {
+          if (Test-Path $dir) {
+            echo "✅ Directory $dir exists"
+            
+            # Check for config files in the directory
+            $files = Get-ChildItem $dir -Recurse -File
+            if ($files.Count -gt 0) {
+              echo "✅ $dir contains $($files.Count) configuration files"
+            } else {
+              echo "⚠️  $dir is empty"
+            }
+          } else {
+            echo "❌ Required directory $dir is missing"
+            exit 1
+          }
+        }
+
+    - name: Test Windows bootstrap function
+      shell: powershell
+      run: |
+        echo "=== Testing Windows bootstrap function ==="
+        
+        # Source the PowerShell profile to load the Bootstrap-Configs function
+        if (Test-Path "PowerShell/Microsoft.PowerShell_profile.ps1") {
+          try {
+            . "PowerShell/Microsoft.PowerShell_profile.ps1"
+            
+            # Check if Bootstrap-Configs function is available
+            if (Get-Command Bootstrap-Configs -ErrorAction SilentlyContinue) {
+              echo "✅ Bootstrap-Configs function loaded successfully"
+            } else {
+              echo "❌ Bootstrap-Configs function not found in profile"
+              exit 1
+            }
+          } catch {
+            echo "❌ Failed to source PowerShell profile: $_"
+            exit 1
+          }
+        } else {
+          echo "❌ PowerShell profile not found"
+          exit 1
+        }

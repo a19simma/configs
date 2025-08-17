@@ -54,41 +54,105 @@ deploy-windows:
     }
 
     
-    # Create symlinks for nvim and alacritty (try with fallback to copying)
-    try {
-        if (!(Test-Path -Path "$env:USERPROFILE\.config\nvim")) {
-            New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\nvim" -Target "$(Get-Location)\neovim\.config\nvim" -Force
-            Write-Host "✅ Created nvim symlink"
+    # Function to test if running as administrator
+    function Test-Administrator {
+        $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
+        $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
+        return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    }
+    
+    # Function to restart script with admin privileges
+    function Request-AdminElevation {
+        if (!(Test-Administrator)) {
+            Write-Host "🔐 Requesting administrator privileges for symlink creation..." -ForegroundColor Yellow
+            Write-Host "   This allows creating symlinks instead of copying files." -ForegroundColor Gray
+            
+            $currentScript = $MyInvocation.MyCommand.Path
+            if (!$currentScript) {
+                # If running from justfile, restart the deploy command with admin
+                Start-Process powershell -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "cd '$PWD'; just deploy-windows" -Verb RunAs -Wait
+                return $true
+            }
         }
-    } catch {
-        Write-Host "⚠️  Symlink creation requires admin privileges. Copying nvim config instead..."
-        if (!(Test-Path -Path "$env:USERPROFILE\.config\nvim")) {
-            Copy-Item -Path "$(Get-Location)\neovim\.config\nvim" -Destination "$env:USERPROFILE\.config\nvim" -Recurse -Force
+        return $false
+    }
+    
+    # Check if we should request elevation for symlinks
+    $shouldElevate = $false
+    $configsToCheck = @(
+        "$env:USERPROFILE\.config\nvim",
+        "$env:USERPROFILE\.config\alacritty", 
+        "$env:USERPROFILE\.wezterm.lua"
+    )
+    
+    foreach ($config in $configsToCheck) {
+        if (!(Test-Path -Path $config)) {
+            $shouldElevate = $true
+            break
         }
     }
     
-    try {
-        if (!(Test-Path -Path "$env:USERPROFILE\.config\alacritty")) {
-            New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\alacritty" -Target "$(Get-Location)\alacritty\.config\alacritty" -Force
-            Write-Host "✅ Created alacritty symlink"
+    # If we need to create symlinks and we're not admin, ask for elevation
+    if ($shouldElevate -and !(Test-Administrator)) {
+        $choice = Read-Host "Create symlinks (requires admin) or copy files? [S]ymlinks/[C]opy (default: Copy)"
+        if ($choice -eq "S" -or $choice -eq "s") {
+            if (Request-AdminElevation) {
+                return  # Exit this instance as the elevated one will take over
+            }
         }
-    } catch {
-        Write-Host "⚠️  Symlink creation requires admin privileges. Copying alacritty config instead..."
-        if (!(Test-Path -Path "$env:USERPROFILE\.config\alacritty")) {
-            Copy-Item -Path "$(Get-Location)\alacritty\.config\alacritty" -Destination "$env:USERPROFILE\.config\alacritty" -Recurse -Force
+        Write-Host "Proceeding with file copying (no admin required)..." -ForegroundColor Yellow
+    }
+    
+    $useSymlinks = Test-Administrator
+    
+    # Create nvim config
+    if (!(Test-Path -Path "$env:USERPROFILE\.config\nvim")) {
+        if ($useSymlinks) {
+            try {
+                New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\nvim" -Target "$(Get-Location)\neovim\.config\nvim" -Force
+                Write-Host "✅ Created nvim symlink" -ForegroundColor Green
+            } catch {
+                Write-Host "⚠️  Symlink creation failed, copying instead..." -ForegroundColor Yellow
+                Copy-Item -Path "$(Get-Location)\neovim\.config\nvim" -Destination "$env:USERPROFILE\.config\nvim" -Recurse -Force
+                Write-Host "✅ Copied nvim config" -ForegroundColor Green
+            }
+        } else {
+            Copy-Item -Path "$(Get-Location)\neovim\.config\nvim" -Destination "$env:USERPROFILE\.config\nvim" -Recurse -Force
+            Write-Host "✅ Copied nvim config" -ForegroundColor Green
         }
     }
-
-    # Create symlinks for wezterm config (try with fallback to copying)
-    try {
-        if (!(Test-Path -Path "$env:USERPROFILE\.wezterm.lua")) {
-            New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.wezterm.lua" -Target "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Force
-            Write-Host "✅ Created wezterm symlink"
+    
+    # Create alacritty config
+    if (!(Test-Path -Path "$env:USERPROFILE\.config\alacritty")) {
+        if ($useSymlinks) {
+            try {
+                New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\alacritty" -Target "$(Get-Location)\alacritty\.config\alacritty" -Force
+                Write-Host "✅ Created alacritty symlink" -ForegroundColor Green
+            } catch {
+                Write-Host "⚠️  Symlink creation failed, copying instead..." -ForegroundColor Yellow
+                Copy-Item -Path "$(Get-Location)\alacritty\.config\alacritty" -Destination "$env:USERPROFILE\.config\alacritty" -Recurse -Force
+                Write-Host "✅ Copied alacritty config" -ForegroundColor Green
+            }
+        } else {
+            Copy-Item -Path "$(Get-Location)\alacritty\.config\alacritty" -Destination "$env:USERPROFILE\.config\alacritty" -Recurse -Force
+            Write-Host "✅ Copied alacritty config" -ForegroundColor Green
         }
-    } catch {
-        Write-Host "⚠️  Symlink creation requires admin privileges. Copying wezterm config instead..."
-        if (!(Test-Path -Path "$env:USERPROFILE\.wezterm.lua")) {
+    }
+    
+    # Create wezterm config
+    if (!(Test-Path -Path "$env:USERPROFILE\.wezterm.lua")) {
+        if ($useSymlinks) {
+            try {
+                New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.wezterm.lua" -Target "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Force
+                Write-Host "✅ Created wezterm symlink" -ForegroundColor Green
+            } catch {
+                Write-Host "⚠️  Symlink creation failed, copying instead..." -ForegroundColor Yellow
+                Copy-Item -Path "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Destination "$env:USERPROFILE\.wezterm.lua" -Force
+                Write-Host "✅ Copied wezterm config" -ForegroundColor Green
+            }
+        } else {
             Copy-Item -Path "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Destination "$env:USERPROFILE\.wezterm.lua" -Force
+            Write-Host "✅ Copied wezterm config" -ForegroundColor Green
         }
     }
 
