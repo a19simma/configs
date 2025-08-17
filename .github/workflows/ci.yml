@@ -135,7 +135,7 @@ jobs:
           echo "✅ Brewfile found"
           
           # Basic syntax check
-          if brew bundle check --file=Brewfile --no-lock; then
+          if brew bundle check --file=Brewfile; then
             echo "✅ Brewfile syntax is valid"
           else
             echo "⚠️  Brewfile may have issues (this could be due to missing packages in CI)"
