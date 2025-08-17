@@ -1,9 +1,13 @@
 Write-Host "💡 To complete setup, run: Bootstrap-Configs" -ForegroundColor Yellow
 
-Import-Module posh-git
-Import-Module PSReadLine
+Import-Module posh-git -ErrorAction SilentlyContinue
+Import-Module PSReadLine -ErrorAction SilentlyContinue
 Invoke-Expression (&starship init powershell)
-$PSStyle.FileInfo.Directory = $PSStyle.Background.FromRgb(0x1f1f28)
+
+# Only set PSStyle if it exists (PowerShell 7+)
+if ($PSStyle) {
+    $PSStyle.FileInfo.Directory = $PSStyle.Background.FromRgb(0x1f1f28)
+}
 
 Set-PSReadLineOption -EditMode Windows
 Set-PSReadLineOption -BellStyle None
