@@ -52,6 +52,7 @@ deploy-windows:
     if (!(Test-Path -Path "$env:USERPROFILE\.config")) {
         New-Item -ItemType Directory -Path "$env:USERPROFILE\.config" -Force
     }
+
     
     # Create symlinks for nvim and alacritty (try with fallback to copying)
     try {
@@ -77,6 +78,19 @@ deploy-windows:
             Copy-Item -Path "$(Get-Location)\alacritty\.config\alacritty" -Destination "$env:USERPROFILE\.config\alacritty" -Recurse -Force
         }
     }
+
+    try {
+        if (!(Test-Path -Path "$env:USERPROFILE\.wezterm.lua")) {
+            New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.wezterm.lua" -Target "$(Get-Location)\wezterm\.config\.wezterm.lua" -Force
+            Write-Host "✅ Created wezterm\.config symlink"
+        }
+    } catch {
+        Write-Host "⚠️  Symlink creation requires admin privileges. Copying wezterm\.config config instead..."
+        if (!(Test-Path -Path "$env:USERPROFILE\.wezterm.lua")) {
+            Copy-Item -Path "$(Get-Location)\wezterm\.config\.wezterm.lua" -Destination "$env:USERPROFILE\.wezterm.lua" -Recurse -Force
+        }
+    }
+
     
     # Fix existing PowerShell profiles first to stop errors
     $profileDir = Split-Path $PROFILE -Parent
