@@ -45,7 +45,7 @@ fix-symlinks:
 
 # Deploy configs on Windows (PowerShell/cmd)
 deploy-windows:
-    #!powershell
+    #!pwsh
     Write-Host "Deploying Windows configurations..."
     
     # Create .config directory if it doesn't exist
@@ -70,7 +70,7 @@ deploy-windows:
             $currentScript = $MyInvocation.MyCommand.Path
             if (!$currentScript) {
                 # If running from justfile, restart the deploy command with admin
-                Start-Process powershell -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "cd '$PWD'; just deploy-windows" -Verb RunAs -Wait
+                Start-Process pwsh -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "cd '$PWD'; just deploy-windows" -Verb RunAs -Wait
                 return $true
             }
         }
@@ -192,7 +192,7 @@ deploy-windows:
 
 # Remove Windows configs
 remove-windows:
-    #!powershell
+    #!pwsh
     Write-Host "Removing Windows configurations..."
     
     # Remove symlinks
@@ -274,7 +274,7 @@ install-system-deps:
 
 # Install dependencies on Windows using Scoop
 install-deps-windows:
-    #!powershell
+    #!pwsh
     Write-Host "Installing dependencies with Scoop..."
     
     # Install Scoop if not present
