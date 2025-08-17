@@ -313,26 +313,28 @@ check-secrets:
 
 # Help system - with optional parameter
 help topic="":
-    @cd help && if [ -n "{{topic}}" ]; then \
-        if [ -f "{{topic}}.txt" ]; then \
-            cat "{{topic}}.txt"; \
-        else \
-            echo "Help topic '{{topic}}' not found"; \
-            echo "Available topics:"; \
-            ls *.txt | sed 's/.txt$//' | sed 's/^/  - /'; \
-        fi; \
-    elif command -v fzf >/dev/null 2>&1; then \
-        selected=$$(ls *.txt | sed 's/.txt$//' | fzf --prompt="Select help topic: "); \
-        if [ -n "$$selected" ]; then \
-            cat "$$selected.txt"; \
-        else \
-            echo "No help topic selected"; \
-        fi; \
-    else \
-        echo "Available help topics:"; \
-        ls *.txt | sed 's/.txt$//' | sed 's/^/  - /'; \
-        echo "Usage: just help [topic] or install fzf for interactive selection"; \
-    fi
+    @nu -c ' \
+        cd help; \
+        if "{{topic}}" != "" { \
+            if ("{{topic}}.txt" | path exists) { \
+                open "{{topic}}.txt" \
+            } else { \
+                print "Help topic {{topic}} not found"; \
+                print "Available topics:"; \
+                ls *.txt | get name | str replace ".txt" "" | each { |it| $"  - ($it)" } \
+            } \
+        } else if (which fzf | is-not-empty) { \
+            let selected = (ls *.txt | get name | str replace ".txt" "" | to text | fzf --prompt="Select help topic: "); \
+            if ($selected != "") { \
+                open $"($selected).txt" \
+            } else { \
+                print "No help topic selected" \
+            } \
+        } else { \
+            print "Available help topics:"; \
+            ls *.txt | get name | str replace ".txt" "" | each { |it| $"  - ($it)" }; \
+            print "Usage: just help [topic] or install fzf for interactive selection" \
+        }'
 
 # Run GitHub Actions locally using act
 test-ci:
