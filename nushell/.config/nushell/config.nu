@@ -13,6 +13,15 @@ $env.config = {
     use_ansi_coloring: true
     bracketed_paste: true
     render_right_prompt_on_last_line: false
+    shell_integration: {
+        osc2: true
+        osc7: true
+        osc8: true
+        osc9_9: false
+        osc133: false  # Disable OSC 133 to fix WezTerm scrolling issue on Windows
+        osc633: true
+        reset_application_mode: true
+    }
     table: {
         mode: rounded
         index_mode: always
