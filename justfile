@@ -78,10 +78,23 @@ deploy-windows:
         }
     }
     
+    # Fix existing PowerShell profiles first to stop errors
+    $profileDir = Split-Path $PROFILE -Parent
+    if (Test-Path -Path "$profileDir\profile.ps1") {
+        # Quick fix for existing profile.ps1 to stop errors
+        (Get-Content "$profileDir\profile.ps1") -replace '\$PSStyle\.FileInfo\.Directory = \$PSStyle\.Background\.FromRgb\(0x1f1f28\)', 'if ($PSStyle -and $PSStyle.FileInfo -and $PSStyle.Background) { try { $PSStyle.FileInfo.Directory = $PSStyle.Background.FromRgb(0x1f1f28) } catch { } }' | Set-Content "$profileDir\profile.ps1"
+        Write-Host "✅ Fixed existing profile.ps1"
+    }
+    
+    if (Test-Path -Path "$PROFILE") {
+        # Quick fix for existing Microsoft.PowerShell_profile.ps1 to stop errors
+        (Get-Content "$PROFILE") -replace '\$PSStyle\.FileInfo\.Directory = \$PSStyle\.Background\.FromRgb\(0x1f1f28\)', 'if ($PSStyle -and $PSStyle.FileInfo -and $PSStyle.Background) { try { $PSStyle.FileInfo.Directory = $PSStyle.Background.FromRgb(0x1f1f28) } catch { } }' | Set-Content "$PROFILE"
+        Write-Host "✅ Fixed existing Microsoft.PowerShell_profile.ps1"
+    }
+    
     # Copy PowerShell profiles (create directories if needed)
     if (Test-Path -Path ".\PowerShell\Microsoft.PowerShell_profile.ps1") {
         # Create PowerShell profile directory if it doesn't exist
-        $profileDir = Split-Path $PROFILE -Parent
         if (!(Test-Path -Path $profileDir)) {
             New-Item -ItemType Directory -Path $profileDir -Force
             Write-Host "✅ Created PowerShell profile directory"
