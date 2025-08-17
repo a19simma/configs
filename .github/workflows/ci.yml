@@ -125,11 +125,7 @@ jobs:
         brew install gitleaks
         
         # Run gitleaks scan
-        if [ -f ".gitleaks.toml" ]; then
-          gitleaks detect --config .gitleaks.toml --verbose || echo "⚠️  Security scan found potential issues"
-        else
-          gitleaks detect --verbose || echo "⚠️  Security scan found potential issues"
-        fi
+        gitleaks detect --config .gitleaks.toml --verbose
 
     - name: Test Brewfile validity
       run: |

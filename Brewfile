@@ -16,6 +16,9 @@ brew "kubectx"
 brew "stow"
 brew "just"
 
+# CI/CD tools
+brew "act"
+
 # Security and secrets management
 brew "gitleaks"
 brew "jq"

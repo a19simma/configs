@@ -26,3 +26,4 @@ exit
 kdebug
 klogs-failing
 kpods-failing
+just --choose

@@ -3,15 +3,30 @@
 
 title = "Dotfiles Security Scan"
 
-[extend]
-# Use default gitleaks rules
-useDefault = true
+# File paths to ignore
+[allowlist]
+paths = [
+    '''.*\.git/.*''',
+    '''.*node_modules/.*''',
+    '''.*\.log$''',
+    '''.*\.cache/.*''',
+]
 
 [[rules]]
 description = "Generic API Key"
 id = "generic-api-key"
 regex = '''(?i)(api[_-]?key|apikey)['"]*\s*[:=]\s*['"][a-zA-Z0-9]{16,}['"]'''
 tags = ["key", "API"]
+
+    [rules.allowlist]
+    description = "Ignore safe examples"
+    regexes = [
+        '''EXAMPLE_API_KEY''',
+        '''your-api-key-here''',
+        '''<your-.*-key>''',
+        '''bw get password.*API Key''',
+        '''\$\(bw get password''',
+    ]
 
 [[rules]]
 description = "AWS Access Key"
@@ -36,29 +51,3 @@ description = "Private SSH Key"
 id = "ssh-private-key"
 regex = '''-----BEGIN (?:RSA |OPENSSH |DSA |EC |PGP )?PRIVATE KEY-----'''
 tags = ["key", "SSH"]
-
-# Allowlist for known safe patterns
-[[rules.allowlist]]
-description = "Ignore example keys in documentation"
-regexes = [
-    '''sk-ant-api03-example''',
-    '''EXAMPLE_API_KEY''',
-    '''your-api-key-here''',
-    '''<your-.*-key>''',
-]
-
-[[rules.allowlist]]
-description = "Ignore bitwarden CLI examples"
-regexes = [
-    '''bw get password.*API Key''',
-    '''\$\(bw get password''',
-]
-
-# File paths to ignore
-[allowlist]
-paths = [
-    '''.*\.git/.*''',
-    '''.*node_modules/.*''',
-    '''.*\.log$''',
-    '''.*\.cache/.*''',
-]

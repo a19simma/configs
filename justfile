@@ -46,20 +46,20 @@ fix-symlinks:
 # Deploy configs on Windows (PowerShell/cmd)
 deploy-windows:
     @echo "Deploying Windows configurations..."
-    @powershell -Command "if (!(Test-Path -Path $env:USERPROFILE\\.config)) { New-Item -ItemType Directory -Path $env:USERPROFILE\\.config -Force }"
-    @powershell -Command "if (!(Test-Path -Path $env:USERPROFILE\\.config\\nvim)) { New-Item -ItemType SymbolicLink -Path $env:USERPROFILE\\.config\\nvim -Target $(Get-Location)\\neovim\\.config\\nvim -Force }"
-    @powershell -Command "if (!(Test-Path -Path $env:USERPROFILE\\.config\\alacritty)) { New-Item -ItemType SymbolicLink -Path $env:USERPROFILE\\.config\\alacritty -Target $(Get-Location)\\alacritty\\.config\\alacritty -Force }"
-    @powershell -Command "Copy-Item -Path .\\PowerShell\\Microsoft.PowerShell_profile.ps1 -Destination $PROFILE -Force"
-    @powershell -Command "Copy-Item -Path .\\PowerShell\\profile.ps1 -Destination $(Split-Path $PROFILE)\\profile.ps1 -Force"
+    @powershell -Command "if (!(Test-Path -Path \"$env:USERPROFILE\\.config\")) { New-Item -ItemType Directory -Path \"$env:USERPROFILE\\.config\" -Force }"
+    @powershell -Command "if (!(Test-Path -Path \"$env:USERPROFILE\\.config\\nvim\")) { New-Item -ItemType SymbolicLink -Path \"$env:USERPROFILE\\.config\\nvim\" -Target \"$(Get-Location)\\neovim\\.config\\nvim\" -Force }"
+    @powershell -Command "if (!(Test-Path -Path \"$env:USERPROFILE\\.config\\alacritty\")) { New-Item -ItemType SymbolicLink -Path \"$env:USERPROFILE\\.config\\alacritty\" -Target \"$(Get-Location)\\alacritty\\.config\\alacritty\" -Force }"
+    @powershell -Command "if (Test-Path -Path \".\\PowerShell\\Microsoft.PowerShell_profile.ps1\") { Copy-Item -Path \".\\PowerShell\\Microsoft.PowerShell_profile.ps1\" -Destination \"$PROFILE\" -Force }"
+    @powershell -Command "if (Test-Path -Path \".\\PowerShell\\profile.ps1\") { Copy-Item -Path \".\\PowerShell\\profile.ps1\" -Destination \"$(Split-Path $PROFILE)\\profile.ps1\" -Force }"
     @echo "✅ Windows configs deployed successfully"
 
 # Remove Windows configs
 remove-windows:
     @echo "Removing Windows configurations..."
-    @powershell -Command "if (Test-Path -Path $env:USERPROFILE\\.config\\nvim) { Remove-Item -Path $env:USERPROFILE\\.config\\nvim -Force -Recurse }"
-    @powershell -Command "if (Test-Path -Path $env:USERPROFILE\\.config\\alacritty) { Remove-Item -Path $env:USERPROFILE\\.config\\alacritty -Force -Recurse }"
-    @powershell -Command "if (Test-Path -Path $PROFILE) { Remove-Item -Path $PROFILE -Force }"
-    @powershell -Command "if (Test-Path -Path $(Split-Path $PROFILE)\\profile.ps1) { Remove-Item -Path $(Split-Path $PROFILE)\\profile.ps1 -Force }"
+    @powershell -Command "if (Test-Path -Path \"$env:USERPROFILE\\.config\\nvim\") { Remove-Item -Path \"$env:USERPROFILE\\.config\\nvim\" -Force -Recurse }"
+    @powershell -Command "if (Test-Path -Path \"$env:USERPROFILE\\.config\\alacritty\") { Remove-Item -Path \"$env:USERPROFILE\\.config\\alacritty\" -Force -Recurse }"
+    @powershell -Command "if (Test-Path -Path \"$PROFILE\") { Remove-Item -Path \"$PROFILE\" -Force }"
+    @powershell -Command "if (Test-Path -Path \"$(Split-Path $PROFILE)\\profile.ps1\") { Remove-Item -Path \"$(Split-Path $PROFILE)\\profile.ps1\" -Force }"
     @echo "✅ Windows configs removed successfully"
 
 # Hello 
@@ -183,4 +183,36 @@ help topic="":
         echo "Available help topics:"
         ls *.txt | sed 's/.txt$//' | sed 's/^/  - /'
         echo "Usage: just help [topic] or install fzf for interactive selection"
+    fi
+
+# Run GitHub Actions locally using act
+test-ci:
+    @echo "Running GitHub Actions locally with act..."
+    @if ! command -v act >/dev/null 2>&1; then \
+        echo "Installing act..."; \
+        if command -v brew >/dev/null 2>&1; then \
+            brew install act; \
+        else \
+            curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash; \
+        fi; \
+    fi
+    @echo "Running CI workflow..."
+    act -j lint-and-test
+
+# Run specific CI job locally
+test-ci-job job:
+    @echo "Running GitHub Actions job: {{job}}"
+    @if ! command -v act >/dev/null 2>&1; then \
+        echo "❌ act not installed. Run: just test-ci"; \
+        exit 1; \
+    fi
+    act -j {{job}}
+
+# List available CI jobs
+list-ci-jobs:
+    @echo "Available GitHub Actions jobs:"
+    @if [ -f ".github/workflows/ci.yml" ]; then \
+        grep "^  [a-zA-Z].*:$" .github/workflows/ci.yml | sed 's/:$//' | sed 's/^  /  - /'; \
+    else \
+        echo "❌ No CI workflow found at .github/workflows/ci.yml"; \
     fi
