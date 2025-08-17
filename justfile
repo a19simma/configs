@@ -313,27 +313,25 @@ check-secrets:
 
 # Help system - with optional parameter
 help topic="":
-    #!/bin/bash
-    cd help
-    if [ -n "{{topic}}" ]; then
-        if [ -f "{{topic}}.txt" ]; then
-            cat "{{topic}}.txt"
-        else
-            echo "Help topic '{{topic}}' not found"
-            echo "Available topics:"
-            ls *.txt | sed 's/.txt$//' | sed 's/^/  - /'
-        fi
-    elif command -v fzf >/dev/null 2>&1; then
-        selected=$(ls *.txt | sed 's/.txt$//' | fzf --prompt="Select help topic: ")
-        if [ -n "$selected" ]; then
-            cat "$selected.txt"
-        else
-            echo "No help topic selected"
-        fi
-    else
-        echo "Available help topics:"
-        ls *.txt | sed 's/.txt$//' | sed 's/^/  - /'
-        echo "Usage: just help [topic] or install fzf for interactive selection"
+    @cd help && if [ -n "{{topic}}" ]; then \
+        if [ -f "{{topic}}.txt" ]; then \
+            cat "{{topic}}.txt"; \
+        else \
+            echo "Help topic '{{topic}}' not found"; \
+            echo "Available topics:"; \
+            ls *.txt | sed 's/.txt$//' | sed 's/^/  - /'; \
+        fi; \
+    elif command -v fzf >/dev/null 2>&1; then \
+        selected=$$(ls *.txt | sed 's/.txt$//' | fzf --prompt="Select help topic: "); \
+        if [ -n "$$selected" ]; then \
+            cat "$$selected.txt"; \
+        else \
+            echo "No help topic selected"; \
+        fi; \
+    else \
+        echo "Available help topics:"; \
+        ls *.txt | sed 's/.txt$//' | sed 's/^/  - /'; \
+        echo "Usage: just help [topic] or install fzf for interactive selection"; \
     fi
 
 # Run GitHub Actions locally using act
