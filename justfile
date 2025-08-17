@@ -79,6 +79,7 @@ deploy-windows:
         }
     }
 
+    Write-Host "✅ Adding symlink for wezterm"
     try {
         if (!(Test-Path -Path "$env:USERPROFILE\.wezterm.lua")) {
             New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.wezterm.lua" -Target "$(Get-Location)\wezterm\.config\.wezterm.lua" -Force
@@ -87,7 +88,7 @@ deploy-windows:
     } catch {
         Write-Host "⚠️  Symlink creation requires admin privileges. Copying wezterm\.config config instead..."
         if (!(Test-Path -Path "$env:USERPROFILE\.wezterm.lua")) {
-            Copy-Item -Path "$(Get-Location)\wezterm\.config\.wezterm.lua" -Destination "$env:USERPROFILE\.wezterm.lua" -Recurse -Force
+            Copy-Item -Path "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua" -Destination "$env:USERPROFILE\.wezterm.lua" -Recurse -Force
         }
     }
 
