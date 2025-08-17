@@ -37,7 +37,7 @@ config.colors = {
 
 -- Set the default shell dynamically
 config.default_prog = { 'nu' }
-config.window_background_opacity = 1
+config.window_background_opacity = 0.85
 config.adjust_window_size_when_changing_font_size = false
 
 config.enable_tab_bar = true

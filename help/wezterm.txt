@@ -1,0 +1,61 @@
+WezTerm Commands - Terminal Multiplexer & Configuration
+====================================================
+
+Window Management:
+  Ctrl+Shift+N      - New window
+  Ctrl+Shift+W      - Close current pane (with confirmation)
+  Ctrl+Shift+Q      - Quit WezTerm
+  
+Pane Management:
+  Ctrl+Shift+|      - Split pane horizontally (vertical divider)
+  Ctrl+Shift+_      - Split pane vertically (horizontal divider)
+  Ctrl+Shift+H      - Move to left pane
+  Ctrl+Shift+L      - Move to right pane  
+  Ctrl+Shift+K      - Move to upper pane
+  Ctrl+Shift+J      - Move to lower pane
+
+Tab Management:
+  Ctrl+Shift+T      - New tab
+  Ctrl+Shift+W      - Close current tab
+  Ctrl+PageUp       - Previous tab
+  Ctrl+PageDown     - Next tab
+  Ctrl+Shift+1-9    - Switch to tab number
+
+Text Operations:
+  Ctrl+Shift+C      - Copy selection
+  Ctrl+Shift+V      - Paste
+  Ctrl+Shift+F      - Search in scrollback
+  Ctrl+Shift+X      - Copy mode (vim-like selection)
+
+Font & Display:
+  Ctrl+=            - Increase font size
+  Ctrl+-            - Decrease font size  
+  Ctrl+0            - Reset font size
+  F11               - Toggle fullscreen
+
+Configuration Locations:
+  Windows: %USERPROFILE%\.wezterm.lua
+  Unix:    ~/.config/wezterm/wezterm.lua
+
+Current Config Features:
+  - 85% window transparency
+  - Kanagawa color theme (matches nvim/tmux)
+  - Nushell as default shell
+  - Custom pane navigation bindings
+  - Fancy tab bar at bottom
+
+Reload Config:
+  Ctrl+Shift+R      - Reload configuration
+  
+Debug:
+  Ctrl+Shift+L      - Show debug overlay
+  
+WSL Integration:
+  Available via domain: 'wsl' (Debian)
+  Switch with Ctrl+Shift+U then select domain
+
+Tips:
+- Right-click for context menu
+- Middle-click to paste (on supported platforms)
+- Drag to select text, double-click to select words
+- Config uses Lua for advanced customization
