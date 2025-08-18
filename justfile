@@ -77,6 +77,9 @@ deploy-windows:
         "$env:USERPROFILE\.config\alacritty" = "$(Get-Location)\alacritty\.config\alacritty" 
         "$env:USERPROFILE\.wezterm.lua" = "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua"
         "$env:APPDATA\nushell" = "$(Get-Location)\nushell\.config\nushell"
+        "$env:USERPROFILE\komorebi.json" = "$(Get-Location)\komorebi\komorebi.json"
+        "$env:USERPROFILE\komorebi.bar.json" = "$(Get-Location)\komorebi\komorebi.bar.json"
+        "$env:USERPROFILE\.config\whkdrc" = "$(Get-Location)\komorebi\.config\whkdrc"
     }
     
     foreach ($config in $configs.GetEnumerator()) {
@@ -243,7 +246,7 @@ install-deps-windows:
     
     # Install packages (try nushell with --skip to continue if it fails)
     # Install core packages first
-    scoop install git jq just gitleaks starship bat fzf nu
+    scoop install git jq just gitleaks starship bat fzf nu komorebi whkd
     
     # Try to install bitwarden-cli separately (often fails)
     try {
