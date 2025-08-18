@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LGUG2Z/komorebi/v0.1.37/bar.schema.json",
+  "monitor": {
+    "index": 0
+  },
+  "position": "Top",
+  "height": 50,
+  "background_colour": "0xff101014",
+  "font_family": "JetBrainsMono Nerd Font",
+  "font_size": 16,
+  "komorebi": {
+    "workspaces": {
+      "enable": true,
+      "hide_empty_workspaces": false
+    },
+    "layout": {
+      "enable": true
+    },
+    "focused_window": {
+      "enable": true,
+      "show_icon": true,
+      "max_title_length": 50
+    }
+  },
+  "left_widgets": [
+    {
+      "Workspaces": {
+        "hide_empty_workspaces": false
+      }
+    },
+    {
+      "Layout": {}
+    }
+  ],
+  "center_widgets": [
+    {
+      "FocusedWindow": {
+        "enable": true,
+        "show_icon": true,
+        "max_title_length": 50
+      }
+    }
+  ],
+  "right_widgets": [
+    {
+      "SystemTray": {}
+    },
+    {
+      "Date": {
+        "format": "%Y-%m-%d %H:%M:%S"
+      }
+    }
+  ]
+}

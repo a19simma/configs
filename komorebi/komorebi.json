@@ -1,0 +1,66 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LGUG2Z/komorebi/v0.1.37/schema.json",
+  "app_specific_configuration_path": "$Env:USERPROFILE/applications.yaml",
+  "window_hiding_behaviour": "Cloak",
+  "cross_monitor_move_behaviour": "Insert",
+  "default_workspace_padding": 10,
+  "default_container_padding": 10,
+  "border": true,
+  "border_width": 8,
+  "border_offset": -1,
+  "active_window_border_colour": {
+    "Single": "0x66cc6600"
+  },
+  "inactive_window_border_colour": {
+    "Single": "0x66272d32"
+  },
+  "border_implementation": "Komorebi",
+  "animation": {
+    "enabled": true,
+    "duration": 250,
+    "fps": 60,
+    "style": "EaseOutExpo"
+  },
+  "transparency": false,
+  "transparency_alpha": 245,
+  "focus_follows_mouse": "Komorebi",
+  "mouse_follows_focus": true,
+  "hotwatch": true,
+  "ensure_workspaces_on_monitor_index_0": 0,
+  "monitors": [
+    {
+      "workspaces": [
+        {
+          "name": "I",
+          "layout": "BSP"
+        },
+        {
+          "name": "II", 
+          "layout": "BSP"
+        },
+        {
+          "name": "III",
+          "layout": "BSP"
+        },
+        {
+          "name": "IV",
+          "layout": "BSP"
+        },
+        {
+          "name": "V",
+          "layout": "BSP"
+        }
+      ]
+    }
+  ],
+  "stackbar": {
+    "height": 40,
+    "mode": "OnStack",
+    "tabs": {
+      "width": 300,
+      "focused_text": "0x00a86400",
+      "unfocused_text": "0x00ffffff",
+      "background": "0x66101014"
+    }
+  }
+}

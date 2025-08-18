@@ -47,3 +47,10 @@ if ("~/.cache/starship/init.nu" | path exists) {
 
 # Initialize Zoxide
 source ~/.zoxide.nu
+
+# Load Windows-specific configuration
+if $nu.os-info.name == "windows" {
+    try {
+        source config-windows.nu
+    }
+}
