@@ -7,7 +7,6 @@ eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
 source ~/.zsh/zsh-completions/zsh-completions.plugin.zsh
 source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
 source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh
-fpath=(path/to/zsh-completions/src $fpath)
 autoload -Uz compinit
 compinit
 

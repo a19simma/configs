@@ -54,3 +54,8 @@ if $nu.os-info.name == "windows" {
         source config-windows.nu
     }
 }
+
+
+
+
+use ($nu.default-config-dir | path join mise.nu)

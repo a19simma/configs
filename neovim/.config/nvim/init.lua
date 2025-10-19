@@ -215,7 +215,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	desc = "Highlight when yanking (copying) text",
 	group = vim.api.nvim_create_augroup("kickstart-highlight-yank", { clear = true }),
 	callback = function()
-		vim.hl.on_yank()
+		vim.highlight.on_yank()
 	end,
 })
 
@@ -709,8 +709,28 @@ require("lazy").setup({
 						},
 					},
 				},
+				omnisharp = {
+					cmd = {
+						"dotnet",
+						vim.fn.stdpath("data") .. "/mason/packages/omnisharp/libexec/OmniSharp.dll",
+					},
+					settings = {
+						FormattingOptions = {
+							EnableEditorConfigSupport = true,
+							OrganizeImports = true,
+						},
+						RoslynExtensionsOptions = {
+							EnableDecompilationSupport = true,
+							EnableAnalyzersSupport = true,
+						},
+					},
+					on_attach = function(client, bufnr)
+						-- Disable semantic tokens (OmniSharp has issues with LSP spec compliance)
+						client.server_capabilities.semanticTokensProvider = nil
+					end,
+				},
 			}
-
+			-- C# language server
 			-- Ensure the servers and tools above are installed
 			--
 			-- To check the current status of installed tools and/or manually install
@@ -752,14 +772,6 @@ require("lazy").setup({
 		event = { "BufWritePre" },
 		cmd = { "ConformInfo" },
 		keys = {
-			{
-				"A-y",
-				function()
-					require("minuet").make_blink_map()
-				end,
-				mode = "i",
-				desc = "",
-			},
 			{
 				"<leader>f",
 				function()
@@ -873,16 +885,9 @@ require("lazy").setup({
 			},
 
 			sources = {
-				default = { "lsp", "path", "snippets", "lazydev", "minuet" },
+				default = { "lsp", "path", "snippets", "lazydev" },
 				providers = {
 					lazydev = { module = "lazydev.integrations.blink", score_offset = 100 },
-					minuet = {
-						name = "minuet",
-						module = "minuet.blink",
-						async = true,
-						timeout_ms = 3000,
-						score_offset = 50, -- Gives minuet higher priority among suggestions
-					},
 				},
 			},
 

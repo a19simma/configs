@@ -1,5 +1,7 @@
+--[[
 return {
 	"milanglacier/minuet-ai.nvim",
+	enabled = false,
 	-- Hello
 	opts = {
 		-- Provider configuration
@@ -20,3 +22,6 @@ return {
 		},
 	},
 }
+--]]
+
+return {}

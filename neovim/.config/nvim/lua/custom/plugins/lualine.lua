@@ -27,11 +27,6 @@ return {
 				lualine_b = { "branch", "diff", "diagnostics" },
 				lualine_c = { "filename" },
 				lualine_x = {
-					{
-						require("minuet.lualine"),
-						-- Show minuet status in the status line
-						color = { fg = "#7aa2f7" }, -- Blue color for AI status
-					},
 					"encoding",
 					"fileformat",
 					"filetype",

@@ -3,6 +3,7 @@
 
 # Basic environment variables
 $env.EDITOR = "nvim"
+$env.PATH = ($env.PATH | prepend "/home/linuxbrew/.linuxbrew/bin")
 
 # Load Windows-specific environment variables
 if $nu.os-info.name == "windows" {
@@ -548,3 +549,10 @@ def bootstrap-configs [] {
         print "git clone <your-repo-url> ~/repos/configs"
     }
 }
+
+$env.VOLTA_HOME = ($env.HOME | path join ".volta")
+$env.PATH = ($env.PATH | prepend ($env.VOLTA_HOME | path join "bin"))
+$env.PATH = ($env.PATH | prepend ($env.HOME + "/.azure-kubectl") | prepend ($env.HOME + "/.azure-kubelogin"))
+
+let mise_path = $nu.default-config-dir | path join mise.nu
+^mise activate nu | save $mise_path --force
