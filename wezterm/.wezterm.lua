@@ -72,10 +72,21 @@ config.keys = {
     }
 }
 
-config.wsl_domains = { {
-    name = 'wsl',
-    distribution = 'Debian'
-} }
+-- Use SSH instead of native WSL integration for better performance
+-- Native wsl_domains uses ConPTY which has performance issues with tmux
+-- config.wsl_domains = { {
+--     name = 'wsl',
+--     distribution = 'Debian'
+-- } }
+
+config.ssh_domains = {
+    {
+        name = 'WSL',
+        remote_address = '127.0.0.1',
+        username = 'simon',
+        -- SSH will automatically use your default shell
+    },
+}
 
 config.mouse_bindings = {
     {
@@ -84,6 +95,11 @@ config.mouse_bindings = {
         action = wezterm.action.OpenLinkAtMouseCursor,
     }
 }
+
+-- Performance optimizations for better rendering and reduced latency
+config.max_fps = 120
+config.animation_fps = 1
+config.cursor_blink_rate = 0  -- Disable cursor blinking to reduce redraws
 
 -- and finally, return the configuration to wezterm
 return config

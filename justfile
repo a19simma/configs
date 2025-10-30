@@ -224,6 +224,27 @@ install-system-deps:
     fi
     @echo "✅ System dependencies installed"
 
+# Setup SSH server for WSL (improves WezTerm performance)
+setup-ssh-server:
+    @echo "🔧 Setting up SSH server..."
+    @if command -v apt >/dev/null 2>&1; then \
+        echo "Installing OpenSSH via apt..."; \
+        sudo apt update && sudo apt install -y openssh-server; \
+    else \
+        echo "❌ apt not found. This command is designed for Debian/Ubuntu systems."; \
+        exit 1; \
+    fi
+    @echo "Configuring SSH to start automatically..."
+    @if command -v systemctl >/dev/null 2>&1; then \
+        sudo systemctl enable ssh; \
+        sudo systemctl start ssh; \
+    else \
+        sudo service ssh start; \
+    fi
+    @echo "✅ SSH server installed, started, and configured to auto-start"
+    @echo ""
+    @echo "Test connection with: ssh localhost"
+
 # Install dependencies on Windows using Scoop
 install-deps-windows:
     #!pwsh
@@ -286,6 +307,8 @@ bootstrap-unix:
     @echo "Installing dependencies..."
     just install-deps
     just install-system-deps
+    @echo "Setting up SSH server for WezTerm..."
+    just setup-ssh-server
     @echo "Deploying configurations..."
     just fix-symlinks
     @echo "Setting default shell to nushell..."

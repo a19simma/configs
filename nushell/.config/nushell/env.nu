@@ -37,6 +37,10 @@ def --env fix-symlinks [] {
     cd ~/repos/configs; just fix-symlinks
 }
 
+def --env setup-ssh [] {
+    cd ~/repos/configs; just setup-ssh-server
+}
+
 def help [] {
     cd ~/repos/configs; just help
 }
@@ -553,6 +557,51 @@ def bootstrap-configs [] {
 $env.VOLTA_HOME = ($env.HOME | path join ".volta")
 $env.PATH = ($env.PATH | prepend ($env.VOLTA_HOME | path join "bin"))
 $env.PATH = ($env.PATH | prepend ($env.HOME + "/.azure-kubectl") | prepend ($env.HOME + "/.azure-kubelogin"))
+
+# Add Go binaries to PATH
+$env.PATH = ($env.PATH | prepend ($env.HOME | path join "go" "bin"))
+
+# Helper to set secrets from bitwarden with fzf selection
+def --env set-secret [] {
+    # Hardcoded list of available secrets
+    let secrets = [
+        {name: "ANTHROPIC_API_KEY", bw_item: "anthropic_api_key"}
+    ]
+
+    let selected = ($secrets | each { |s| $s.name } | str join "\n" | fzf --prompt="Select secret to set: ")
+
+    if ($selected | is-empty) {
+        print "❌ No secret selected"
+        return
+    }
+
+    let secret_config = ($secrets | where name == $selected | first)
+
+    # Check bitwarden status
+    let status = (^bw status | from json)
+
+    if $status.status == "unauthenticated" {
+        print "🔐 Bitwarden: Not logged in. Please log in:"
+        ^bw login
+    }
+
+    if $status.status == "locked" {
+        print "🔓 Bitwarden: Vault is locked. Please unlock:"
+        let session = (^bw unlock --raw)
+        $env.BW_SESSION = $session
+    }
+
+    # Retrieve the secret
+    let item = (^bw get item $secret_config.bw_item | from json)
+    let value = $item.login.password
+
+    match $selected {
+        "ANTHROPIC_API_KEY" => {
+            $env.ANTHROPIC_API_KEY = $value
+            print $"✅ ANTHROPIC_API_KEY has been set from '($secret_config.bw_item)'"
+        }
+    }
+}
 
 let mise_path = $nu.default-config-dir | path join mise.nu
 ^mise activate nu | save $mise_path --force
