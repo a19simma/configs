@@ -1,7 +1,10 @@
 # Windows-specific environment variables for Nushell
 
-# Set Claude Code git-bash path
-$env.CLAUDE_CODE_GIT_BASH_PATH = $"($env.USERPROFILE)\\scoop\\shims\\git-bash.exe"
+# Set HOME to USERPROFILE for cross-platform compatibility
+$env.HOME = $env.USERPROFILE
+
+# Set Claude Code bash path to Git Bash (has cygpath utility)
+$env.CLAUDE_CODE_GIT_BASH_PATH = $"($env.USERPROFILE)\\scoop\\apps\\git\\current\\bin\\bash.exe"
 
 # Fix zoxide boolean conversion issue on Windows
 if "__zoxide_hooked" in $env {

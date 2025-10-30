@@ -3,12 +3,16 @@
 
 # Basic environment variables
 $env.EDITOR = "nvim"
-$env.PATH = ($env.PATH | prepend "/home/linuxbrew/.linuxbrew/bin")
+$env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY = "1"
 
-# Load Windows-specific environment variables
+# Load OS-specific environment variables
 if $nu.os-info.name == "windows" {
     try {
         source env-windows.nu
+    }
+} else {
+    try {
+        source env-linux.nu
     }
 }
 
@@ -554,13 +558,6 @@ def bootstrap-configs [] {
     }
 }
 
-$env.VOLTA_HOME = ($env.HOME | path join ".volta")
-$env.PATH = ($env.PATH | prepend ($env.VOLTA_HOME | path join "bin"))
-$env.PATH = ($env.PATH | prepend ($env.HOME + "/.azure-kubectl") | prepend ($env.HOME + "/.azure-kubelogin"))
-
-# Add Go binaries to PATH
-$env.PATH = ($env.PATH | prepend ($env.HOME | path join "go" "bin"))
-
 # Helper to set secrets from bitwarden with fzf selection
 def --env set-secret [] {
     # Hardcoded list of available secrets
@@ -602,6 +599,3 @@ def --env set-secret [] {
         }
     }
 }
-
-let mise_path = $nu.default-config-dir | path join mise.nu
-^mise activate nu | save $mise_path --force
