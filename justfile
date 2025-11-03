@@ -13,13 +13,28 @@ backup-configs:
 # Deploy dotfiles using GNU Stow
 stow-deploy:
     @echo "Deploying dotfiles with GNU Stow..."
-    stow -t ~ shell neovim alacritty vscode nushell tmux wezterm claude
+    @mkdir -p ~/.config/nvim ~/.config/alacritty ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/claude
+    stow -t ~/.config/nvim neovim
+    stow -t ~/.config/alacritty alacritty
+    stow -t ~/.config/Code vscode
+    stow -t ~/.config/nushell nushell
+    stow -t ~/.config/wezterm wezterm
+    stow -t ~/.config/claude claude
+    stow -t ~ shell
+    stow -t ~ tmux
     @echo "✅ Dotfiles deployed successfully"
 
 # Remove dotfiles using GNU Stow
 stow-remove:
     @echo "Removing dotfiles with GNU Stow..."
-    stow -t ~ -D shell neovim alacritty vscode nushell tmux wezterm claude
+    stow -t ~/.config/nvim -D neovim
+    stow -t ~/.config/alacritty -D alacritty
+    stow -t ~/.config/Code -D vscode
+    stow -t ~/.config/nushell -D nushell
+    stow -t ~/.config/wezterm -D wezterm
+    stow -t ~/.config/claude -D claude
+    stow -t ~ -D shell
+    stow -t ~ -D tmux
     @echo "✅ Dotfiles removed successfully"
 
 # Setup Claude Code MCP servers
@@ -41,13 +56,17 @@ setup-claude-mcp:
 # Fix existing symlinks and files that block stow
 fix-symlinks:
     @echo "Fixing existing symlinks and backing up conflicting files..."
-    # Remove or backup existing symlinks
+    # Remove existing symlinks
     @if [ -L ~/.config/nvim ]; then rm ~/.config/nvim; fi
+    @if [ -L ~/.config/nushell ]; then rm ~/.config/nushell; fi
+    @if [ -L ~/.config/alacritty ]; then rm ~/.config/alacritty; fi
+    @if [ -L ~/.config/Code ]; then rm ~/.config/Code; fi
+    @if [ -L ~/.config/wezterm ]; then rm ~/.config/wezterm; fi
+    @if [ -L ~/.config/claude ]; then rm ~/.config/claude; fi
     @if [ -L ~/.zshrc ]; then rm ~/.zshrc; fi
     @if [ -L ~/.bashrc ]; then rm ~/.bashrc; fi
-    @if [ -L ~/.config/nushell ]; then rm ~/.config/nushell; fi
     @if [ -L ~/.tmux.conf ]; then rm ~/.tmux.conf; fi
-    # Backup existing files that would conflict with stow
+    # Backup existing files/dirs that would conflict with stow
     @if [ -f ~/.bashrc ] && [ ! -L ~/.bashrc ]; then mv ~/.bashrc ~/.bashrc.backup; fi
     @if [ -f ~/.zshrc ] && [ ! -L ~/.zshrc ]; then mv ~/.zshrc ~/.zshrc.backup; fi
     @if [ -f ~/.tmux.conf ] && [ ! -L ~/.tmux.conf ]; then mv ~/.tmux.conf ~/.tmux.conf.backup; fi
@@ -55,8 +74,18 @@ fix-symlinks:
     @if [ -d ~/.config/nushell ] && [ ! -L ~/.config/nushell ]; then mv ~/.config/nushell ~/.config/nushell.backup; fi
     @if [ -d ~/.config/alacritty ] && [ ! -L ~/.config/alacritty ]; then mv ~/.config/alacritty ~/.config/alacritty.backup; fi
     @if [ -d ~/.config/Code ] && [ ! -L ~/.config/Code ]; then mv ~/.config/Code ~/.config/Code.backup; fi
+    @if [ -d ~/.config/wezterm ] && [ ! -L ~/.config/wezterm ]; then mv ~/.config/wezterm ~/.config/wezterm.backup; fi
+    @if [ -d ~/.config/claude ] && [ ! -L ~/.config/claude ]; then mv ~/.config/claude ~/.config/claude.backup; fi
     # Deploy with stow
-    stow -t ~ shell neovim alacritty vscode nushell tmux wezterm
+    @echo "Deploying with stow..."
+    stow -t ~/.config/nvim neovim
+    stow -t ~/.config/alacritty alacritty
+    stow -t ~/.config/Code vscode
+    stow -t ~/.config/nushell nushell
+    stow -t ~/.config/wezterm wezterm
+    stow -t ~/.config/claude claude
+    stow -t ~ shell
+    stow -t ~ tmux
     @echo "✅ Symlinks fixed and dotfiles deployed"
 
 # Deploy configs on Windows (PowerShell/cmd)
