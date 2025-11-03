@@ -13,14 +13,30 @@ backup-configs:
 # Deploy dotfiles using GNU Stow
 stow-deploy:
     @echo "Deploying dotfiles with GNU Stow..."
-    stow -t ~ shell neovim alacritty vscode nushell tmux wezterm
+    stow -t ~ shell neovim alacritty vscode nushell tmux wezterm claude
     @echo "✅ Dotfiles deployed successfully"
 
 # Remove dotfiles using GNU Stow
 stow-remove:
     @echo "Removing dotfiles with GNU Stow..."
-    stow -t ~ -D shell neovim alacritty vscode nushell tmux wezterm
+    stow -t ~ -D shell neovim alacritty vscode nushell tmux wezterm claude
     @echo "✅ Dotfiles removed successfully"
+
+# Setup Claude Code MCP servers
+setup-claude-mcp:
+    @echo "Setting up Claude Code MCP servers..."
+    @echo "Checking dependencies..."
+    @command -v docker >/dev/null 2>&1 || { echo "❌ Docker not found. Install docker first."; exit 1; }
+    @command -v npx >/dev/null 2>&1 || { echo "❌ npx not found. Install Node.js first."; exit 1; }
+    @command -v claude >/dev/null 2>&1 || { echo "❌ Claude Code not found. Install claude-code first."; exit 1; }
+    @echo "✅ All dependencies found"
+    @echo "Adding Terraform MCP server..."
+    @claude mcp add --scope user --transport stdio terraform -- docker run -i --rm hashicorp/terraform-mcp-server || echo "⚠️  Terraform MCP may already be configured"
+    @echo "Adding Kubernetes MCP server (read-only)..."
+    @claude mcp add --scope user --transport stdio kubernetes -- npx -y kubernetes-mcp-server@latest --read-only || echo "⚠️  Kubernetes MCP may already be configured"
+    @echo "✅ MCP servers configured!"
+    @echo ""
+    @echo "To see available tools, start Claude Code and run: /mcp"
 
 # Fix existing symlinks and files that block stow
 fix-symlinks:
