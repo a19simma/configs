@@ -118,10 +118,12 @@ deploy-windows:
     
     # Remove existing configs and create fresh symlinks
     $configs = @{
-        "$env:USERPROFILE\.config\nvim" = "$(Get-Location)\neovim\.config\nvim"
-        "$env:USERPROFILE\.config\alacritty" = "$(Get-Location)\alacritty\.config\alacritty" 
-        "$env:USERPROFILE\.wezterm.lua" = "$(Get-Location)\wezterm\.config\wezterm\wezterm.lua"
-        "$env:APPDATA\nushell" = "$(Get-Location)\nushell\.config\nushell"
+        "$env:USERPROFILE\.config\nvim" = "$(Get-Location)\neovim"
+        "$env:USERPROFILE\.config\alacritty" = "$(Get-Location)\alacritty"
+        "$env:USERPROFILE\.config\wezterm" = "$(Get-Location)\wezterm"
+        "$env:APPDATA\nushell" = "$(Get-Location)\nushell"
+        "$env:USERPROFILE\.config\Code" = "$(Get-Location)\vscode"
+        "$env:USERPROFILE\.config\claude" = "$(Get-Location)\claude"
         "$env:USERPROFILE\komorebi.json" = "$(Get-Location)\komorebi\komorebi.json"
         "$env:USERPROFILE\komorebi.bar.json" = "$(Get-Location)\komorebi\komorebi.bar.json"
         "$env:USERPROFILE\.config\whkdrc" = "$(Get-Location)\komorebi\.config\whkdrc"
@@ -186,24 +188,47 @@ deploy-windows:
 remove-windows:
     #!pwsh
     Write-Host "Removing Windows configurations..."
-    
+
     # Remove symlinks
     if (Test-Path -Path "$env:USERPROFILE\.config\nvim") {
         Remove-Item -Path "$env:USERPROFILE\.config\nvim" -Force -Recurse
     }
-    
+
     if (Test-Path -Path "$env:USERPROFILE\.config\alacritty") {
         Remove-Item -Path "$env:USERPROFILE\.config\alacritty" -Force -Recurse
     }
-    
+
     # Remove wezterm config
-    if (Test-Path -Path "$env:USERPROFILE\.wezterm.lua") {
-        Remove-Item -Path "$env:USERPROFILE\.wezterm.lua" -Force
+    if (Test-Path -Path "$env:USERPROFILE\.config\wezterm") {
+        Remove-Item -Path "$env:USERPROFILE\.config\wezterm" -Force -Recurse
     }
-    
+
     # Remove nushell config
     if (Test-Path -Path "$env:APPDATA\nushell") {
         Remove-Item -Path "$env:APPDATA\nushell" -Force -Recurse
+    }
+
+    # Remove vscode config
+    if (Test-Path -Path "$env:USERPROFILE\.config\Code") {
+        Remove-Item -Path "$env:USERPROFILE\.config\Code" -Force -Recurse
+    }
+
+    # Remove claude config
+    if (Test-Path -Path "$env:USERPROFILE\.config\claude") {
+        Remove-Item -Path "$env:USERPROFILE\.config\claude" -Force -Recurse
+    }
+
+    # Remove komorebi configs
+    if (Test-Path -Path "$env:USERPROFILE\komorebi.json") {
+        Remove-Item -Path "$env:USERPROFILE\komorebi.json" -Force
+    }
+
+    if (Test-Path -Path "$env:USERPROFILE\komorebi.bar.json") {
+        Remove-Item -Path "$env:USERPROFILE\komorebi.bar.json" -Force
+    }
+
+    if (Test-Path -Path "$env:USERPROFILE\.config\whkdrc") {
+        Remove-Item -Path "$env:USERPROFILE\.config\whkdrc" -Force
     }
     
     # Remove PowerShell profiles
