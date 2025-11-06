@@ -17,7 +17,7 @@ stow-deploy:
     stow -t ~/.config/nvim neovim
     stow -t ~/.config/alacritty alacritty
     stow -t ~/.config/Code vscode
-    stow -t ~/.config/nushell nushell
+    stow -t ~/.config/nushell nushell --adopt
     stow -t ~/.config/wezterm wezterm
     stow -t ~/.config/claude claude
     stow -t ~ shell
