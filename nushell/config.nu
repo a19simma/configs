@@ -57,5 +57,3 @@ if $nu.os-info.name == "windows" {
 
 
 
-
-use ($nu.default-config-dir | path join mise.nu)

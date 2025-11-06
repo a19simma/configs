@@ -15,4 +15,4 @@ $env.PATH = ($env.PATH | prepend ($env.HOME | path join "go" "bin"))
 
 # Generate and load mise configuration
 let mise_path = $nu.default-config-dir | path join mise.nu
-^mise activate nu | save $mise_path --force
+#^mise activate nu | save $mise_path --force
