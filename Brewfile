@@ -11,6 +11,8 @@ brew "zoxide"
 # Development tools
 brew "starship"
 brew "kubectx"
+brew "dotnet"
+brew "ollama"
 
 # Configuration management
 brew "stow"

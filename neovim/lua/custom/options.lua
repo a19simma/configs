@@ -12,5 +12,5 @@ vim.opt.relativenumber = true -- Show relative line numbers
 vim.opt.wrap = false          -- Don't wrap long lines
 vim.opt.colorcolumn = "120"   -- Show guide at 120 characters
 
--- Global statusline (recommended for avante.nvim)
+-- Global statusline
 vim.opt.laststatus = 3   -- Views can only be fully collapsed with the global statusline

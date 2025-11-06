@@ -1,19 +1,28 @@
 return {
 	"milanglacier/minuet-ai.nvim",
-	-- Only enable if ANTHROPIC_API_KEY is set
-	enabled = vim.fn.getenv("ANTHROPIC_API_KEY") ~= vim.NIL,
-	opts = {
-		-- Provider configuration
-		provider = "claude",
-		provider_options = {
-			claude = {
-				model = "claude-haiku-4-5-20251001",
-				temperature = 0.3,
-				max_tokens = 512,
-				stream = true,
-				-- Read API key from environment variable
-				api_key = vim.fn.getenv("ANTHROPIC_API_KEY"),
+	dependencies = { "saghen/blink.cmp" },
+	config = function()
+		require("minuet").setup({
+			provider = "openai_fim_compatible",
+			-- Context window (7B model can handle ~4K efficiently)
+			context_window = 4096,
+			-- Number of completion candidates
+			n_completions = 1,
+			provider_options = {
+				openai_fim_compatible = {
+					model = "qwen2.5-coder:7b",
+					end_point = "http://localhost:11434/v1/completions",
+					name = "Ollama",
+					api_key = "TERM", -- Ollama doesn't need authentication
+					stream = true,
+					optional = {
+						stop = nil, -- Let Ollama handle stop tokens
+						max_tokens = 128, -- Max tokens to generate (tune this for completion length)
+						temperature = 0.3,
+						top_p = 0.9,
+					},
+				},
 			},
-		},
-	},
+		})
+	end,
 }

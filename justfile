@@ -463,3 +463,33 @@ list-ci-jobs:
     else \
         echo "❌ No CI workflow found at .github/workflows/ci.yml"; \
     fi
+
+# Setup Ollama for local AI code completion
+setup-ollama:
+    @echo "🦙 Setting up Ollama for code completion..."
+    @if ! command -v ollama >/dev/null 2>&1; then \
+        echo "Installing Ollama with GPU support..."; \
+        curl -fsSL https://ollama.com/install.sh | sh; \
+    fi
+    @echo "Starting Ollama service..."
+    ollama serve > /dev/null 2>&1 &
+    @sleep 3
+    @echo "Pulling qwen2.5-coder:7b model (this may take a few minutes)..."
+    ollama pull qwen2.5-coder:7b
+    @echo "✅ Ollama setup complete!"
+    @echo ""
+    @echo "To use in Neovim:"
+    @echo "  1. Make sure Ollama is running: just start-ollama"
+    @echo "  2. Press <C-k> in insert mode for AI completion"
+    @echo ""
+    @echo "Model info: qwen2.5-coder:7b (~5GB, runs on RTX 4070 GPU)"
+
+# Start Ollama service (run this before using Neovim AI completion)
+start-ollama:
+    @echo "Starting Ollama service..."
+    @if pgrep -x ollama > /dev/null; then \
+        echo "✅ Ollama is already running"; \
+    else \
+        ollama serve > /dev/null 2>&1 & \
+        echo "✅ Ollama started in background"; \
+    fi

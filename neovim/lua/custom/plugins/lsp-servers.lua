@@ -22,9 +22,9 @@ return {
 
       -- Add additional schemas for common use cases
       local additional_schemas = {
-        -- Kubernetes - content-based detection (yamlls looks for apiVersion/kind)
-        -- This works for any K8s manifest regardless of filename (deployment.yaml, service.yaml, etc.)
-        kubernetes = '*.yaml',
+        -- Kubernetes - yamlls has built-in content-based detection (looks for apiVersion/kind)
+        -- Only add explicit patterns if you need to override
+        -- kubernetes = '*.k8s.yaml',
 
         -- ArgoCD CRDs
         ['https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/application_v1alpha1.json'] = {
@@ -51,12 +51,10 @@ return {
           '**/*compositeresourcedefinition*.yaml',
         },
 
-        -- OpenAPI/Swagger specifications
-        ['https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.json'] = {
-          'openapi*.{yml,yaml}',
-          '**/openapi.{yml,yaml}',
-          'swagger*.{yml,yaml}',
-        },
+        -- OpenAPI/Swagger specifications (SchemaStore.nvim already provides these)
+        -- Uncomment if you need custom patterns:
+        -- ['https://json.schemastore.org/openapi-3.1.json'] = 'openapi*.{yml,yaml}',
+        -- ['https://json.schemastore.org/swagger-2.0.json'] = 'swagger*.{yml,yaml}',
 
         -- Docker Compose
         ['https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json'] = {
