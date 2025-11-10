@@ -118,7 +118,7 @@ deploy-windows:
     
     # Remove existing configs and create fresh symlinks
     $configs = @{
-        "$env:USERPROFILE\.config\nvim" = "$(Get-Location)\neovim"
+        "$env:LOCALAPPDATA\nvim" = "$(Get-Location)\neovim"
         "$env:USERPROFILE\.config\alacritty" = "$(Get-Location)\alacritty"
         "$env:USERPROFILE\.wezterm.lua" = "$(Get-Location)\wezterm\wezterm.lua"
         "$env:APPDATA\nushell" = "$(Get-Location)\nushell"
@@ -190,8 +190,8 @@ remove-windows:
     Write-Host "Removing Windows configurations..."
 
     # Remove symlinks
-    if (Test-Path -Path "$env:USERPROFILE\.config\nvim") {
-        Remove-Item -Path "$env:USERPROFILE\.config\nvim" -Force -Recurse
+    if (Test-Path -Path "$env:LOCALAPPDATA\nvim") {
+        Remove-Item -Path "$env:LOCALAPPDATA\nvim" -Force -Recurse
     }
 
     if (Test-Path -Path "$env:USERPROFILE\.config\alacritty") {
