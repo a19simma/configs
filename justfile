@@ -120,7 +120,7 @@ deploy-windows:
     $configs = @{
         "$env:USERPROFILE\.config\nvim" = "$(Get-Location)\neovim"
         "$env:USERPROFILE\.config\alacritty" = "$(Get-Location)\alacritty"
-        "$env:USERPROFILE\.config\wezterm" = "$(Get-Location)\wezterm"
+        "$env:USERPROFILE\.wezterm.lua" = "$(Get-Location)\wezterm\wezterm.lua"
         "$env:APPDATA\nushell" = "$(Get-Location)\nushell"
         "$env:USERPROFILE\.config\Code" = "$(Get-Location)\vscode"
         "$env:USERPROFILE\.config\claude" = "$(Get-Location)\claude"
@@ -199,8 +199,8 @@ remove-windows:
     }
 
     # Remove wezterm config
-    if (Test-Path -Path "$env:USERPROFILE\.config\wezterm") {
-        Remove-Item -Path "$env:USERPROFILE\.config\wezterm" -Force -Recurse
+    if (Test-Path -Path "$env:USERPROFILE\.wezterm.lua") {
+        Remove-Item -Path "$env:USERPROFILE\.wezterm.lua" -Force
     }
 
     # Remove nushell config
