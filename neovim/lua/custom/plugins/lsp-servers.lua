@@ -72,7 +72,7 @@ return {
       end
 
       -- YAML Language Server Configuration
-      require('lspconfig').yamlls.setup {
+      vim.lsp.config('yamlls', {
         capabilities = capabilities,
         settings = {
           yaml = {
@@ -89,11 +89,12 @@ return {
             schemas = schemas,
           },
         },
-      }
+      })
+      vim.lsp.enable('yamlls')
 
       -- Helm Language Server Configuration
       -- helm-ls: 358 stars, actively maintained, supports Helm charts + K8s schemas
-      require('lspconfig').helm_ls.setup {
+      vim.lsp.config('helm_ls', {
         capabilities = capabilities,
         settings = {
           ['helm-ls'] = {
@@ -104,16 +105,18 @@ return {
           },
         },
         filetypes = { 'helm' },
-      }
+      })
+      vim.lsp.enable('helm_ls')
 
       -- Markdown Language Server (Marksman)
       -- marksman: 2.8k stars, actively maintained, latest release Dec 2024
       -- Provides completion, goto definition, find references, rename, diagnostics
       -- Supports wiki-link style references for note-taking
-      require('lspconfig').marksman.setup {
+      vim.lsp.config('marksman', {
         capabilities = capabilities,
         filetypes = { 'markdown', 'markdown.mdx' },
-      }
+      })
+      vim.lsp.enable('marksman')
 
       -- YAML Schema Picker
       -- When you press <leader>ys in a YAML file, this will show you available schemas

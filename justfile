@@ -13,13 +13,13 @@ backup-configs:
 # Deploy dotfiles using GNU Stow
 stow-deploy:
     @echo "Deploying dotfiles with GNU Stow..."
-    @mkdir -p ~/.config/nvim ~/.config/alacritty ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/claude
+    @mkdir -p ~/.config/nvim ~/.config/alacritty ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.claude
     stow -t ~/.config/nvim neovim
     stow -t ~/.config/alacritty alacritty
     stow -t ~/.config/Code vscode
     stow -t ~/.config/nushell nushell --adopt
     stow -t ~/.config/wezterm wezterm
-    stow -t ~/.config/claude claude
+    stow -t ~/.claude claude
     stow -t ~ shell
     stow -t ~ tmux
     @echo "✅ Dotfiles deployed successfully"
@@ -32,7 +32,7 @@ stow-remove:
     stow -t ~/.config/Code -D vscode
     stow -t ~/.config/nushell -D nushell
     stow -t ~/.config/wezterm -D wezterm
-    stow -t ~/.config/claude -D claude
+    stow -t ~/.claude -D claude
     stow -t ~ -D shell
     stow -t ~ -D tmux
     @echo "✅ Dotfiles removed successfully"
@@ -63,6 +63,7 @@ fix-symlinks:
     @if [ -L ~/.config/Code ]; then rm ~/.config/Code; fi
     @if [ -L ~/.config/wezterm ]; then rm ~/.config/wezterm; fi
     @if [ -L ~/.config/claude ]; then rm ~/.config/claude; fi
+    @if [ -L ~/.claude ]; then rm -rf ~/.claude; fi
     @if [ -L ~/.zshrc ]; then rm ~/.zshrc; fi
     @if [ -L ~/.bashrc ]; then rm ~/.bashrc; fi
     @if [ -L ~/.tmux.conf ]; then rm ~/.tmux.conf; fi
@@ -76,6 +77,7 @@ fix-symlinks:
     @if [ -d ~/.config/Code ] && [ ! -L ~/.config/Code ]; then mv ~/.config/Code ~/.config/Code.backup; fi
     @if [ -d ~/.config/wezterm ] && [ ! -L ~/.config/wezterm ]; then mv ~/.config/wezterm ~/.config/wezterm.backup; fi
     @if [ -d ~/.config/claude ] && [ ! -L ~/.config/claude ]; then mv ~/.config/claude ~/.config/claude.backup; fi
+    @if [ -d ~/.claude ] && [ ! -L ~/.claude ]; then mv ~/.claude ~/.claude.backup; fi
     # Deploy with stow
     @echo "Deploying with stow..."
     stow -t ~/.config/nvim neovim
@@ -83,7 +85,7 @@ fix-symlinks:
     stow -t ~/.config/Code vscode
     stow -t ~/.config/nushell nushell
     stow -t ~/.config/wezterm wezterm
-    stow -t ~/.config/claude claude
+    stow -t ~/.claude claude
     stow -t ~ shell
     stow -t ~ tmux
     @echo "✅ Symlinks fixed and dotfiles deployed"
