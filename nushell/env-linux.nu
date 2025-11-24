@@ -3,6 +3,9 @@
 # Add linuxbrew to PATH
 $env.PATH = ($env.PATH | prepend "/home/linuxbrew/.linuxbrew/bin")
 
+# Add PostgreSQL client tools (libpq)
+$env.PATH = ($env.PATH | prepend "/home/linuxbrew/.linuxbrew/opt/libpq/bin")
+
 # Setup Volta
 $env.VOLTA_HOME = ($env.HOME | path join ".volta")
 $env.PATH = ($env.PATH | prepend ($env.VOLTA_HOME | path join "bin"))

@@ -9,14 +9,7 @@ return {
 		end,
 	},
 
-	-- Add csharpier formatter
-	{
-		"stevearc/conform.nvim",
-		opts = function(_, opts)
-			opts.formatters_by_ft = opts.formatters_by_ft or {}
-			opts.formatters_by_ft.cs = { "csharpier" }
-		end,
-	},
+	-- NOTE: C# formatter (csharpier) is configured in custom/plugins/conform.lua
 
 	-- Add C# to treesitter
 	{

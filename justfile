@@ -1,3 +1,5 @@
+default:
+    just --choose
 # Sync files from kickstart.nvim
 sync-kickstart:
     @TMP_DIR=$(mktemp -d) && git clone https://github.com/nvim-lua/kickstart.nvim.git "$TMP_DIR" && cp -r "$TMP_DIR"/* neovim/.config/nvim/ && rm -rf "$TMP_DIR"
@@ -13,13 +15,14 @@ backup-configs:
 # Deploy dotfiles using GNU Stow
 stow-deploy:
     @echo "Deploying dotfiles with GNU Stow..."
-    @mkdir -p ~/.config/nvim ~/.config/alacritty ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.claude
+    @mkdir -p ~/.config/nvim ~/.config/alacritty ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.claude ~/.gemini
     stow -t ~/.config/nvim neovim
     stow -t ~/.config/alacritty alacritty
     stow -t ~/.config/Code vscode
     stow -t ~/.config/nushell nushell --adopt
     stow -t ~/.config/wezterm wezterm
     stow -t ~/.claude claude
+    stow -t ~/.gemini gemini
     stow -t ~ shell
     stow -t ~ tmux
     @echo "✅ Dotfiles deployed successfully"
@@ -33,6 +36,7 @@ stow-remove:
     stow -t ~/.config/nushell -D nushell
     stow -t ~/.config/wezterm -D wezterm
     stow -t ~/.claude -D claude
+    stow -t ~/.gemini -D gemini
     stow -t ~ -D shell
     stow -t ~ -D tmux
     @echo "✅ Dotfiles removed successfully"
@@ -49,6 +53,9 @@ setup-claude-mcp:
     @claude mcp add --scope user --transport stdio terraform -- docker run -i --rm hashicorp/terraform-mcp-server || echo "⚠️  Terraform MCP may already be configured"
     @echo "Adding Kubernetes MCP server (read-only)..."
     @claude mcp add --scope user --transport stdio kubernetes -- npx -y kubernetes-mcp-server@latest --read-only || echo "⚠️  Kubernetes MCP may already be configured"
+    @echo "Adding context7 MCP server..."
+    @claude mcp remove context7
+    @claude mcp add --scope user --transport stdio context7 -- npx -y @upstash/context7-mcp --api-key $(bw get item context7_api_key | jq -r .login.password) || echo "⚠️  context7 MCP may already be configured"
     @echo "✅ MCP servers configured!"
     @echo ""
     @echo "To see available tools, start Claude Code and run: /mcp"
@@ -64,6 +71,7 @@ fix-symlinks:
     @if [ -L ~/.config/wezterm ]; then rm ~/.config/wezterm; fi
     @if [ -L ~/.config/claude ]; then rm ~/.config/claude; fi
     @if [ -L ~/.claude ]; then rm -rf ~/.claude; fi
+    @if [ -L ~/.gemini ]; then rm -rf ~/.gemini; fi
     @if [ -L ~/.zshrc ]; then rm ~/.zshrc; fi
     @if [ -L ~/.bashrc ]; then rm ~/.bashrc; fi
     @if [ -L ~/.tmux.conf ]; then rm ~/.tmux.conf; fi
@@ -78,6 +86,7 @@ fix-symlinks:
     @if [ -d ~/.config/wezterm ] && [ ! -L ~/.config/wezterm ]; then mv ~/.config/wezterm ~/.config/wezterm.backup; fi
     @if [ -d ~/.config/claude ] && [ ! -L ~/.config/claude ]; then mv ~/.config/claude ~/.config/claude.backup; fi
     @if [ -d ~/.claude ] && [ ! -L ~/.claude ]; then mv ~/.claude ~/.claude.backup; fi
+    @if [ -d ~/.gemini ] && [ ! -L ~/.gemini ]; then mv ~/.gemini ~/.gemini.backup; fi
     # Deploy with stow
     @echo "Deploying with stow..."
     stow -t ~/.config/nvim neovim
@@ -86,6 +95,7 @@ fix-symlinks:
     stow -t ~/.config/nushell nushell
     stow -t ~/.config/wezterm wezterm
     stow -t ~/.claude claude
+    stow -t ~/.gemini gemini
     stow -t ~ shell
     stow -t ~ tmux
     @echo "✅ Symlinks fixed and dotfiles deployed"

@@ -71,9 +71,225 @@ return {
         schemas[schema] = pattern
       end
 
-      -- YAML Language Server Configuration
-      vim.lsp.config('yamlls', {
+      -- Lua Language Server Configuration
+      vim.lsp.config.lua_ls = {
         capabilities = capabilities,
+        on_attach = on_attach,
+        settings = {
+          Lua = {
+            completion = {
+              callSnippet = 'Replace',
+            },
+            -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
+            -- diagnostics = { disable = { 'missing-fields' } },
+          },
+        },
+      }
+      vim.lsp.enable({ 'lua_ls' })
+
+      -- TypeScript/JavaScript Language Server Configuration
+      vim.lsp.config.ts_ls = {
+        capabilities = capabilities,
+        on_attach = on_attach,
+        filetypes = { 'javascript', 'typescript' },
+        settings = {
+          typescript = {
+            inlayHints = {
+              includeInlayParameterNameHints = 'all',
+              includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+              includeInlayFunctionParameterTypeHints = true,
+              includeInlayVariableTypeHints = true,
+              includeInlayPropertyDeclarationTypeHints = true,
+              includeInlayFunctionLikeReturnTypeHints = true,
+              includeInlayEnumMemberValueHints = true,
+            },
+          },
+          javascript = {
+            inlayHints = {
+              includeInlayParameterNameHints = 'all',
+              includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+              includeInlayFunctionParameterTypeHints = true,
+              includeInlayVariableTypeHints = true,
+              includeInlayPropertyDeclarationTypeHints = true,
+              includeInlayFunctionLikeReturnTypeHints = true,
+              includeInlayEnumMemberValueHints = true,
+            },
+          },
+        },
+      }
+      vim.lsp.enable({ 'ts_ls' })
+
+      -- Svelte Language Server Configuration
+      vim.lsp.config.svelte = {
+        capabilities = capabilities,
+        on_attach = on_attach,
+        filetypes = { 'svelte' },
+        settings = {
+          svelte = {
+            plugin = {
+              typescript = {
+                enable = true,
+              },
+            },
+          },
+        },
+      }
+      vim.lsp.enable({ 'svelte' })
+
+      -- Helper function to set LSP keymaps (shared across all servers)
+      local function on_attach(client, bufnr)
+        local map = function(keys, func, desc, mode)
+          mode = mode or 'n'
+          vim.keymap.set(mode, keys, func, { buffer = bufnr, desc = 'LSP: ' .. desc })
+        end
+
+        -- LSP Keymaps (using snacks.picker for navigation)
+        map('grn', vim.lsp.buf.rename, '[R]e[n]ame')
+        map('gra', vim.lsp.buf.code_action, '[C]ode [A]ction', { 'n', 'x' })
+        map('grr', function() Snacks.picker.lsp_references() end, '[G]oto [R]eferences')
+        map('gri', function() Snacks.picker.lsp_implementations() end, '[G]oto [I]mplementation')
+        map('grd', function() Snacks.picker.lsp_definitions() end, '[G]oto [D]efinition')
+        map('grD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+        map('gO', function() Snacks.picker.lsp_symbols() end, 'Document [S]ymbols')
+        map('gW', function() Snacks.picker.lsp_workspace_symbols() end, 'Workspace [S]ymbols')
+        map('grt', function() Snacks.picker.lsp_type_definitions() end, '[G]oto [T]ype Definition')
+      end
+
+      -- Go Language Server Configuration
+      vim.lsp.config.gopls = {
+        capabilities = capabilities,
+        on_attach = on_attach,
+        settings = {
+          gopls = {
+            analyses = {
+              unusedparams = true,
+              unusedwrite = true,
+              useany = true,
+            },
+            staticcheck = true,
+            gofumpt = true,
+            -- Semantic tokens for better syntax highlighting
+            semanticTokens = true,
+            -- Enable all code lenses
+            codelenses = {
+              gc_details = true,
+              generate = true,
+              regenerate_cgo = true,
+              tidy = true,
+              upgrade_dependency = true,
+              vendor = true,
+            },
+            -- Improved completion
+            usePlaceholders = true,
+            completeUnimported = true,
+            -- Build flags
+            buildFlags = { '-tags=integration' },
+            -- Enable detailed hover information
+            hoverKind = 'FullDocumentation',
+            linkTarget = 'pkg.go.dev',
+            -- Inlay hints
+            hints = {
+              assignVariableTypes = true,
+              compositeLiteralFields = true,
+              compositeLiteralTypes = true,
+              constantValues = true,
+              functionTypeParameters = true,
+              parameterNames = true,
+              rangeVariableTypes = true,
+            },
+          },
+        },
+      }
+      vim.lsp.enable({ 'gopls' })
+
+      -- Rust Language Server Configuration
+      vim.lsp.config.rust_analyzer = {
+        capabilities = capabilities,
+        on_attach = on_attach,
+        settings = {
+          ['rust-analyzer'] = {
+            checkOnSave = {
+              command = 'clippy',
+            },
+            cargo = {
+              allFeatures = true,
+            },
+            inlayHints = {
+              lifetimeElisionHints = {
+                enable = 'skip_trivial',
+              },
+            },
+          },
+        },
+      }
+      vim.lsp.enable({ 'rust_analyzer' })
+
+      -- Python Language Server Configuration
+      vim.lsp.config.pyright = {
+        capabilities = capabilities,
+        on_attach = on_attach,
+        settings = {
+          python = {
+            analysis = {
+              autoSearchPaths = true,
+              useLibraryCodeForTypes = true,
+              diagnosticMode = 'workspace',
+              typeCheckingMode = 'basic',
+            },
+          },
+        },
+      }
+      vim.lsp.enable({ 'pyright' })
+
+      -- C/C++ Language Server Configuration
+      vim.lsp.config.clangd = {
+        capabilities = capabilities,
+        on_attach = on_attach,
+        cmd = {
+          'clangd',
+          '--background-index',
+          '--clang-tidy',
+          '--header-insertion=iwyu',
+          '--completion-style=detailed',
+          '--function-arg-placeholders',
+        },
+        filetypes = { 'c', 'cpp', 'objc', 'objcpp' },
+      }
+      vim.lsp.enable({ 'clangd' })
+
+      -- C# Language Server Configuration
+      vim.lsp.config.omnisharp = {
+        capabilities = capabilities,
+        cmd = {
+          'dotnet',
+          vim.fn.stdpath 'data' .. '/mason/packages/omnisharp/libexec/OmniSharp.dll',
+        },
+        settings = {
+          FormattingOptions = {
+            EnableEditorConfigSupport = true,
+            OrganizeImports = true,
+          },
+          RoslynExtensionsOptions = {
+            EnableDecompilationSupport = true,
+            EnableAnalyzersSupport = true,
+          },
+        },
+        on_attach = function(client, bufnr)
+          -- Set up standard LSP keymaps first
+          on_attach(client, bufnr)
+
+          -- Disable semantic tokens (OmniSharp has issues with LSP spec compliance)
+          if client.server_capabilities then
+            client.server_capabilities.semanticTokensProvider = nil
+          end
+        end,
+      }
+      vim.lsp.enable({ 'omnisharp' })
+
+      -- YAML Language Server Configuration
+      vim.lsp.config.yamlls = {
+        capabilities = capabilities,
+        on_attach = on_attach,
         settings = {
           yaml = {
             format = { enable = true },
@@ -89,13 +305,14 @@ return {
             schemas = schemas,
           },
         },
-      })
-      vim.lsp.enable('yamlls')
+      }
+      vim.lsp.enable({ 'yamlls' })
 
       -- Helm Language Server Configuration
       -- helm-ls: 358 stars, actively maintained, supports Helm charts + K8s schemas
-      vim.lsp.config('helm_ls', {
+      vim.lsp.config.helm_ls = {
         capabilities = capabilities,
+        on_attach = on_attach,
         settings = {
           ['helm-ls'] = {
             yamlls = {
@@ -105,18 +322,19 @@ return {
           },
         },
         filetypes = { 'helm' },
-      })
-      vim.lsp.enable('helm_ls')
+      }
+      vim.lsp.enable({ 'helm_ls' })
 
       -- Markdown Language Server (Marksman)
       -- marksman: 2.8k stars, actively maintained, latest release Dec 2024
       -- Provides completion, goto definition, find references, rename, diagnostics
       -- Supports wiki-link style references for note-taking
-      vim.lsp.config('marksman', {
+      vim.lsp.config.marksman = {
         capabilities = capabilities,
+        on_attach = on_attach,
         filetypes = { 'markdown', 'markdown.mdx' },
-      })
-      vim.lsp.enable('marksman')
+      }
+      vim.lsp.enable({ 'marksman' })
 
       -- YAML Schema Picker
       -- When you press <leader>ys in a YAML file, this will show you available schemas
@@ -200,6 +418,14 @@ return {
     opts = function(_, opts)
       opts.ensure_installed = opts.ensure_installed or {}
       vim.list_extend(opts.ensure_installed, {
+        'lua-language-server', -- lua_ls
+        'typescript-language-server', -- ts_ls
+        'svelte-language-server', -- svelte
+        'gopls', -- Go
+        'rust-analyzer', -- Rust
+        'pyright', -- Python
+        'clangd', -- C/C++
+        'omnisharp', -- C#
         'yaml-language-server', -- yamlls
         'helm-ls', -- Helm language server
         'marksman', -- Markdown LSP

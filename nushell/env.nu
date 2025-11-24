@@ -563,6 +563,7 @@ def --env set-secret [] {
     # Hardcoded list of available secrets
     let secrets = [
         {name: "ANTHROPIC_API_KEY", bw_item: "anthropic_api_key"}
+        {name: "CONTEXT7_API_KEY", bw_item: "context7_api_key"}
     ]
 
     let selected = ($secrets | each { |s| $s.name } | str join "\n" | fzf --prompt="Select secret to set: ")
@@ -596,6 +597,10 @@ def --env set-secret [] {
         "ANTHROPIC_API_KEY" => {
             $env.ANTHROPIC_API_KEY = $value
             print $"✅ ANTHROPIC_API_KEY has been set from '($secret_config.bw_item)'"
+        }
+        "CONTEXT7_API_KEY" => {
+            $env.CONTEXT7_API_KEY = $value
+            print $"✅ CONTEXT7_API_KEY has been set from '($secret_config.bw_item)'"
         }
     }
 }
