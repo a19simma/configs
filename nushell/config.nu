@@ -55,5 +55,13 @@ if $nu.os-info.name == "windows" {
     }
 }
 
+# Custom Commands
+
+# Pull and run the qwen2.5-coder model in Ollama
+def ollama-run [] {
+    ollama pull qwen2.5-coder:7b
+    ollama run qwen2.5-coder:7b
+}
+
 
 

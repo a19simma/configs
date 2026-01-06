@@ -1,0 +1,104 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "edit": "ask",
+    "bash": "deny",
+    "webfetch": "deny",
+    "write": "ask",
+    "doom_loop": "ask",
+    "external_directory": "ask"
+  },
+  "tools": {
+    "bash": false,
+    "webfetch": false,
+    "websearch": false,
+    "write": true,
+    "edit": true
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": false,
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      }
+    },
+    "terraform": {
+      "type": "local",
+      "command": ["docker", "run", "-i", "--rm", "hashicorp/terraform-mcp-server"],
+      "enabled": false
+    },
+    "kubernetes": {
+      "type": "local",
+      "command": ["npx", "-y", "kubernetes-mcp-server@latest"],
+      "enabled": true
+    },
+    "git": {
+      "type": "local",
+      "command": ["uvx", "mcp-server-git"],
+      "enabled": false
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "@playwright/mcp@latest"],
+      "enabled": false
+    },
+    "memory": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-memory"],
+      "enabled": false
+    }
+  },
+  "tools": {
+    "context7_*": false,
+    "terraform_*": false,
+    "kubernetes_*": false,
+    "git_*": false,
+    "playwright_*": false,
+    "memory_*": false
+  },
+  "lsp": {
+    "yamlls": {
+      "disabled": true
+    }
+  },
+  "agent": {
+    "coder": {
+      "mode": "primary",
+      "model": "anthropic/claude-sonnet-4-5",
+      "description": "Primary development agent for implementing features",
+      "temperature": 0.3
+    },
+    "main": {
+      "tools": {
+        "context7_*": true
+      }
+    },
+    "researcher": {
+      "tools": {
+        "context7_*": true
+      }
+    },
+    "architect": {
+      "tools": {}
+    },
+    "tester": {
+      "tools": {
+        "playwright_*": true
+      }
+    },
+    "reviewer": {
+      "tools": {
+        "git_*": true
+      }
+    },
+    "infrastructure": {
+      "tools": {
+        "context7_*": true,
+        "terraform_*": true,
+        "kubernetes_*": true
+      }
+    }
+  }
+}

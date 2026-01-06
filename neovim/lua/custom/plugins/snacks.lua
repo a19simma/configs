@@ -28,6 +28,13 @@ return {
     notifier = {
       enabled = true,
       timeout = 3000,
+      style = 'compact',
+      -- Override notification window style for true transparency
+      styles = {
+        notification = {
+          wo = { winblend = 0 }, -- Use highlight group transparency instead of window blend
+        },
+      },
     },
 
     -- Quick file operations
@@ -158,6 +165,9 @@ return {
           'SnacksNotifierError',
           'SnacksNotifierDebug',
           'SnacksNotifierTrace',
+          -- Fidget LSP status notifications
+          'FidgetTask',
+          'FidgetTitle',
         }
 
         for _, group in ipairs(transparent_groups) do

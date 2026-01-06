@@ -15,12 +15,13 @@ backup-configs:
 # Deploy dotfiles using GNU Stow
 stow-deploy:
     @echo "Deploying dotfiles with GNU Stow..."
-    @mkdir -p ~/.config/nvim ~/.config/alacritty ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.claude ~/.gemini
+    @mkdir -p ~/.config/nvim ~/.config/alacritty ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/opencode ~/.claude ~/.gemini
     stow -t ~/.config/nvim neovim
     stow -t ~/.config/alacritty alacritty
     stow -t ~/.config/Code vscode
     stow -t ~/.config/nushell nushell --adopt
     stow -t ~/.config/wezterm wezterm
+    stow -t ~/.config/opencode opencode
     stow -t ~/.claude claude
     stow -t ~/.gemini gemini
     stow -t ~ shell
@@ -35,6 +36,7 @@ stow-remove:
     stow -t ~/.config/Code -D vscode
     stow -t ~/.config/nushell -D nushell
     stow -t ~/.config/wezterm -D wezterm
+    stow -t ~/.config/opencode -D opencode
     stow -t ~/.claude -D claude
     stow -t ~/.gemini -D gemini
     stow -t ~ -D shell
@@ -69,6 +71,7 @@ fix-symlinks:
     @if [ -L ~/.config/alacritty ]; then rm ~/.config/alacritty; fi
     @if [ -L ~/.config/Code ]; then rm ~/.config/Code; fi
     @if [ -L ~/.config/wezterm ]; then rm ~/.config/wezterm; fi
+    @if [ -L ~/.config/opencode ]; then rm ~/.config/opencode; fi
     @if [ -L ~/.config/claude ]; then rm ~/.config/claude; fi
     @if [ -L ~/.claude ]; then rm -rf ~/.claude; fi
     @if [ -L ~/.gemini ]; then rm -rf ~/.gemini; fi
@@ -84,6 +87,7 @@ fix-symlinks:
     @if [ -d ~/.config/alacritty ] && [ ! -L ~/.config/alacritty ]; then mv ~/.config/alacritty ~/.config/alacritty.backup; fi
     @if [ -d ~/.config/Code ] && [ ! -L ~/.config/Code ]; then mv ~/.config/Code ~/.config/Code.backup; fi
     @if [ -d ~/.config/wezterm ] && [ ! -L ~/.config/wezterm ]; then mv ~/.config/wezterm ~/.config/wezterm.backup; fi
+    @if [ -d ~/.config/opencode ] && [ ! -L ~/.config/opencode ]; then mv ~/.config/opencode ~/.config/opencode.backup; fi
     @if [ -d ~/.config/claude ] && [ ! -L ~/.config/claude ]; then mv ~/.config/claude ~/.config/claude.backup; fi
     @if [ -d ~/.claude ] && [ ! -L ~/.claude ]; then mv ~/.claude ~/.claude.backup; fi
     @if [ -d ~/.gemini ] && [ ! -L ~/.gemini ]; then mv ~/.gemini ~/.gemini.backup; fi
@@ -94,6 +98,7 @@ fix-symlinks:
     stow -t ~/.config/Code vscode
     stow -t ~/.config/nushell nushell
     stow -t ~/.config/wezterm wezterm
+    stow -t ~/.config/opencode opencode
     stow -t ~/.claude claude
     stow -t ~/.gemini gemini
     stow -t ~ shell

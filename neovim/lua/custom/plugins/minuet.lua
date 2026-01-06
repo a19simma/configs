@@ -1,28 +1,40 @@
 return {
 	"milanglacier/minuet-ai.nvim",
-	dependencies = { "saghen/blink.cmp" },
+	dependencies = { "nvim-lua/plenary.nvim" },
 	config = function()
 		require("minuet").setup({
 			provider = "openai_fim_compatible",
-			-- Context window (7B model can handle ~4K efficiently)
-			context_window = 4096,
-			-- Number of completion candidates
-			n_completions = 1,
+			n_completions = 1, -- recommend for local model for resource saving
+			context_window = 512,
+
+			-- Enable virtual text for inline ghost text display
+			virtualtext = {
+				auto_trigger_ft = { "*" }, -- Enable for all filetypes
+				keymap = {
+					accept = "<C-l>", -- Ctrl+L to accept
+					prev = "<C-p>",
+					next = "<C-n>",
+					dismiss = "<C-h>", -- Ctrl+H to dismiss
+				},
+			},
+
 			provider_options = {
 				openai_fim_compatible = {
-					model = "qwen2.5-coder:7b",
-					end_point = "http://localhost:11434/v1/completions",
+					api_key = "TERM",
 					name = "Ollama",
-					api_key = "TERM", -- Ollama doesn't need authentication
-					stream = true,
+					end_point = "http://localhost:11434/v1/completions",
+					model = "qwen2.5-coder:7b",
 					optional = {
-						stop = nil, -- Let Ollama handle stop tokens
-						max_tokens = 128, -- Max tokens to generate (tune this for completion length)
-						temperature = 0.3,
+						max_tokens = 56,
 						top_p = 0.9,
 					},
 				},
 			},
 		})
+
+		-- Toggle auto-suggestions: <leader>la
+		vim.keymap.set("n", "<leader>la", function()
+			vim.cmd("Minuet virtualtext toggle")
+		end, { desc = "Toggle AI auto-suggestions" })
 	end,
 }

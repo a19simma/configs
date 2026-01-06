@@ -65,3 +65,5 @@ alias remove-configs='(cd ~/repos/configs && just stow-remove)'
 alias fix-symlinks='(cd ~/repos/configs && just fix-symlinks)'
 alias help='(cd ~/repos/configs && just help)'
 
+
+. "$HOME/.local/bin/env"

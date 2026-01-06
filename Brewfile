@@ -30,5 +30,5 @@ brew "bitwarden-cli"
 brew "bat"
 
 # Terminal and shell enhancements (if available via brew)
-# Note: some packages from Ansible (nfs-common, ca-certificates, etc.) 
+# Note: some packages from Ansible (nfs-common, ca-certificates, etc.)
 # are system-level and handled by OS package managers

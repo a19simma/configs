@@ -1,8 +1,12 @@
 ---
 name: infrastructure
 description: Specialized agent for Kubernetes, Helm, ArgoCD, Crossplane, Terraform, and Terragrunt infrastructure-as-code tasks
-tools: Read, Write, Edit, Grep, Glob, Bash, WebSearch, WebFetch
+tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch
 model: sonnet
+mcp:
+  terraform: true
+  kubernetes: true
+  context7: true
 ---
 
 # Infrastructure-as-Code Agent

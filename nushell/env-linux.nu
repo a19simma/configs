@@ -1,5 +1,8 @@
 # Linux-specific environment variables for Nushell
 
+# Add ~/.local/bin to PATH (for uv, uvx, and other user-installed tools)
+$env.PATH = ($env.PATH | prepend ($env.HOME | path join ".local" "bin"))
+
 # Add linuxbrew to PATH
 $env.PATH = ($env.PATH | prepend "/home/linuxbrew/.linuxbrew/bin")
 
@@ -16,6 +19,15 @@ $env.PATH = ($env.PATH | prepend ($env.HOME + "/.azure-kubectl") | prepend ($env
 # Add Go binaries to PATH
 $env.PATH = ($env.PATH | prepend ($env.HOME | path join "go" "bin"))
 
+# Add Bun binaries to PATH
+$env.PATH = ($env.PATH | prepend ($env.HOME | path join ".bun" "bin"))
+
+# Add Cargo binaries to PATH
+$env.PATH = ($env.PATH | prepend ($env.HOME | path join ".cargo" "bin"))
+
 # Generate and load mise configuration
 let mise_path = $nu.default-config-dir | path join mise.nu
 #^mise activate nu | save $mise_path --force
+
+# WSL Clipboard integration
+$env.DISPLAY = ":0"

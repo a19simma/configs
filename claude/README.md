@@ -63,6 +63,28 @@ Configured via `just setup-claude-mcp`:
 
 MCP servers are installed user-scoped and available across all projects.
 
+### Slash Commands (`~/.claude/commands/`)
+
+#### `/tutor`
+Read-only tutoring mode for explanations and documentation:
+- Provides concise explanations with code examples
+- Uses context7 for library documentation
+- Cites sources (file:line or URLs)
+- Never modifies files (read-only)
+- Brief and direct responses
+
+**Usage**: `/tutor <your question>`
+
+#### `/tutor-plan`
+Generate a progressive learning plan for any topic or library:
+- Starts with concept overview and setup instructions
+- Creates checkable task lists (Foundation → Practice → Further Reading)
+- Includes documentation links and brief explanations
+- Gradually reduces specificity to encourage independent learning
+- Prompts to continue with advanced topics after completing basics
+
+**Usage**: `/tutor-plan gRPC setup in Rust` or `/tutor-plan learning tokio`
+
 ## Creating Custom Agents
 
 Add new agents to `.claude/agents/` using this format:

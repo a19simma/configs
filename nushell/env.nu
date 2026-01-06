@@ -45,8 +45,66 @@ def --env setup-ssh [] {
     cd ~/repos/configs; just setup-ssh-server
 }
 
-def help [] {
+def configs-help [] {
     cd ~/repos/configs; just help
+}
+
+# Git worktree navigation with fzf
+def --env gwt [] {
+    let worktrees = (git worktree list --porcelain
+        | lines
+        | where $it starts-with "worktree"
+        | each { |line| $line | str replace "worktree " "" })
+
+    let selected = ($worktrees | str join "\n" | fzf --prompt="Select worktree: ")
+
+    if ($selected | is-not-empty) {
+        cd $selected
+    }
+}
+
+# Tmux session management
+def ta [] {
+    let sessions = (tmux list-sessions -F "#{session_name}" | lines)
+
+    if ($sessions | is-empty) {
+        print "No tmux sessions found"
+        return
+    }
+
+    let selected = ($sessions | str join "\n" | fzf --prompt="Select tmux session: ")
+
+    if ($selected | is-not-empty) {
+        tmux attach-session -t $selected
+    }
+}
+
+def td [session_name?: string] {
+    let name = if ($session_name | is-empty) { "dev" } else { $session_name }
+    let current_dir = $env.PWD
+
+    # Create new session with first window (plain shell)
+    tmux new-session -d -s $name -c $current_dir -n "shell"
+
+    # Window 2: nvim
+    tmux new-window -t $"($name):1" -n "nvim" -c $current_dir
+    tmux send-keys -t $"($name):1" "nvim" Enter
+
+    # Window 3: lazygit
+    tmux new-window -t $"($name):2" -n "lazygit" -c $current_dir
+    tmux send-keys -t $"($name):2" "lazygit" Enter
+
+    # Window 4: claude code
+    tmux new-window -t $"($name):3" -n "claude1" -c $current_dir
+    tmux send-keys -t $"($name):3" "claude" Enter
+
+    # Window 5: claude code
+    tmux new-window -t $"($name):4" -n "claude2" -c $current_dir
+    tmux send-keys -t $"($name):4" "claude" Enter
+
+    # Select first window and attach
+    tmux select-window -t $"($name):0"
+    tmux attach-session -t $name
 }
 
 # Kubectl fzf functions for pod operations
@@ -562,18 +620,20 @@ def bootstrap-configs [] {
 def --env set-secret [] {
     # Hardcoded list of available secrets
     let secrets = [
-        {name: "ANTHROPIC_API_KEY", bw_item: "anthropic_api_key"}
-        {name: "CONTEXT7_API_KEY", bw_item: "context7_api_key"}
+        {name: "ANTHROPIC_API_KEY", bw_item: "anthropic_api_key", desc: "Anthropic API Key (SDK, pay-as-you-go)"}
+        {name: "CONTEXT7_API_KEY", bw_item: "context7_api_key", desc: "Context7 API Key"}
+        {name: "CLAUDE_CODE_OAUTH_TOKEN", bw_item: "claude_oauth_token_1", desc: "Claude Code OAuth - Account 1"}
+        {name: "CLAUDE_CODE_OAUTH_TOKEN", bw_item: "claude_oauth_token_2", desc: "Claude Code OAuth - Account 2"}
     ]
 
-    let selected = ($secrets | each { |s| $s.name } | str join "\n" | fzf --prompt="Select secret to set: ")
+    let selected = ($secrets | each { |s| $"($s.desc)" } | str join "\n" | fzf --prompt="Select secret to set: ")
 
     if ($selected | is-empty) {
         print "❌ No secret selected"
         return
     }
 
-    let secret_config = ($secrets | where name == $selected | first)
+    let secret_config = ($secrets | where desc == $selected | first)
 
     # Check bitwarden status
     let status = (^bw status | from json)
@@ -590,10 +650,26 @@ def --env set-secret [] {
     }
 
     # Retrieve the secret
-    let item = (^bw get item $secret_config.bw_item | from json)
+    let result = (^bw get item $secret_config.bw_item | complete)
+
+    if $result.exit_code != 0 {
+        print $"❌ Error: Bitwarden item '($secret_config.bw_item)' not found"
+        print $"   Please create this item in Bitwarden with your token"
+        return
+    }
+
+    let item = ($result.stdout | from json)
+
+    if ($item.login?.password? | is-empty) {
+        print $"❌ Error: Item '($secret_config.bw_item)' has no password field"
+        print $"   Please store the token in the password field of this Bitwarden item"
+        return
+    }
+
     let value = $item.login.password
 
-    match $selected {
+    # Set the environment variable
+    match $secret_config.name {
         "ANTHROPIC_API_KEY" => {
             $env.ANTHROPIC_API_KEY = $value
             print $"✅ ANTHROPIC_API_KEY has been set from '($secret_config.bw_item)'"
@@ -601,6 +677,11 @@ def --env set-secret [] {
         "CONTEXT7_API_KEY" => {
             $env.CONTEXT7_API_KEY = $value
             print $"✅ CONTEXT7_API_KEY has been set from '($secret_config.bw_item)'"
+        }
+        "CLAUDE_CODE_OAUTH_TOKEN" => {
+            $env.CLAUDE_CODE_OAUTH_TOKEN = $value
+            print $"✅ CLAUDE_CODE_OAUTH_TOKEN has been set from '($secret_config.bw_item)'"
+            print "   This token works with Claude Code CLI only (not SDK)"
         }
     }
 }

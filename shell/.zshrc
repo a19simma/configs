@@ -176,3 +176,5 @@ alias help='(cd ~/repos/configs && just help)'
 # User command keybinds - using Meh key (Ctrl+Alt+Shift) as prefix to avoid tmux conflicts
 bindkey -s '^[[1;8m' 'tm\n'
 
+
+. "$HOME/.local/bin/env"

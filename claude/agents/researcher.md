@@ -3,6 +3,10 @@ name: researcher
 description: Research agent for gathering information, analyzing codebases, and answering questions without modifying files
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: haiku
+mcp:
+  context7: true
+  terraform: false
+  kubernetes: false
 ---
 
 # Researcher Agent
