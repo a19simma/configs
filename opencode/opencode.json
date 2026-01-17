@@ -1,33 +1,64 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "plugin": ["opencode-antigravity-auth@beta"],
+  "provider": {
+    "google": {
+      "models": {
+        "antigravity-claude-sonnet-4-5-thinking": {
+          "name": "Claude Sonnet 4.5 Thinking",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": {
+            "input": ["text", "image", "pdf"],
+            "output": ["text"]
+          },
+          "variants": {
+            "low": { "thinkingConfig": { "thinkingBudget": 8192 } },
+            "max": { "thinkingConfig": { "thinkingBudget": 32768 } }
+          }
+        }
+      }
+    }
+  },
   "permission": {
     "edit": "ask",
-    "bash": "deny",
+    "bash": "ask",
     "webfetch": "deny",
     "write": "ask",
     "doom_loop": "ask",
     "external_directory": "ask"
   },
   "tools": {
-    "bash": false,
+    "bash": true,
     "webfetch": false,
     "websearch": false,
     "write": true,
-    "edit": true
+    "edit": true,
+
+    "context7_*": false,
+    "exa_*": true,
+    "terraform_*": false,
+    "kubernetes_*": false,
+    "git_*": false,
+    "playwright_*": false,
+    "memory_*": false
   },
   "mcp": {
     "context7": {
       "type": "remote",
       "url": "https://mcp.context7.com/mcp",
-      "enabled": false,
+      "enabled": true,
       "headers": {
         "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
       }
     },
-    "terraform": {
-      "type": "local",
-      "command": ["docker", "run", "-i", "--rm", "hashicorp/terraform-mcp-server"],
-      "enabled": false
+    "exa": {
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:EXA_API_KEY}"
+      }
     },
     "kubernetes": {
       "type": "local",
@@ -36,27 +67,19 @@
     },
     "git": {
       "type": "local",
-      "command": ["uvx", "mcp-server-git"],
-      "enabled": false
+      "command": ["uv", "tool", "run", "mcp-server-git"],
+      "enabled": true
     },
     "playwright": {
       "type": "local",
       "command": ["npx", "@playwright/mcp@latest"],
-      "enabled": false
+      "enabled": true
     },
     "memory": {
       "type": "local",
       "command": ["npx", "-y", "@modelcontextprotocol/server-memory"],
       "enabled": false
     }
-  },
-  "tools": {
-    "context7_*": false,
-    "terraform_*": false,
-    "kubernetes_*": false,
-    "git_*": false,
-    "playwright_*": false,
-    "memory_*": false
   },
   "lsp": {
     "yamlls": {
@@ -65,19 +88,104 @@
   },
   "agent": {
     "coder": {
-      "mode": "primary",
-      "model": "anthropic/claude-sonnet-4-5",
-      "description": "Primary development agent for implementing features",
-      "temperature": 0.3
-    },
-    "main": {
+      "mode": "subagent",
+      "model": "openai/gpt-5.1-codex",
+      "description": "Implementation subagent for writing code and fixes",
+      "temperature": 0.3,
       "tools": {
         "context7_*": true
       }
     },
-    "researcher": {
+    "build": {
+      "mode": "primary",
+      "model": "openai/gpt-5.2",
+      "description": "Primary build agent (can edit/write by default)",
+      "temperature": 0.2,
+      "tools": {
+        "edit": true,
+        "write": true,
+        "bash": true,
+        "context7_*": true,
+        "exa_*": true
+      },
+      "permission": {
+        "edit": "allow",
+        "write": "allow",
+        "bash": "allow"
+      }
+    },
+    "research": {
+      "mode": "primary",
+      "model": "openai/gpt-5.1-codex-mini",
+      "description": "Primary research agent (copy of researcher)",
+      "temperature": 0.1,
       "tools": {
         "context7_*": true
+      }
+    },
+    "tutor": {
+      "mode": "primary",
+      "model": "openai/gpt-4o",
+      "description": "Primary tutoring agent for explanations and guidance",
+      "temperature": 0.4,
+      "tools": {
+        "context7_*": true
+      }
+    },
+    "auto": {
+      "mode": "primary",
+      "model": "openai/gpt-5.2",
+      "description": "Primary autonomous agent (all permissions enabled)",
+      "temperature": 0.3,
+      "tools": {
+        "task": true,
+        "bash": true,
+        "webfetch": true,
+        "websearch": true,
+        "write": true,
+        "edit": true,
+        "context7_*": true,
+        "terraform_*": true,
+        "kubernetes_*": true,
+        "git_*": true,
+        "playwright_*": true,
+        "memory_*": true
+      },
+      "permission": {
+        "read": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "task": "allow",
+        "edit": "allow",
+        "bash": "allow",
+        "webfetch": "allow",
+        "websearch": "allow",
+        "write": "allow",
+        "doom_loop": "allow",
+        "external_directory": "allow"
+      }
+    },
+    "researcher": {
+      "mode": "subagent",
+      "model": "openai/gpt-5.1-codex-mini",
+      "description": "Research specialist for web/filesystem exploration",
+      "temperature": 0.1,
+      "system_prompt": "You are a research specialist. Use context7 first, cite sources, and gather information without editing files.",
+      "tools": {
+        "context7_*": true,
+        "exa_*": true,
+        "webfetch": true,
+        "websearch": true,
+        "read": true,
+        "glob": true,
+        "grep": true,
+        "todoread": true,
+        "todowrite": true
+      },
+      "permission": {
+        "write": "deny",
+        "edit": "deny",
+        "bash": "deny"
       }
     },
     "architect": {

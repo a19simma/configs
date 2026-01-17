@@ -270,34 +270,35 @@ return {
 			}
 			vim.lsp.enable({ "clangd" })
 
-			-- C# Language Server Configuration
-			vim.lsp.config.omnisharp = {
-				capabilities = capabilities,
-				cmd = {
-					"dotnet",
-					vim.fn.stdpath("data") .. "/mason/packages/omnisharp/libexec/OmniSharp.dll",
-				},
-				settings = {
-					FormattingOptions = {
-						EnableEditorConfigSupport = true,
-						OrganizeImports = true,
-					},
-					RoslynExtensionsOptions = {
-						EnableDecompilationSupport = true,
-						EnableAnalyzersSupport = true,
-					},
-				},
-				on_attach = function(client, bufnr)
-					-- Set up standard LSP keymaps first
-					on_attach(client, bufnr)
-
-					-- Disable semantic tokens (OmniSharp has issues with LSP spec compliance)
-					if client.server_capabilities then
-						client.server_capabilities.semanticTokensProvider = nil
-					end
-				end,
-			}
-			vim.lsp.enable({ "omnisharp" })
+		-- NOTE: C# LSP is handled by easy-dotnet.nvim (see custom/plugins/csharp.lua)
+--			-- C# Language Server Configuration (commented out, using easy-dotnet.nvim instead)
+--			vim.lsp.config.omnisharp = {
+--				capabilities = capabilities,
+--				cmd = {
+--					"dotnet",
+--					vim.fn.stdpath("data") .. "/mason/packages/omnisharp/libexec/OmniSharp.dll",
+--				},
+--				settings = {
+--					FormattingOptions = {
+--						EnableEditorConfigSupport = true,
+--						OrganizeImports = true,
+--					},
+--					RoslynExtensionsOptions = {
+--						EnableDecompilationSupport = true,
+--						EnableAnalyzersSupport = true,
+--					},
+--				},
+--				on_attach = function(client, bufnr)
+--					-- Set up standard LSP keymaps first
+--					on_attach(client, bufnr)
+--
+--					-- Disable semantic tokens (OmniSharp has issues with LSP spec compliance)
+--					if client.server_capabilities then
+--						client.server_capabilities.semanticTokensProvider = nil
+--					end
+--				end,
+--			}
+--			vim.lsp.enable({ "omnisharp" })
 
 			-- YAML Language Server Configuration
 			vim.lsp.config.yamlls = {
@@ -439,7 +440,7 @@ return {
 				"rust-analyzer", -- Rust
 				"pyright", -- Python
 				"clangd", -- C/C++
-				"omnisharp", -- C#
+				-- NOTE: C# LSP handled by easy-dotnet.nvim
 				"yaml-language-server", -- yamlls
 				"helm-ls", -- Helm language server
 				"marksman", -- Markdown LSP

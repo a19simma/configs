@@ -301,6 +301,9 @@ require("lazy").setup({
 				topdelete = { text = "‾" },
 				changedelete = { text = "~" },
 			},
+			diff_opts = {
+				ignore_whitespace_change_at_eol = true,
+			},
 		},
 	},
 
