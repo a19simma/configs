@@ -7,16 +7,16 @@ return {
 			n_completions = 1, -- recommend for local model for resource saving
 			context_window = 512,
 
-			-- Enable virtual text for inline ghost text display
-			virtualtext = {
-				auto_trigger_ft = { "*" }, -- Enable for all filetypes
-				keymap = {
-					accept = "<C-l>", -- Ctrl+L to accept
-					prev = "<C-p>",
-					next = "<C-n>",
-					dismiss = "<C-h>", -- Ctrl+H to dismiss
-				},
+		-- Enable virtual text for inline ghost text display
+		virtualtext = {
+			auto_trigger_ft = {}, -- Disabled by default, toggle with <leader>la
+			keymap = {
+				accept = "<C-l>", -- Ctrl+L to accept
+				prev = "<C-p>",
+				next = "<C-n>",
+				dismiss = "<C-h>", -- Ctrl+H to dismiss
 			},
+		},
 
 			provider_options = {
 				openai_fim_compatible = {

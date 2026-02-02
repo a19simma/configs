@@ -1,7 +1,7 @@
 ---
 description: Primary development agent for implementing features and fixing bugs
 mode: subagent
-model: openai/gpt-5.2
+model: google/antigravity-claude-sonnet-4-5-thinking
 temperature: 0.3
 tools:
   read: true

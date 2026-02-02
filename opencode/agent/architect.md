@@ -1,7 +1,7 @@
 ---
 description: Creates detailed implementation plans and architectural designs
 mode: subagent
-model: openai/gpt-5.2
+model: google/antigravity-claude-sonnet-4-5-thinking
 temperature: 0.2
 tools:
   read: true

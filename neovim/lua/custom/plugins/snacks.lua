@@ -112,6 +112,7 @@ return {
     -- Notifications
     { '<leader>un', function() Snacks.notifier.hide() end, desc = 'Dismiss all notifications' },
     { '<leader>nh', function() Snacks.notifier.show_history() end, desc = 'Notification history' },
+    { '<leader>sm', function() Snacks.picker.messages() end, desc = 'Message history' },
 
     -- Zen mode
     { '<leader>z',  function() Snacks.zen() end, desc = 'Toggle Zen Mode' },

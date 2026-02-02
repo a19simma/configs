@@ -1,41 +1,6 @@
 -- Enhanced diagnostic viewing configuration
 return {
   {
-    'nvim-telescope/telescope.nvim',
-    keys = {
-      -- Fuzzy search Neovim messages
-      {
-        '<leader>sm',
-        function()
-          -- Get all messages
-          local messages = vim.split(vim.fn.execute 'messages', '\n')
-
-          -- Use Telescope to fuzzy search messages
-          require('telescope.pickers').new({}, {
-            prompt_title = 'Neovim Messages',
-            finder = require('telescope.finders').new_table {
-              results = messages,
-            },
-            sorter = require('telescope.config').values.generic_sorter {},
-            previewer = false,
-            attach_mappings = function(_, map)
-              -- Copy selected message on <C-y>
-              map('i', '<C-y>', function(prompt_bufnr)
-                local selection = require('telescope.actions.state').get_selected_entry()
-                require('telescope.actions').close(prompt_bufnr)
-                vim.fn.setreg('+', selection.value)
-                vim.notify('Message copied to clipboard', vim.log.levels.INFO)
-              end)
-              return true
-            end,
-          }):find()
-        end,
-        desc = '[S]earch [M]essages',
-      },
-    },
-  },
-
-  {
     'neovim/nvim-lspconfig',
     config = function()
       -- Show full diagnostic on current line in floating window (press gl)

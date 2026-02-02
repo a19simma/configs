@@ -1,7 +1,7 @@
 ---
 description: Research specialist for web and codebase exploration
 mode: subagent
-model: openai/gpt-5.1-codex-mini
+model: google/antigravity-claude-sonnet-4-5-thinking
 temperature: 0.1
 tools:
   read: true

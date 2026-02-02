@@ -1,16 +1,47 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-antigravity-auth@beta"],
+  "plugin": ["opencode-antigravity-auth@latest"],
   "provider": {
     "google": {
       "models": {
-        "antigravity-claude-sonnet-4-5-thinking": {
-          "name": "Claude Sonnet 4.5 Thinking",
+        "antigravity-gemini-3-pro": {
+          "name": "Gemini 3 Pro (Antigravity)",
+          "limit": { "context": 1048576, "output": 65535 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] },
+          "variants": {
+            "low": { "thinkingLevel": "low" },
+            "high": { "thinkingLevel": "high" }
+          }
+        },
+        "antigravity-gemini-3-flash": {
+          "name": "Gemini 3 Flash (Antigravity)",
+          "limit": { "context": 1048576, "output": 65536 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] },
+          "variants": {
+            "minimal": { "thinkingLevel": "minimal" },
+            "low": { "thinkingLevel": "low" },
+            "medium": { "thinkingLevel": "medium" },
+            "high": { "thinkingLevel": "high" }
+          }
+        },
+        "antigravity-claude-sonnet-4-5": {
+          "name": "Claude Sonnet 4.5 (Antigravity)",
           "limit": { "context": 200000, "output": 64000 },
-          "modalities": {
-            "input": ["text", "image", "pdf"],
-            "output": ["text"]
-          },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "antigravity-claude-sonnet-4-5-thinking": {
+          "name": "Claude Sonnet 4.5 Thinking (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] },
+          "variants": {
+            "low": { "thinkingConfig": { "thinkingBudget": 8192 } },
+            "max": { "thinkingConfig": { "thinkingBudget": 32768 } }
+          }
+        },
+        "antigravity-claude-opus-4-5-thinking": {
+          "name": "Claude Opus 4.5 Thinking (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] },
           "variants": {
             "low": { "thinkingConfig": { "thinkingBudget": 8192 } },
             "max": { "thinkingConfig": { "thinkingBudget": 32768 } }
@@ -89,7 +120,7 @@
   "agent": {
     "coder": {
       "mode": "subagent",
-      "model": "openai/gpt-5.1-codex",
+      "model": "google/antigravity-claude-sonnet-4-5-thinking",
       "description": "Implementation subagent for writing code and fixes",
       "temperature": 0.3,
       "tools": {
@@ -98,7 +129,7 @@
     },
     "build": {
       "mode": "primary",
-      "model": "openai/gpt-5.2",
+      "model": "google/antigravity-claude-sonnet-4-5-thinking",
       "description": "Primary build agent (can edit/write by default)",
       "temperature": 0.2,
       "tools": {
@@ -116,7 +147,7 @@
     },
     "research": {
       "mode": "primary",
-      "model": "openai/gpt-5.1-codex-mini",
+      "model": "google/antigravity-gemini-3-flash",
       "description": "Primary research agent (copy of researcher)",
       "temperature": 0.1,
       "tools": {
@@ -125,16 +156,17 @@
     },
     "tutor": {
       "mode": "primary",
-      "model": "openai/gpt-4o",
+      "model": "google/antigravity-gemini-3-pro",
       "description": "Primary tutoring agent for explanations and guidance",
       "temperature": 0.4,
+      "system_prompt": "You are a concise tutor. Give brief, clear explanations. Use bullet points. Avoid verbosity. Get to the point quickly.",
       "tools": {
         "context7_*": true
       }
     },
     "auto": {
       "mode": "primary",
-      "model": "openai/gpt-5.2",
+      "model": "google/antigravity-claude-sonnet-4-5-thinking",
       "description": "Primary autonomous agent (all permissions enabled)",
       "temperature": 0.3,
       "tools": {
@@ -167,7 +199,7 @@
     },
     "researcher": {
       "mode": "subagent",
-      "model": "openai/gpt-5.1-codex-mini",
+      "model": "google/antigravity-gemini-3-flash",
       "description": "Research specialist for web/filesystem exploration",
       "temperature": 0.1,
       "system_prompt": "You are a research specialist. Use context7 first, cite sources, and gather information without editing files.",

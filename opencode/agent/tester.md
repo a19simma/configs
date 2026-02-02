@@ -1,7 +1,7 @@
 ---
 description: Runs tests, verifies functionality, and ensures proper test coverage for new features
 mode: subagent
-model: openai/gpt-5.1-codex-mini
+model: google/antigravity-claude-sonnet-4-5-thinking
 temperature: 0.2
 tools:
   read: true

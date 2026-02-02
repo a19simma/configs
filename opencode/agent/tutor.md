@@ -1,7 +1,7 @@
 ---
 description: Primary tutoring agent for explanations and guidance
 mode: primary
-model: openai/gpt-5.2
+model: google/antigravity-claude-sonnet-4-5-thinking
 temperature: 0.4
 tools:
   read: true
