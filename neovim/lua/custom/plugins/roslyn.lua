@@ -38,9 +38,9 @@ return {
 			-- Setup the plugin
 			require("roslyn").setup(opts)
 
-			-- Configure LSP settings using vim.lsp.config as a FUNCTION
-			vim.lsp.config("roslyn", {
-				on_attach = function(client, bufnr)
+		-- Configure LSP settings using vim.lsp.config as a FUNCTION
+		vim.lsp.config("roslyn", {
+			on_attach = function(client, bufnr)
 					-- Set up LSP keymaps (same as other LSP servers)
 					local snacks = require("snacks")
 					local map = function(keys, func, desc, mode)
@@ -71,8 +71,13 @@ return {
 						snacks.picker.lsp_type_definitions()
 					end, "[G]oto [T]ype Definition")
 				end,
-				settings = {
-					-- Enable inlay hints for better type visibility
+			settings = {
+				-- Enable formatting (respects .editorconfig)
+				["csharp|formatting"] = {
+					dotnet_organize_imports_on_format = true,
+					dotnet_sort_system_directives_first = true,
+				},
+				-- Enable inlay hints for better type visibility
 					["csharp|inlay_hints"] = {
 						csharp_enable_inlay_hints_for_implicit_object_creation = true,
 						csharp_enable_inlay_hints_for_implicit_variable_types = true,
