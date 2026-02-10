@@ -35,6 +35,10 @@ let mise_path = $nu.default-config-dir | path join mise.nu
 # WSL Clipboard integration
 $env.DISPLAY = ":0"
 
+# .NET HTTPS Development Certificate
+$env.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt"
+$env.SSL_CERT_DIR = "/etc/ssl/certs"
+
 # SSH Agent setup (from https://www.nushell.sh/cookbook/ssh_agent.html)
 # This prevents starting multiple ssh-agent processes
 do --env {
@@ -60,4 +64,14 @@ do --env {
         | into record
     load-env $ssh_agent_env
     $ssh_agent_env | save --force $ssh_agent_file
+}
+
+# Load WSL-specific configuration if running in WSL
+if ("/proc/version" | path exists) {
+    let proc_version = (open /proc/version)
+    if ($proc_version | str contains "WSL") or ($proc_version | str contains "microsoft") {
+        try {
+            source wsl-env.nu
+        }
+    }
 }

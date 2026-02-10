@@ -73,16 +73,62 @@ return {
 					cwd = "${workspaceFolder}",
 					sourceMaps = true,
 				},
-				-- Client-side: Launch Chrome (minimal config)
-				{
-					type = "pwa-chrome",
-					request = "launch",
-					name = "Launch Chrome",
-					url = "http://localhost:5173",
-					webRoot = function()
-						return vim.fn.getcwd()
-					end,
+			-- Client-side: Launch Chrome (minimal config)
+			{
+				type = "pwa-chrome",
+				request = "launch",
+				name = "Launch Chrome",
+				url = "http://localhost:5173",
+				webRoot = function()
+					return vim.fn.getcwd()
+				end,
+			},
+			-- WSL: Launch Chrome helper (runs script then attaches)
+			{
+				type = "pwa-chrome",
+				request = "attach",
+				name = "Launch Chrome (WSL)",
+				port = 9222,
+				webRoot = function()
+					return vim.fn.getcwd()
+				end,
+				sourceMaps = true,
+				-- Source map path overrides for common build tools
+				sourceMapPathOverrides = {
+					["webpack:///./*"] = "${webRoot}/*",
+					["webpack://?:*/*"] = "${webRoot}/*",
+					["webpack:///*"] = "*",
+					["webpack:///./~/*"] = "${webRoot}/node_modules/*",
+					["meteor://💻app/*"] = "${webRoot}/*",
 				},
+				-- This will be triggered by a custom command
+				-- Use :DapLaunchChrome instead of selecting this directly
+			},
+			-- WSL: Attach to Chrome running in Windows
+			-- Instructions:
+			--   1. From Windows PowerShell: .\Start-ChromeDebug.ps1
+			--      (Script located at: \\wsl$\Ubuntu\home\simon\repos\configs\wsl-scripts\Start-ChromeDebug.ps1)
+			--   2. Or manually run: 
+			--      & "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug" http://localhost:5173
+			--   3. Then use this attach configuration
+			{
+				type = "pwa-chrome",
+				request = "attach",
+				name = "Attach to Chrome (WSL)",
+				port = 9222,
+				webRoot = function()
+					return vim.fn.getcwd()
+				end,
+				sourceMaps = true,
+				-- Source map path overrides for common build tools
+				sourceMapPathOverrides = {
+					["webpack:///./*"] = "${webRoot}/*",
+					["webpack://?:*/*"] = "${webRoot}/*",
+					["webpack:///*"] = "*",
+					["webpack:///./~/*"] = "${webRoot}/node_modules/*",
+					["meteor://💻app/*"] = "${webRoot}/*",
+				},
+			},
 			}
 		end
 
@@ -106,6 +152,42 @@ return {
 			-- Highlight groups
 			vim.api.nvim_set_hl(0, "DapBreakpoint", { fg = "#e51400" })
 			vim.api.nvim_set_hl(0, "DapStopped", { fg = "#98c379" })
+
+			-- Custom command: Launch Chrome and attach (WSL)
+			vim.api.nvim_create_user_command("DapLaunchChrome", function()
+				-- Kill existing Chrome
+				print("Stopping existing Chrome instances...")
+				vim.fn.system('powershell.exe -Command "Stop-Process -Name chrome -Force -ErrorAction SilentlyContinue"')
+				vim.wait(500)
+				
+				-- Launch Chrome with debugging
+				print("Launching Chrome with debugging on port 9222...")
+				vim.fn.jobstart(
+					'powershell.exe -Command "& \\"C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\\" --remote-debugging-port=9222 --user-data-dir=\\"C:\\\\temp\\\\chrome-debug\\" --no-first-run --no-default-browser-check http://localhost:5173"',
+					{ detach = true }
+				)
+				
+				-- Wait for Chrome to start
+				print("Waiting for Chrome to start...")
+				vim.wait(3000)
+				
+				-- Verify debug server is ready
+				local result = vim.fn.system('curl -s http://localhost:9222/json/version')
+				if result:match("Browser") then
+					print("✓ Chrome debug server ready! Starting DAP...")
+					-- Find and run the "Attach to Chrome (WSL)" configuration
+					local configs = dap.configurations[vim.bo.filetype] or {}
+					for _, config in ipairs(configs) do
+						if config.name == "Attach to Chrome (WSL)" then
+							dap.run(config)
+							return
+						end
+					end
+					print("Error: Could not find 'Attach to Chrome (WSL)' configuration")
+				else
+					print("✗ Chrome debug server not responding. Try manually: :DapLaunchChrome")
+				end
+			end, {desc = "Launch Chrome with debugging and attach DAP (WSL)"})
 		end,
 	},
 

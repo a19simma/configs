@@ -1,0 +1,10 @@
+#!/bin/bash
+# Launch Chrome with remote debugging enabled for WSL access
+"/mnt/c/Program Files/Google/Chrome/Application/chrome.exe" \
+  --remote-debugging-address=0.0.0.0 \
+  --remote-debugging-port=9222 \
+  --user-data-dir="C:\\temp\\chrome-debug-profile" \
+  --no-first-run \
+  --no-default-browser-check \
+  --disable-extensions \
+  "$@"

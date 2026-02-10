@@ -55,6 +55,20 @@ if $nu.os-info.name == "windows" {
     }
 }
 
+# Load WSL-specific configuration
+if $nu.os-info.name == "linux" {
+    if ("/proc/version" | path exists) {
+        let proc_version = (open /proc/version)
+        if ($proc_version | str contains "WSL") or ($proc_version | str contains "microsoft") {
+            try {
+                source wsl-config.nu
+            } catch { |e|
+                print $"Warning: Failed to load wsl-config.nu: ($e)"
+            }
+        }
+    }
+}
+
 # Custom Commands
 
 # Pull and run the qwen2.5-coder model in Ollama
