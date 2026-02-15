@@ -49,6 +49,50 @@ return {
 			}
 		end
 
+		-- Python adapter configuration
+		dap.adapters.python = function(cb, config)
+			if config.request == "launch" then
+				local port = 5678
+				local host = "127.0.0.1"
+				cb({
+					type = "server",
+					port = port,
+					host = host,
+					executable = {
+						command = "python",
+						args = { "-m", "debugpy.adapter" },
+					},
+				})
+			else
+				cb({
+					type = "executable",
+					command = "python",
+					args = { "-m", "debugpy.adapter" },
+				})
+			end
+		end
+
+		-- Python debug configurations
+		dap.configurations.python = {
+			{
+				type = "python",
+				request = "launch",
+				name = "Launch file",
+				program = "${file}",
+				pythonPath = function()
+					-- Automatically detect virtualenv
+					local cwd = vim.fn.getcwd()
+					if vim.fn.executable(cwd .. "/venv/bin/python") == 1 then
+						return cwd .. "/venv/bin/python"
+					elseif vim.fn.executable(cwd .. "/.venv/bin/python") == 1 then
+						return cwd .. "/.venv/bin/python"
+					else
+						return "python"
+					end
+				end,
+			},
+		}
+
 		-- Configure debug configurations for JavaScript/TypeScript/Svelte
 		local js_based_languages = { "typescript", "javascript", "svelte" }
 
@@ -198,6 +242,7 @@ return {
 			opts.ensure_installed = opts.ensure_installed or {}
 			vim.list_extend(opts.ensure_installed, {
 				"js-debug-adapter",
+				"debugpy",
 			})
 			return opts
 		end,

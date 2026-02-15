@@ -22,10 +22,13 @@ stow-deploy:
     stow -t ~/.config/nushell nushell --adopt
     stow -t ~/.config/wezterm wezterm
     stow -t ~/.config/opencode opencode
-    stow -t ~/.claude claude
     stow -t ~/.gemini gemini
     stow -t ~ shell
     stow -t ~ tmux
+    @echo "Setting up Claude Code symlinks to OpenCode configs..."
+    @ln -sf .config/opencode/AGENTS.md ~/.claude/CLAUDE.md
+    @ln -sf .config/opencode/agents ~/.claude/agents
+    @ln -sf .config/opencode/commands ~/.claude/commands
     @echo "✅ Dotfiles deployed successfully"
 
 # Remove dotfiles using GNU Stow
@@ -37,10 +40,11 @@ stow-remove:
     stow -t ~/.config/nushell -D nushell
     stow -t ~/.config/wezterm -D wezterm
     stow -t ~/.config/opencode -D opencode
-    stow -t ~/.claude -D claude
     stow -t ~/.gemini -D gemini
     stow -t ~ -D shell
     stow -t ~ -D tmux
+    @echo "Removing Claude Code symlinks..."
+    @rm -f ~/.claude/CLAUDE.md ~/.claude/agents ~/.claude/commands
     @echo "✅ Dotfiles removed successfully"
 
 # Setup Claude Code MCP servers
@@ -72,8 +76,9 @@ fix-symlinks:
     @if [ -L ~/.config/Code ]; then rm ~/.config/Code; fi
     @if [ -L ~/.config/wezterm ]; then rm ~/.config/wezterm; fi
     @if [ -L ~/.config/opencode ]; then rm ~/.config/opencode; fi
-    @if [ -L ~/.config/claude ]; then rm ~/.config/claude; fi
-    @if [ -L ~/.claude ]; then rm -rf ~/.claude; fi
+    @if [ -L ~/.claude/CLAUDE.md ]; then rm ~/.claude/CLAUDE.md; fi
+    @if [ -L ~/.claude/agents ]; then rm ~/.claude/agents; fi
+    @if [ -L ~/.claude/commands ]; then rm ~/.claude/commands; fi
     @if [ -L ~/.gemini ]; then rm -rf ~/.gemini; fi
     @if [ -L ~/.zshrc ]; then rm ~/.zshrc; fi
     @if [ -L ~/.bashrc ]; then rm ~/.bashrc; fi
@@ -88,8 +93,9 @@ fix-symlinks:
     @if [ -d ~/.config/Code ] && [ ! -L ~/.config/Code ]; then mv ~/.config/Code ~/.config/Code.backup; fi
     @if [ -d ~/.config/wezterm ] && [ ! -L ~/.config/wezterm ]; then mv ~/.config/wezterm ~/.config/wezterm.backup; fi
     @if [ -d ~/.config/opencode ] && [ ! -L ~/.config/opencode ]; then mv ~/.config/opencode ~/.config/opencode.backup; fi
-    @if [ -d ~/.config/claude ] && [ ! -L ~/.config/claude ]; then mv ~/.config/claude ~/.config/claude.backup; fi
-    @if [ -d ~/.claude ] && [ ! -L ~/.claude ]; then mv ~/.claude ~/.claude.backup; fi
+    @if [ -f ~/.claude/CLAUDE.md ] && [ ! -L ~/.claude/CLAUDE.md ]; then mv ~/.claude/CLAUDE.md ~/.claude/CLAUDE.md.backup; fi
+    @if [ -d ~/.claude/agents ] && [ ! -L ~/.claude/agents ]; then mv ~/.claude/agents ~/.claude/agents.backup; fi
+    @if [ -d ~/.claude/commands ] && [ ! -L ~/.claude/commands ]; then mv ~/.claude/commands ~/.claude/commands.backup; fi
     @if [ -d ~/.gemini ] && [ ! -L ~/.gemini ]; then mv ~/.gemini ~/.gemini.backup; fi
     # Deploy with stow
     @echo "Deploying with stow..."
@@ -99,10 +105,13 @@ fix-symlinks:
     stow -t ~/.config/nushell nushell
     stow -t ~/.config/wezterm wezterm
     stow -t ~/.config/opencode opencode
-    stow -t ~/.claude claude
     stow -t ~/.gemini gemini
     stow -t ~ shell
     stow -t ~ tmux
+    @echo "Setting up Claude Code symlinks to OpenCode configs..."
+    @ln -sf .config/opencode/AGENTS.md ~/.claude/CLAUDE.md
+    @ln -sf .config/opencode/agents ~/.claude/agents
+    @ln -sf .config/opencode/commands ~/.claude/commands
     @echo "✅ Symlinks fixed and dotfiles deployed"
 
 # Deploy configs on Windows (PowerShell/cmd)
@@ -140,7 +149,7 @@ deploy-windows:
         "$env:USERPROFILE\.wezterm.lua" = "$(Get-Location)\wezterm\wezterm.lua"
         "$env:APPDATA\nushell" = "$(Get-Location)\nushell"
         "$env:USERPROFILE\.config\Code" = "$(Get-Location)\vscode"
-        "$env:USERPROFILE\.config\claude" = "$(Get-Location)\claude"
+        "$env:USERPROFILE\.config\opencode" = "$(Get-Location)\opencode"
         "$env:USERPROFILE\komorebi.json" = "$(Get-Location)\komorebi\komorebi.json"
         "$env:USERPROFILE\komorebi.bar.json" = "$(Get-Location)\komorebi\komorebi.bar.json"
         "$env:USERPROFILE\.config\whkdrc" = "$(Get-Location)\komorebi\.config\whkdrc"
@@ -230,9 +239,20 @@ remove-windows:
         Remove-Item -Path "$env:USERPROFILE\.config\Code" -Force -Recurse
     }
 
-    # Remove claude config
-    if (Test-Path -Path "$env:USERPROFILE\.config\claude") {
-        Remove-Item -Path "$env:USERPROFILE\.config\claude" -Force -Recurse
+    # Remove opencode config
+    if (Test-Path -Path "$env:USERPROFILE\.config\opencode") {
+        Remove-Item -Path "$env:USERPROFILE\.config\opencode" -Force -Recurse
+    }
+
+    # Remove Claude Code symlinks to OpenCode
+    if (Test-Path -Path "$env:USERPROFILE\.claude\CLAUDE.md") {
+        Remove-Item -Path "$env:USERPROFILE\.claude\CLAUDE.md" -Force
+    }
+    if (Test-Path -Path "$env:USERPROFILE\.claude\agents") {
+        Remove-Item -Path "$env:USERPROFILE\.claude\agents" -Force -Recurse
+    }
+    if (Test-Path -Path "$env:USERPROFILE\.claude\commands") {
+        Remove-Item -Path "$env:USERPROFILE\.claude\commands" -Force -Recurse
     }
 
     # Remove komorebi configs

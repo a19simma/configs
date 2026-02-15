@@ -1,0 +1,7 @@
+# Default stow ignores
+\.git
+\.gitignore
+\.stow-local-ignore
+
+# Sensitive files
+antigravity\.json

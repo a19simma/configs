@@ -237,22 +237,28 @@ return {
 			}
 			vim.lsp.enable({ "rust_analyzer" })
 
-			-- Python Language Server Configuration
-			vim.lsp.config.pyright = {
+			-- Python Language Server Configuration (Basedpyright + Ruff)
+			vim.lsp.config.basedpyright = {
 				capabilities = capabilities,
 				on_attach = on_attach,
 				settings = {
-					python = {
+					basedpyright = {
 						analysis = {
 							autoSearchPaths = true,
 							useLibraryCodeForTypes = true,
-							diagnosticMode = "workspace",
+							diagnosticMode = "openFilesOnly",
 							typeCheckingMode = "basic",
 						},
 					},
 				},
 			}
-			vim.lsp.enable({ "pyright" })
+			vim.lsp.enable({ "basedpyright" })
+
+			vim.lsp.config.ruff = {
+				capabilities = capabilities,
+				on_attach = on_attach,
+			}
+			vim.lsp.enable({ "ruff" })
 
 			-- C/C++ Language Server Configuration
 			vim.lsp.config.clangd = {
@@ -409,9 +415,10 @@ return {
 				"typescript-language-server", -- ts_ls
 				"svelte-language-server", -- svelte
 				"gopls", -- Go
-			"rust-analyzer", -- Rust
-			"pyright", -- Python
-			"clangd", -- C/C++
+				"rust-analyzer", -- Rust
+				"basedpyright", -- Python (better than pyright)
+				"ruff", -- Python linter/formatter
+				"clangd", -- C/C++
 			"yaml-language-server", -- yamlls
 				"helm-ls", -- Helm language server
 				"marksman", -- Markdown LSP
