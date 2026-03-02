@@ -26,9 +26,9 @@ stow-deploy:
     stow -t ~ shell
     stow -t ~ tmux
     @echo "Setting up Claude Code symlinks to OpenCode configs..."
-    @ln -sf .config/opencode/AGENTS.md ~/.claude/CLAUDE.md
-    @ln -sf .config/opencode/agents ~/.claude/agents
-    @ln -sf .config/opencode/commands ~/.claude/commands
+    @ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
+    @ln -sf ~/.config/opencode/commands ~/.claude/commands
+    @ln -sf ~/.config/opencode/skills ~/.claude/skills
     @echo "✅ Dotfiles deployed successfully"
 
 # Remove dotfiles using GNU Stow

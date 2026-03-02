@@ -1,7 +1,7 @@
 ---
 description: Research specialist for web and codebase exploration
 mode: subagent
-model: google/antigravity-claude-sonnet-4-5-thinking
+model: google/antigravity-gemini-3-flash
 temperature: 0.1
 tools:
   read: true

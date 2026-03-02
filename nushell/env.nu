@@ -63,6 +63,18 @@ def --env gwt [] {
     }
 }
 
+# Fix a bare repo missing the fetch refspec for origin
+def git-fix-bare [] {
+    let refspec = "+refs/heads/*:refs/remotes/origin/*"
+    let current = (git config --get remote.origin.fetch | complete)
+    if $current.exit_code == 0 {
+        print $"fetch refspec already set: ($current.stdout | str trim)"
+    } else {
+        git config remote.origin.fetch $refspec
+        print $"Added fetch refspec: ($refspec)"
+    }
+}
+
 # Tmux session management
 def ta [] {
     let sessions = (tmux list-sessions -F "#{session_name}" | lines)
