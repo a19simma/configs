@@ -1,15 +1,14 @@
 -- Tree-sitter configuration
--- This overrides the treesitter config in init.lua
+-- Requires Neovim 0.11.0+ and the main branch of nvim-treesitter
+-- Features (highlight, fold, indent) are no longer configured via setup opts;
+-- they are enabled per-filetype via autocommands per the new API.
 return {
 	{
 		"nvim-treesitter/nvim-treesitter",
-		version = false,
-		build = function()
-			require("nvim-treesitter.install").update({ with_sync = true })
-		end,
-		opts = {
-			-- Ensure these parsers are installed
-			ensure_installed = {
+		lazy = false,
+		build = ":TSUpdate",
+		config = function()
+			require("nvim-treesitter").install({
 				"bash",
 				"c",
 				"cpp",
@@ -30,30 +29,40 @@ return {
 				"vim",
 				"vimdoc",
 				"yaml",
-			},
-			-- Don't auto-install parsers (install explicitly via :TSInstall)
-			auto_install = false,
-			highlight = {
-				enable = true,
-				additional_vim_regex_highlighting = false,
-			},
-			indent = {
-				enable = true,
-				disable = { "ruby" },
-			},
-			-- Incremental selection based on the named nodes from the grammar
-			incremental_selection = {
-				enable = true,
-				keymaps = {
-					init_selection = "<C-n>",
-					node_incremental = "<C-n>",
-					scope_incremental = "<C-s>",
-					node_decremental = "<C-m>",
-				},
-			},
-		},
-		config = function(_, opts)
-			require("nvim-treesitter.configs").setup(opts)
+			})
+
+			-- Enable highlighting, folding, and indentation for all filetypes
+			-- that have a treesitter parser installed.
+			vim.api.nvim_create_autocmd("FileType", {
+				callback = function(ev)
+					local ok = pcall(vim.treesitter.start)
+					if not ok then
+						return
+					end
+					-- Treesitter-based folding
+					vim.wo[0][0].foldmethod = "expr"
+					vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
+					-- Treesitter-based indentation (experimental)
+					vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+				end,
+			})
 		end,
 	},
+
+	-- Incremental selection (removed from nvim-treesitter main branch)
+	-- {
+	-- 	"daliusd/incr.nvim",
+	-- 	config = function()
+	-- 		require("incr").setup({})
+	-- 		vim.keymap.set("n", "<C-n>", function()
+	-- 			require("incr").init_selection()
+	-- 		end, { desc = "Treesitter: start selection" })
+	-- 		vim.keymap.set("v", "<C-n>", function()
+	-- 			require("incr").node_incremental()
+	-- 		end, { desc = "Treesitter: expand selection" })
+	-- 		vim.keymap.set("v", "<C-m>", function()
+	-- 			require("incr").node_decremental()
+	-- 		end, { desc = "Treesitter: shrink selection" })
+	-- 	end,
+	-- },
 }

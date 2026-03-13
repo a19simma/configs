@@ -9,24 +9,87 @@ return {
 			"nvim-neotest/nvim-nio",
 		},
 		keys = {
-			{ "<leader>db", function() require("dap").toggle_breakpoint() end, desc = "Toggle [B]reakpoint" },
-			{ "<leader>dB", function() require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, desc = "Conditional [B]reakpoint" },
-			{ 
-				"<leader>dc", 
+			{
+				"<leader>db",
 				function()
-					if vim.bo.filetype:match("^dapui_") then return end
-					require("dap").continue()
-				end, 
-				desc = "Debug: [C]ontinue" 
+					require("dap").toggle_breakpoint()
+				end,
+				desc = "Toggle [B]reakpoint",
 			},
-			{ "<leader>di", function() require("dap").step_into() end, desc = "Debug: Step [I]nto" },
-			{ "<leader>do", function() require("dap").step_over() end, desc = "Debug: Step [O]ver" },
-			{ "<leader>dO", function() require("dap").step_out() end, desc = "Debug: Step [O]ut" },
-			{ "<leader>dr", function() require("dap").repl.toggle() end, desc = "Toggle Debug [R]EPL" },
-			{ "<leader>dl", function() require("dap").run_last() end, desc = "Debug: Run [L]ast" },
-			{ "<leader>du", function() require("dapui").toggle() end, desc = "Toggle Debug [U]I" },
-			{ "<leader>dt", function() require("dap").terminate() end, desc = "[T]erminate Debug Session" },
-			{ "<leader>dh", function() require("dap.ui.widgets").hover() end, desc = "Debug: [H]over Variables", mode = { "n", "v" } },
+			{
+				"<leader>dB",
+				function()
+					require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))
+				end,
+				desc = "Conditional [B]reakpoint",
+			},
+			{
+				"<leader>dc",
+				function()
+					if vim.bo.filetype:match("^dapui_") then
+						return
+					end
+					require("dap").continue()
+				end,
+				desc = "Debug: [C]ontinue",
+			},
+			{
+				"<leader>di",
+				function()
+					require("dap").step_into()
+				end,
+				desc = "Debug: Step [I]nto",
+			},
+			{
+				"<leader>do",
+				function()
+					require("dap").step_over()
+				end,
+				desc = "Debug: Step [O]ver",
+			},
+			{
+				"<leader>dO",
+				function()
+					require("dap").step_out()
+				end,
+				desc = "Debug: Step [O]ut",
+			},
+			{
+				"<leader>dr",
+				function()
+					require("dap").repl.toggle()
+				end,
+				desc = "Toggle Debug [R]EPL",
+			},
+			{
+				"<leader>dl",
+				function()
+					require("dap").run_last()
+				end,
+				desc = "Debug: Run [L]ast",
+			},
+			{
+				"<leader>du",
+				function()
+					require("dapui").toggle()
+				end,
+				desc = "Toggle Debug [U]I",
+			},
+			{
+				"<leader>dt",
+				function()
+					require("dap").terminate()
+				end,
+				desc = "[T]erminate Debug Session",
+			},
+			{
+				"<leader>dh",
+				function()
+					require("dap.ui.widgets").hover()
+				end,
+				desc = "Debug: [H]over Variables",
+				mode = { "n", "v" },
+			},
 		},
 		config = function()
 			local dap = require("dap")
@@ -35,146 +98,164 @@ return {
 			-- Setup DAP UI
 			dapui.setup()
 
-		-- Setup adapters using js-debug-adapter from Mason
-		-- Note: Mason's js-debug-adapter uses DAP debug server, not VSCode debug server
-		for _, adapter in pairs({ "pwa-node", "pwa-chrome" }) do
-			dap.adapters[adapter] = {
-				type = "server",
-				host = "localhost",
-				port = "${port}",
-				executable = {
-					command = "js-debug-adapter",
-					args = { "${port}" },
-				},
-			}
-		end
-
-		-- Python adapter configuration
-		dap.adapters.python = function(cb, config)
-			if config.request == "launch" then
-				local port = 5678
-				local host = "127.0.0.1"
-				cb({
+			-- Setup adapters using js-debug-adapter from Mason
+			-- Note: Mason's js-debug-adapter uses DAP debug server, not VSCode debug server
+			for _, adapter in pairs({ "pwa-node", "pwa-chrome" }) do
+				dap.adapters[adapter] = {
 					type = "server",
-					port = port,
-					host = host,
+					host = "localhost",
+					port = "${port}",
 					executable = {
+						command = "js-debug-adapter",
+						args = { "${port}" },
+					},
+				}
+			end
+
+			-- Python adapter configuration
+			dap.adapters.python = function(cb, config)
+				if config.request == "launch" then
+					local port = 5678
+					local host = "127.0.0.1"
+					cb({
+						type = "server",
+						port = port,
+						host = host,
+						executable = {
+							command = "python",
+							args = { "-m", "debugpy.adapter" },
+						},
+					})
+				else
+					cb({
+						type = "executable",
 						command = "python",
 						args = { "-m", "debugpy.adapter" },
-					},
-				})
-			else
-				cb({
-					type = "executable",
-					command = "python",
-					args = { "-m", "debugpy.adapter" },
-				})
+					})
+				end
 			end
-		end
 
-		-- Python debug configurations
-		dap.configurations.python = {
-			{
-				type = "python",
-				request = "launch",
-				name = "Launch file",
-				program = "${file}",
-				pythonPath = function()
-					-- Automatically detect virtualenv
-					local cwd = vim.fn.getcwd()
-					if vim.fn.executable(cwd .. "/venv/bin/python") == 1 then
-						return cwd .. "/venv/bin/python"
-					elseif vim.fn.executable(cwd .. "/.venv/bin/python") == 1 then
-						return cwd .. "/.venv/bin/python"
-					else
-						return "python"
-					end
-				end,
-			},
-		}
-
-		-- Configure debug configurations for JavaScript/TypeScript/Svelte
-		local js_based_languages = { "typescript", "javascript", "svelte" }
-
-		for _, language in ipairs(js_based_languages) do
-			dap.configurations[language] = {
-				-- Server-side: Attach to running Node process
+			-- Python debug configurations
+			dap.configurations.python = {
 				{
-					type = "pwa-node",
-					request = "attach",
-					name = "Attach to Node Process",
-					processId = require("dap.utils").pick_process,
-					cwd = "${workspaceFolder}",
-					sourceMaps = true,
-					skipFiles = { "<node_internals>/**" },
-				},
-				-- Server-side: Launch a single file
-				{
-					type = "pwa-node",
+					type = "python",
 					request = "launch",
 					name = "Launch file",
 					program = "${file}",
-					cwd = "${workspaceFolder}",
-					sourceMaps = true,
+					pythonPath = function()
+						-- Automatically detect virtualenv
+						local cwd = vim.fn.getcwd()
+						if vim.fn.executable(cwd .. "/venv/bin/python") == 1 then
+							return cwd .. "/venv/bin/python"
+						elseif vim.fn.executable(cwd .. "/.venv/bin/python") == 1 then
+							return cwd .. "/.venv/bin/python"
+						else
+							return "python"
+						end
+					end,
 				},
-			-- Client-side: Launch Chrome (minimal config)
-			{
-				type = "pwa-chrome",
-				request = "launch",
-				name = "Launch Chrome",
-				url = "http://localhost:5173",
-				webRoot = function()
-					return vim.fn.getcwd()
-				end,
-			},
-			-- WSL: Launch Chrome helper (runs script then attaches)
-			{
-				type = "pwa-chrome",
-				request = "attach",
-				name = "Launch Chrome (WSL)",
-				port = 9222,
-				webRoot = function()
-					return vim.fn.getcwd()
-				end,
-				sourceMaps = true,
-				-- Source map path overrides for common build tools
-				sourceMapPathOverrides = {
-					["webpack:///./*"] = "${webRoot}/*",
-					["webpack://?:*/*"] = "${webRoot}/*",
-					["webpack:///*"] = "*",
-					["webpack:///./~/*"] = "${webRoot}/node_modules/*",
-					["meteor://💻app/*"] = "${webRoot}/*",
-				},
-				-- This will be triggered by a custom command
-				-- Use :DapLaunchChrome instead of selecting this directly
-			},
-			-- WSL: Attach to Chrome running in Windows
-			-- Instructions:
-			--   1. From Windows PowerShell: .\Start-ChromeDebug.ps1
-			--      (Script located at: \\wsl$\Ubuntu\home\simon\repos\configs\wsl-scripts\Start-ChromeDebug.ps1)
-			--   2. Or manually run: 
-			--      & "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug" http://localhost:5173
-			--   3. Then use this attach configuration
-			{
-				type = "pwa-chrome",
-				request = "attach",
-				name = "Attach to Chrome (WSL)",
-				port = 9222,
-				webRoot = function()
-					return vim.fn.getcwd()
-				end,
-				sourceMaps = true,
-				-- Source map path overrides for common build tools
-				sourceMapPathOverrides = {
-					["webpack:///./*"] = "${webRoot}/*",
-					["webpack://?:*/*"] = "${webRoot}/*",
-					["webpack:///*"] = "*",
-					["webpack:///./~/*"] = "${webRoot}/node_modules/*",
-					["meteor://💻app/*"] = "${webRoot}/*",
-				},
-			},
 			}
-		end
+
+			-- Configure debug configurations for JavaScript/TypeScript/Svelte
+			local js_based_languages = { "typescript", "javascript", "svelte" }
+
+			for _, language in ipairs(js_based_languages) do
+				dap.configurations[language] = {
+					-- Server-side: Attach to running Node process
+					{
+						type = "pwa-node",
+						request = "attach",
+						name = "Attach to Node Process",
+						processId = require("dap.utils").pick_process,
+						cwd = "${workspaceFolder}",
+						sourceMaps = true,
+						skipFiles = { "<node_internals>/**" },
+					},
+					-- Server-side: Launch a single file
+					{
+						type = "pwa-node",
+						request = "launch",
+						name = "Launch file",
+						program = "${file}",
+						cwd = "${workspaceFolder}",
+						sourceMaps = true,
+					},
+					-- Client-side: Launch Chrome (minimal config)
+					{
+						type = "pwa-chrome",
+						request = "launch",
+						name = "Launch Chrome",
+						url = "http://localhost:5173",
+						webRoot = function()
+							return vim.fn.getcwd()
+						end,
+					},
+					{
+						type = "pwa-chrome",
+						request = "attach",
+						name = "Attach Chrome",
+						port = 9222,
+						webRoot = function()
+							return vim.fn.getcwd()
+						end,
+					},
+					{
+						type = "pwa-chrome",
+						request = "attach",
+						name = "Attach Vitest Browser",
+						port = 9229,
+						webRoot = function()
+							return vim.fn.getcwd()
+						end,
+					},
+					-- -- WSL: Launch Chrome helper (runs script then attaches)
+					-- {
+					-- 	type = "pwa-chrome",
+					-- 	request = "attach",
+					-- 	name = "Launch Chrome (WSL)",
+					-- 	port = 9222,
+					-- 	webRoot = function()
+					-- 		return vim.fn.getcwd()
+					-- 	end,
+					-- 	sourceMaps = true,
+					-- 	-- Source map path overrides for common build tools
+					-- 	sourceMapPathOverrides = {
+					-- 		["webpack:///./*"] = "${webRoot}/*",
+					-- 		["webpack://?:*/*"] = "${webRoot}/*",
+					-- 		["webpack:///*"] = "*",
+					-- 		["webpack:///./~/*"] = "${webRoot}/node_modules/*",
+					-- 		["meteor://💻app/*"] = "${webRoot}/*",
+					-- 	},
+					-- 	-- This will be triggered by a custom command
+					-- 	-- Use :DapLaunchChrome instead of selecting this directly
+					-- },
+					-- -- WSL: Attach to Chrome running in Windows
+					-- -- Instructions:
+					-- --   1. From Windows PowerShell: .\Start-ChromeDebug.ps1
+					-- --      (Script located at: \\wsl$\Ubuntu\home\simon\repos\configs\wsl-scripts\Start-ChromeDebug.ps1)
+					-- --   2. Or manually run:
+					-- --      & "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug" http://localhost:5173
+					-- --   3. Then use this attach configuration
+					-- {
+					-- 	type = "pwa-chrome",
+					-- 	request = "attach",
+					-- 	name = "Attach to Chrome (WSL)",
+					-- 	port = 9222,
+					-- 	webRoot = function()
+					-- 		return vim.fn.getcwd()
+					-- 	end,
+					-- 	sourceMaps = true,
+					-- 	-- Source map path overrides for common build tools
+					-- 	sourceMapPathOverrides = {
+					-- 		["webpack:///./*"] = "${webRoot}/*",
+					-- 		["webpack://?:*/*"] = "${webRoot}/*",
+					-- 		["webpack:///*"] = "*",
+					-- 		["webpack:///./~/*"] = "${webRoot}/node_modules/*",
+					-- 		["meteor://💻app/*"] = "${webRoot}/*",
+					-- 	},
+					-- },
+				}
+			end
 
 			-- Auto-open/close DAP UI
 			dap.listeners.after.event_initialized["dapui_config"] = function()
@@ -201,22 +282,24 @@ return {
 			vim.api.nvim_create_user_command("DapLaunchChrome", function()
 				-- Kill existing Chrome
 				print("Stopping existing Chrome instances...")
-				vim.fn.system('powershell.exe -Command "Stop-Process -Name chrome -Force -ErrorAction SilentlyContinue"')
+				vim.fn.system(
+					'powershell.exe -Command "Stop-Process -Name chrome -Force -ErrorAction SilentlyContinue"'
+				)
 				vim.wait(500)
-				
+
 				-- Launch Chrome with debugging
 				print("Launching Chrome with debugging on port 9222...")
 				vim.fn.jobstart(
 					'powershell.exe -Command "& \\"C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\\" --remote-debugging-port=9222 --user-data-dir=\\"C:\\\\temp\\\\chrome-debug\\" --no-first-run --no-default-browser-check http://localhost:5173"',
 					{ detach = true }
 				)
-				
+
 				-- Wait for Chrome to start
 				print("Waiting for Chrome to start...")
 				vim.wait(3000)
-				
+
 				-- Verify debug server is ready
-				local result = vim.fn.system('curl -s http://localhost:9222/json/version')
+				local result = vim.fn.system("curl -s http://localhost:9222/json/version")
 				if result:match("Browser") then
 					print("✓ Chrome debug server ready! Starting DAP...")
 					-- Find and run the "Attach to Chrome (WSL)" configuration
@@ -231,7 +314,7 @@ return {
 				else
 					print("✗ Chrome debug server not responding. Try manually: :DapLaunchChrome")
 				end
-			end, {desc = "Launch Chrome with debugging and attach DAP (WSL)"})
+			end, { desc = "Launch Chrome with debugging and attach DAP (WSL)" })
 		end,
 	},
 

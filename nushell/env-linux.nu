@@ -9,10 +9,6 @@ $env.PATH = ($env.PATH | prepend "/home/linuxbrew/.linuxbrew/bin")
 # Add PostgreSQL client tools (libpq)
 $env.PATH = ($env.PATH | prepend "/home/linuxbrew/.linuxbrew/opt/libpq/bin")
 
-# Setup Volta
-$env.VOLTA_HOME = ($env.HOME | path join ".volta")
-$env.PATH = ($env.PATH | prepend ($env.VOLTA_HOME | path join "bin"))
-
 # Setup Azure tools
 $env.PATH = ($env.PATH | prepend ($env.HOME + "/.azure-kubectl") | prepend ($env.HOME + "/.azure-kubelogin"))
 
@@ -30,7 +26,8 @@ $env.PATH = ($env.PATH | prepend ($env.HOME | path join ".dotnet" "tools"))
 
 # Generate and load mise configuration
 let mise_path = $nu.default-config-dir | path join mise.nu
-#^mise activate nu | save $mise_path --force
+^mise activate nu | save $mise_path --force
+$env.MISE_TRUSTED_CONFIG_PATHS = ($env.HOME | path join "repos")
 
 # WSL Clipboard integration
 $env.DISPLAY = ":0"
@@ -39,32 +36,8 @@ $env.DISPLAY = ":0"
 $env.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt"
 $env.SSL_CERT_DIR = "/etc/ssl/certs"
 
-# SSH Agent setup (from https://www.nushell.sh/cookbook/ssh_agent.html)
-# This prevents starting multiple ssh-agent processes
-do --env {
-    let ssh_agent_file = (
-        $nu.temp-path | path join $"ssh-agent-(whoami).nuon"
-    )
-
-    if ($ssh_agent_file | path exists) {
-        let ssh_agent_env = open ($ssh_agent_file)
-        if ($"/proc/($ssh_agent_env.SSH_AGENT_PID)" | path exists) {
-            load-env $ssh_agent_env
-            return
-        } else {
-            rm $ssh_agent_file
-        }
-    }
-
-    let ssh_agent_env = ^ssh-agent -c
-        | lines
-        | first 2
-        | parse "setenv {name} {value};"
-        | transpose --header-row
-        | into record
-    load-env $ssh_agent_env
-    $ssh_agent_env | save --force $ssh_agent_file
-}
+# SSH Agent setup via systemd socket activation
+$env.SSH_AUTH_SOCK = $"($env.XDG_RUNTIME_DIR)/ssh-agent.socket"
 
 # Load WSL-specific configuration if running in WSL
 if ("/proc/version" | path exists) {
