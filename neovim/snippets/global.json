@@ -1,0 +1,67 @@
+{
+  "Lorem Ipsum": {
+    "prefix": "lorem",
+    "body": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit. $0"],
+    "description": "Lorem ipsum placeholder"
+  },
+  "Date": {
+    "prefix": "date",
+    "body": ["$CURRENT_DATE/$CURRENT_MONTH/$CURRENT_YEAR"],
+    "description": "Current date"
+  },
+  "Time": {
+    "prefix": "time",
+    "body": ["$CURRENT_HOUR:$CURRENT_MINUTE"],
+    "description": "Current time"
+  },
+  "DateTime": {
+    "prefix": "datetime",
+    "body": ["$CURRENT_DATE/$CURRENT_MONTH/$CURRENT_YEAR $CURRENT_HOUR:$CURRENT_MINUTE"],
+    "description": "Current date and time"
+  },
+  "File Path": {
+    "prefix": "filepath",
+    "body": ["$TM_FILEPATH"],
+    "description": "Current file path"
+  },
+  "File Name": {
+    "prefix": "filename",
+    "body": ["$TM_FILENAME"],
+    "description": "Current file name"
+  },
+  "Clipboard": {
+    "prefix": "clip",
+    "body": ["$CLIPBOARD"],
+    "description": "Clipboard content"
+  },
+  "TODO": {
+    "prefix": "todo",
+    "body": ["TODO: $0"],
+    "description": "TODO comment"
+  },
+  "FIXME": {
+    "prefix": "fixme",
+    "body": ["FIXME: $0"],
+    "description": "FIXME comment"
+  },
+  "NOTE": {
+    "prefix": "note",
+    "body": ["NOTE: $0"],
+    "description": "NOTE comment"
+  },
+  "Email": {
+    "prefix": "email",
+    "body": ["$EMAIL"],
+    "description": "User email"
+  },
+  "Username": {
+    "prefix": "user",
+    "body": ["$USERNAME"],
+    "description": "Current username"
+  },
+  "IP Address": {
+    "prefix": "ip",
+    "body": ["$IP_ADDRESS"],
+    "description": "IP address"
+  }
+}

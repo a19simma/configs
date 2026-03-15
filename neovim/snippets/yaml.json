@@ -1,0 +1,7 @@
+{
+  "YAML Document": {
+    "prefix": "doc",
+    "body": ["---", "apiVersion: ${1:v1}", "kind: ${2:ConfigMap}", "metadata:", "  name: ${3:name}", "data:", "  $0"],
+    "description": "YAML document start"
+  }
+}

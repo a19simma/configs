@@ -73,7 +73,7 @@ if $nu.os-info.name == "linux" {
 }
 
 # Shell integrations
-source ~/.local/share/nushell/vendor/autoload/wt.nu
+source ~/.config/nushell/vendor/autoload/wt.nu
 
 # Aliases
 alias claude = claude --dangerously-skip-permissions
@@ -88,3 +88,5 @@ def ollama-run [] {
 
 
 
+
+use ($nu.default-config-dir | path join mise.nu)

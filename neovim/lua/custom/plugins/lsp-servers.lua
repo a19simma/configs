@@ -53,41 +53,9 @@ return {
             local schemas = schemastore_ok and schemastore.yaml.schemas() or {}
 
             -- Add additional schemas for common use cases
+            -- Note: Kubernetes CRD schemas are auto-detected by yaml-schema-detect.nvim
+            -- from the current kubectl context, so no need to hardcode them here.
             local additional_schemas = {
-                -- Kubernetes - yamlls has built-in content-based detection (looks for apiVersion/kind)
-                -- Only add explicit patterns if you need to override
-                -- kubernetes = '*.k8s.yaml',
-
-                -- ArgoCD CRDs
-                ["https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/application_v1alpha1.json"] = {
-                    "**/argocd/*.yaml",
-                    "**/*application*.yaml",
-                },
-                ["https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/appproject_v1alpha1.json"] = {
-                    "**/argocd/*.yaml",
-                    "**/*appproject*.yaml",
-                },
-                ["https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/applicationset_v1alpha1.json"] = {
-                    "**/argocd/*.yaml",
-                    "**/*applicationset*.yaml",
-                },
-
-                -- Crossplane CRDs
-                ["https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/apiextensions.crossplane.io/composition_v1.json"] = {
-                    "**/crossplane/*.yaml",
-                    "**/*composition*.yaml",
-                },
-                ["https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/apiextensions.crossplane.io/compositeresourcedefinition_v1.json"] = {
-                    "**/crossplane/*.yaml",
-                    "**/*xrd*.yaml",
-                    "**/*compositeresourcedefinition*.yaml",
-                },
-
-                -- OpenAPI/Swagger specifications (SchemaStore.nvim already provides these)
-                -- Uncomment if you need custom patterns:
-                -- ['https://json.schemastore.org/openapi-3.1.json'] = 'openapi*.{yml,yaml}',
-                -- ['https://json.schemastore.org/swagger-2.0.json'] = 'swagger*.{yml,yaml}',
-
                 -- Docker Compose
                 ["https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json"] = {
                     "docker-compose*.{yml,yaml}",

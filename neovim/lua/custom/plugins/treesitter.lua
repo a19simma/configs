@@ -8,31 +8,42 @@ return {
 		lazy = false,
 		build = ":TSUpdate",
 		config = function()
-			require("nvim-treesitter").install({
-				"bash",
-				"c",
-				"cpp",
-				"c_sharp",
-				"diff",
-				"go",
-				"html",
-				"javascript",
-				"lua",
-				"luadoc",
-				"markdown",
-				"markdown_inline",
-				"python",
-				"query",
-				"rust",
-				"svelte",
-				"typescript",
-				"vim",
-				"vimdoc",
-				"yaml",
+			local configs = require("nvim-treesitter.configs")
+
+			configs.setup({
+				ensure_installed = {
+					"bash",
+					"c",
+					"cpp",
+					"c_sharp",
+					"diff",
+					"go",
+					"html",
+					"javascript",
+					"lua",
+					"luadoc",
+					"markdown",
+					"markdown_inline",
+					"python",
+					"query",
+					"rust",
+					"svelte",
+					"typescript",
+					"vim",
+					"vimdoc",
+					"yaml",
+				},
 			})
 
 			-- Enable highlighting, folding, and indentation for all filetypes
 			-- that have a treesitter parser installed.
+			-- Note: YAML is excluded from treesitter indentation due to bugs
+			-- with whitespace-sensitive indentation.
+			local skip_indent_filetypes = {
+				yaml = true,
+				helm = true,
+			}
+
 			vim.api.nvim_create_autocmd("FileType", {
 				callback = function(ev)
 					local ok = pcall(vim.treesitter.start)
@@ -42,8 +53,10 @@ return {
 					-- Treesitter-based folding
 					vim.wo[0][0].foldmethod = "expr"
 					vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
-					-- Treesitter-based indentation (experimental)
-					vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+					-- Treesitter-based indentation (skip for YAML/helm)
+					if not skip_indent_filetypes[ev.match] then
+						vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+					end
 				end,
 			})
 		end,

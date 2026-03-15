@@ -3,6 +3,9 @@
 # Add ~/.local/bin to PATH (for uv, uvx, and other user-installed tools)
 $env.PATH = ($env.PATH | prepend ($env.HOME | path join ".local" "bin"))
 
+# Add krew (kubectl plugin manager) to PATH
+$env.PATH = ($env.PATH | prepend ($env.HOME | path join ".krew" "bin"))
+
 # Add linuxbrew to PATH
 $env.PATH = ($env.PATH | prepend "/home/linuxbrew/.linuxbrew/bin")
 

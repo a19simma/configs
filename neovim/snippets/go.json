@@ -1,0 +1,162 @@
+{
+  "Package Main": {
+    "prefix": "pkgm",
+    "body": ["package main", "", "func main() {", "  $0", "}"],
+    "description": "Package main with main function"
+  },
+  "Package": {
+    "prefix": "pkg",
+    "body": ["package ${1:name}", "$0"],
+    "description": "Package declaration"
+  },
+  "Function": {
+    "prefix": "fn",
+    "body": ["func ${1:name}($2) ${3:error} {", "  $0", "}"],
+    "description": "Function declaration"
+  },
+  "Method": {
+    "prefix": "method",
+    "body": ["func (${1:receiver} ${2:Type}) ${3:name}($4) ${5:error} {", "  $0", "}"],
+    "description": "Method declaration"
+  },
+  "Struct": {
+    "prefix": "struct",
+    "body": ["type ${1:Name} struct {", "  $2 ${3:string}", "}", "$0"],
+    "description": "Struct definition"
+  },
+  "Interface": {
+    "prefix": "interface",
+    "body": ["type ${1:Name} interface {", "  ${2:Method}($3) ${4:error}", "}", "$0"],
+    "description": "Interface definition"
+  },
+  "Error": {
+    "prefix": "err",
+    "body": ["if err != nil {", "  return err", "}", "$0"],
+    "description": "Error check"
+  },
+  "Error Return": {
+    "prefix": "errret",
+    "body": ["if err != nil {", "  return ${1:nil}, err", "}", "$0"],
+    "description": "Error check with return"
+  },
+  "Var": {
+    "prefix": "var",
+    "body": ["var ${1:name} ${2:string}"],
+    "description": "Variable declaration"
+  },
+  "Const": {
+    "prefix": "const",
+    "body": ["const ${1:name} = ${2:value}", "$0"],
+    "description": "Constant declaration"
+  },
+  "Slice": {
+    "prefix": "slice",
+    "body": ["[]${1:string}", "$0"],
+    "description": "Slice type"
+  },
+  "Map": {
+    "prefix": "map",
+    "body": ["map[${1:string}]${2:interface{}}", "$0"],
+    "description": "Map type"
+  },
+  "Chan": {
+    "prefix": "chan",
+    "body": ["make(chan ${1:string})", "$0"],
+    "description": "Channel creation"
+  },
+  "If": {
+    "prefix": "if",
+    "body": ["if ${1:condition} {", "  $0", "}"],
+    "description": "If statement"
+  },
+  "Else": {
+    "prefix": "else",
+    "body": ["if ${1:condition} {", "  $2", "} else {", "  $0", "}"],
+    "description": "If else statement"
+  },
+  "Switch": {
+    "prefix": "switch",
+    "body": ["switch ${1:variable} {", "case ${2:value}:", "  $0", "}"],
+    "description": "Switch statement"
+  },
+  "For": {
+    "prefix": "for",
+    "body": ["for ${1:i} := 0; ${1:i} < ${2:10}; ${1:i}++ {", "  $0", "}"],
+    "description": "For loop"
+  },
+  "For Range": {
+    "prefix": "forr",
+    "body": ["for ${1:idx}, ${2:val} := range ${3:slice} {", "  $0", "}"],
+    "description": "For range loop"
+  },
+  "Go Routine": {
+    "prefix": "go",
+    "body": ["go func() {", "  $0", "}()"],
+    "description": "Go routine"
+  },
+  "Defer": {
+    "prefix": "defer",
+    "body": ["defer ${1:func}()", "$0"],
+    "description": "Defer statement"
+  },
+  "Import": {
+    "prefix": "imp",
+    "body": ["\"${1:fmt}\"", "$0"],
+    "description": "Import package"
+  },
+  "Multiple Import": {
+    "prefix": "imp-multi",
+    "body": ["import (", "  \"${1:fmt}\"", "  \"${2:os}\"", ")", "$0"],
+    "description": "Multiple imports"
+  },
+  "Test Function": {
+    "prefix": "test",
+    "body": ["func Test${1:Name}(t *testing.T) {", "  $0", "}"],
+    "description": "Test function"
+  },
+  "Benchmark": {
+    "prefix": "bench",
+    "body": ["func Benchmark${1:Name}(b *testing.B) {", "  for i := 0; i < b.N; i++ {", "    $0", "  }", "}"],
+    "description": "Benchmark function"
+  },
+  "HTTP Handler": {
+    "prefix": "http",
+    "body": ["func ${1:handler}(w http.ResponseWriter, r *http.Request) {", "  $0", "}"],
+    "description": "HTTP handler"
+  },
+  "HTTP Server": {
+    "prefix": "httpserver",
+    "body": ["http.HandleFunc(\"/${1:path}\", ${2:handler})", "http.ListenAndServe(\":${3:8080}\", nil)", "$0"],
+    "description": "HTTP server"
+  },
+  "JSON Marshal": {
+    "prefix": "json-m",
+    "body": ["json.Marshal($1)", "$0"],
+    "description": "JSON marshal"
+  },
+  "JSON Unmarshal": {
+    "prefix": "json-u",
+    "body": ["json.Unmarshal(${1:data}, &$2)"],
+    "description": "JSON unmarshal"
+  },
+  "Context": {
+    "prefix": "ctx",
+    "body": ["ctx := context.Background()", "$0"],
+    "description": "Create context"
+  },
+  "Context With Timeout": {
+    "prefix": "ctx-time",
+    "body": ["ctx, cancel := context.WithTimeout(context.Background(), ${1:time.Second * 5})", "defer cancel()", "$0"],
+    "description": "Context with timeout"
+  },
+  "Error Wrap": {
+    "prefix": "errw",
+    "body": ["return fmt.Errorf(\"${1:error message}: %w\", ${2:err})", "$0"],
+    "description": "Wrap error"
+  },
+  "Struct Tags": {
+    "prefix": "tags",
+    "body": ["`json:\"$1\"`"],
+    "description": "JSON struct tags"
+  }
+}

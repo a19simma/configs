@@ -1,0 +1,137 @@
+{
+  "Script Setup": {
+    "prefix": "script",
+    "body": ["<script lang=\"ts\">", "$1", "</script>", "$0"],
+    "description": "Svelte script tag with TS"
+  },
+  "Script Setup JS": {
+    "prefix": "script-js",
+    "body": ["<script>", "$1", "</script>", "$0"],
+    "description": "Svelte script tag"
+  },
+  "Reactive Variable": {
+    "prefix": "let",
+    "body": ["let $1 = $2$$3"],
+    "description": "Reactive variable"
+  },
+  "Reactive Statement": {
+    "prefix": "$",
+    "body": ["$ $1"],
+    "description": "Reactive statement"
+  },
+  "Props": {
+    "prefix": "export",
+    "body": ["export let $1: ${2:string}$3"],
+    "description": "Export props"
+  },
+  "Function": {
+    "prefix": "fn",
+    "body": ["function ${1:name}($2) {", "  $0", "}"],
+    "description": "Function declaration"
+  },
+  "Arrow Function": {
+    "prefix": "af",
+    "body": ["const ${1:name} = ($2) => {", "  $0", "};"],
+    "description": "Arrow function"
+  },
+  "OnMount": {
+    "prefix": "onmount",
+    "body": ["import { onMount } from 'svelte';", "", "onMount(() => {", "  $0", "});"],
+    "description": "onMount lifecycle"
+  },
+  "OnDestroy": {
+    "prefix": "ondestroy",
+    "body": ["import { onDestroy } from 'svelte';", "", "onDestroy(() => {", "  $0", "});"],
+    "description": "onDestroy lifecycle"
+  },
+  "Store": {
+    "prefix": "store",
+    "body": ["import { writable } from 'svelte/store';", "", "export const ${1:storeName} = writable($2);", "$0"],
+    "description": "Svelte store"
+  },
+  "Derived Store": {
+    "prefix": "derived",
+    "body": ["import { derived } from 'svelte/store';", "", "export const ${1:name} = derived($2, ($$2) => {", "  return $3;", "});", "$0"],
+    "description": "Derived store"
+  },
+  "Each Block": {
+    "prefix": "each",
+    "body": ["{#each $1 as $2}", "  $0", "{/each}"],
+    "description": "Each block"
+  },
+  "If Block": {
+    "prefix": "if",
+    "body": ["{#if $1}", "  $0", "{/if}"],
+    "description": "If block"
+  },
+  "If Else Block": {
+    "prefix": "ifelse",
+    "body": ["{#if $1}", "  $2", "{:else}", "  $0", "{/if}"],
+    "description": "If else block"
+  },
+  "Await Block": {
+    "prefix": "await",
+    "body": ["{#await $1}", "  $0", "{:then $2}", "  ${3:data}", "{/await}"],
+    "description": "Await block"
+  },
+  "Key Block": {
+    "prefix": "key",
+    "body": ["{#key $1}", "  $0", "{/key}"],
+    "description": "Key block"
+  },
+  "Component Import": {
+    "prefix": "comp",
+    "body": ["import ${1:Component} from './$1.svelte';", "$0"],
+    "description": "Import component"
+  },
+  "Component with Props": {
+    "prefix": "compp",
+    "body": ["<${1:Component}", "  $2={$3}", "/>", "$0"],
+    "description": "Component with props"
+  },
+  "Event Handler": {
+    "prefix": "onevent",
+    "body": ["on:${1:click}={${2:handler}}", "$0"],
+    "description": "Event handler"
+  },
+  "Bind Value": {
+    "prefix": "bind",
+    "body": ["bind:value={$1}", "$0"],
+    "description": "Bind value"
+  },
+  "Bind This": {
+    "prefix": "bindthis",
+    "body": ["bind:this={$1}", "$0"],
+    "description": "Bind this"
+  },
+  "Dispatch": {
+    "prefix": "dispatch",
+    "body": ["import { createEventDispatcher } from 'svelte';", "", "const dispatch = createEventDispatcher();", "", "export const ${1:send} = () => dispatch('$1'$2);", "$0"],
+    "description": "Create event dispatcher"
+  },
+  "Context": {
+    "prefix": "context",
+    "body": ["import { setContext, getContext } from 'svelte';", "", "setContext('$1', $2);", "const $3 = getContext('$1');", "$0"],
+    "description": "Context API"
+  },
+  "Transition": {
+    "prefix": "trans",
+    "body": ["import { ${1:fade} } from 'svelte/transition';", "", "<div transition:${1:fade}>$0</div>"],
+    "description": "Svelte transition"
+  },
+  "Style": {
+    "prefix": "style",
+    "body": ["<style>", "  $0", "</style>"],
+    "description": "Style tag"
+  },
+  "HTML Element": {
+    "prefix": "div",
+    "body": ["<div>$0</div>"],
+    "description": "Div element"
+  },
+  "Svelte Component": {
+    "prefix": "svelte",
+    "body": ["<script lang=\"ts\">", "  import type { SvelteComponent } from 'svelte';", "</script>", "", "<script context=\"module\">", "  export const component: typeof SvelteComponent = {};", "</script>", "", "<div>$0</div>"],
+    "description": "Full Svelte component"
+  }
+}

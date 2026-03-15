@@ -15,16 +15,16 @@ backup-configs:
 # Deploy dotfiles using GNU Stow
 stow-deploy:
     @echo "Deploying dotfiles with GNU Stow..."
-    @mkdir -p ~/.config/nvim ~/.config/alacritty ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/opencode ~/.claude ~/.gemini
+    @mkdir -p ~/.config/nvim ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/opencode ~/.claude ~/.gemini ~/.config/tmux ~/.config/k9s/skins
     stow -t ~/.config/nvim neovim
-    stow -t ~/.config/alacritty alacritty
     stow -t ~/.config/Code vscode
     stow -t ~/.config/nushell nushell --adopt
     stow -t ~/.config/wezterm wezterm
     stow -t ~/.config/opencode opencode
     stow -t ~/.gemini gemini
     stow -t ~ shell
-    stow -t ~ tmux
+    stow -t ~/.config/tmux tmux --adopt
+    stow -t ~/.config/k9s k9s --adopt
     @echo "Setting up Claude Code symlinks to OpenCode configs..."
     @ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
     @ln -sf ~/.config/opencode/commands ~/.claude/commands
@@ -35,14 +35,14 @@ stow-deploy:
 stow-remove:
     @echo "Removing dotfiles with GNU Stow..."
     stow -t ~/.config/nvim -D neovim
-    stow -t ~/.config/alacritty -D alacritty
     stow -t ~/.config/Code -D vscode
     stow -t ~/.config/nushell -D nushell
     stow -t ~/.config/wezterm -D wezterm
     stow -t ~/.config/opencode -D opencode
     stow -t ~/.gemini -D gemini
     stow -t ~ -D shell
-    stow -t ~ -D tmux
+    stow -t ~/.config/tmux -D tmux
+    stow -t ~/.config/k9s -D k9s
     @echo "Removing Claude Code symlinks..."
     @rm -f ~/.claude/CLAUDE.md ~/.claude/agents ~/.claude/commands
     @echo "✅ Dotfiles removed successfully"
@@ -72,7 +72,6 @@ fix-symlinks:
     # Remove existing symlinks
     @if [ -L ~/.config/nvim ]; then rm ~/.config/nvim; fi
     @if [ -L ~/.config/nushell ]; then rm ~/.config/nushell; fi
-    @if [ -L ~/.config/alacritty ]; then rm ~/.config/alacritty; fi
     @if [ -L ~/.config/Code ]; then rm ~/.config/Code; fi
     @if [ -L ~/.config/wezterm ]; then rm ~/.config/wezterm; fi
     @if [ -L ~/.config/opencode ]; then rm ~/.config/opencode; fi
@@ -89,7 +88,6 @@ fix-symlinks:
     @if [ -f ~/.tmux.conf ] && [ ! -L ~/.tmux.conf ]; then mv ~/.tmux.conf ~/.tmux.conf.backup; fi
     @if [ -d ~/.config/nvim ] && [ ! -L ~/.config/nvim ]; then mv ~/.config/nvim ~/.config/nvim.backup; fi
     @if [ -d ~/.config/nushell ] && [ ! -L ~/.config/nushell ]; then mv ~/.config/nushell ~/.config/nushell.backup; fi
-    @if [ -d ~/.config/alacritty ] && [ ! -L ~/.config/alacritty ]; then mv ~/.config/alacritty ~/.config/alacritty.backup; fi
     @if [ -d ~/.config/Code ] && [ ! -L ~/.config/Code ]; then mv ~/.config/Code ~/.config/Code.backup; fi
     @if [ -d ~/.config/wezterm ] && [ ! -L ~/.config/wezterm ]; then mv ~/.config/wezterm ~/.config/wezterm.backup; fi
     @if [ -d ~/.config/opencode ] && [ ! -L ~/.config/opencode ]; then mv ~/.config/opencode ~/.config/opencode.backup; fi
@@ -100,7 +98,6 @@ fix-symlinks:
     # Deploy with stow
     @echo "Deploying with stow..."
     stow -t ~/.config/nvim neovim
-    stow -t ~/.config/alacritty alacritty
     stow -t ~/.config/Code vscode
     stow -t ~/.config/nushell nushell
     stow -t ~/.config/wezterm wezterm
@@ -108,6 +105,7 @@ fix-symlinks:
     stow -t ~/.gemini gemini
     stow -t ~ shell
     stow -t ~ tmux
+    stow -t ~/.config/k9s k9s --adopt
     @echo "Setting up Claude Code symlinks to OpenCode configs..."
     @ln -sf .config/opencode/AGENTS.md ~/.claude/CLAUDE.md
     @ln -sf .config/opencode/agents ~/.claude/agents
@@ -150,6 +148,7 @@ deploy-windows:
         "$env:APPDATA\nushell" = "$(Get-Location)\nushell"
         "$env:USERPROFILE\.config\Code" = "$(Get-Location)\vscode"
         "$env:USERPROFILE\.config\opencode" = "$(Get-Location)\opencode"
+        "$env:USERPROFILE\.config\k9s" = "$(Get-Location)\k9s"
         "$env:USERPROFILE\komorebi.json" = "$(Get-Location)\komorebi\komorebi.json"
         "$env:USERPROFILE\komorebi.bar.json" = "$(Get-Location)\komorebi\komorebi.bar.json"
         "$env:USERPROFILE\.config\whkdrc" = "$(Get-Location)\komorebi\.config\whkdrc"

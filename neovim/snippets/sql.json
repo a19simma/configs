@@ -1,0 +1,177 @@
+{
+  "Select All": {
+    "prefix": "sela",
+    "body": ["SELECT * FROM ${1:table_name};"],
+    "description": "Select all from table"
+  },
+  "Select": {
+    "prefix": "sel",
+    "body": ["SELECT ${1:column1, column2} FROM ${2:table_name};"],
+    "description": "Select columns"
+  },
+  "Select Where": {
+    "prefix": "selw",
+    "body": ["SELECT ${1:column1, column2} FROM ${2:table_name} WHERE ${3:condition};"],
+    "description": "Select with where"
+  },
+  "Select Join": {
+    "prefix": "selj",
+    "body": ["SELECT a.*, b.*", "FROM ${1:table1} a", "INNER JOIN ${2:table2} b ON a.${3:column} = b.${4:column};"],
+    "description": "Select with join"
+  },
+  "Insert": {
+    "prefix": "ins",
+    "body": ["INSERT INTO ${1:table_name} (${2:column1, column2})", "VALUES (${3:'value1', 'value2'});"],
+    "description": "Insert statement"
+  },
+  "Insert Multi": {
+    "prefix": "insm",
+    "body": ["INSERT INTO ${1:table_name} (${2:column1, column2})", "VALUES", "  (${3:'value1', 'value2'}),", "  (${4:'value3', 'value4'});"],
+    "description": "Insert multiple rows"
+  },
+  "Update": {
+    "prefix": "upd",
+    "body": ["UPDATE ${1:table_name}", "SET ${2:column1} = ${3:'value1'}", "WHERE ${4:condition};"],
+    "description": "Update statement"
+  },
+  "Delete": {
+    "prefix": "del",
+    "body": ["DELETE FROM ${1:table_name} WHERE ${2:condition};"],
+    "description": "Delete statement"
+  },
+  "Create Table": {
+    "prefix": "crt",
+    "body": ["CREATE TABLE ${1:table_name} (", "  ${2:id} INT PRIMARY KEY,", "  ${3:name} VARCHAR(255),", "  ${4:created_at} TIMESTAMP DEFAULT CURRENT_TIMESTAMP", ");"],
+    "description": "Create table"
+  },
+  "Alter Table": {
+    "prefix": "alt",
+    "body": ["ALTER TABLE ${1:table_name}", "ADD COLUMN ${2:column_name} ${3:VARCHAR(255)};"],
+    "description": "Alter table add column"
+  },
+  "Drop Table": {
+    "prefix": "drt",
+    "body": ["DROP TABLE IF EXISTS ${1:table_name};"],
+    "description": "Drop table"
+  },
+  "Inner Join": {
+    "prefix": "ij",
+    "body": ["INNER JOIN ${1:table2} ON ${2:t1.column} = ${3:t2.column}"],
+    "description": "Inner join"
+  },
+  "Left Join": {
+    "prefix": "lj",
+    "body": ["LEFT JOIN ${1:table2} ON ${2:t1.column} = ${3:t2.column}"],
+    "description": "Left join"
+  },
+  "Right Join": {
+    "prefix": "rj",
+    "body": ["RIGHT JOIN ${1:table2} ON ${2:t1.column} = ${3:t2.column}"],
+    "description": "Right join"
+  },
+  "Group By": {
+    "prefix": "grp",
+    "body": ["GROUP BY ${1:column}", "HAVING ${2:condition}"],
+    "description": "Group by with having"
+  },
+  "Order By": {
+    "prefix": "ord",
+    "body": ["ORDER BY ${1:column} ${2:ASC|DESC}"],
+    "description": "Order by"
+  },
+  "Limit": {
+    "prefix": "lim",
+    "body": ["LIMIT ${1:10} OFFSET ${2:0};"],
+    "description": "Limit with offset"
+  },
+  "Like": {
+    "prefix": "like",
+    "body": ["WHERE ${1:column} LIKE '${2:pattern}%'"],
+    "description": "Like pattern match"
+  },
+  "In": {
+    "prefix": "in",
+    "body": ["WHERE ${1:column} IN (${2:value1, value2})"],
+    "description": "IN clause"
+  },
+  "Between": {
+    "prefix": "bet",
+    "body": ["WHERE ${1:column} BETWEEN ${2:value1} AND ${3:value2}"],
+    "description": "Between clause"
+  },
+  "Is Null": {
+    "prefix": "null",
+    "body": ["WHERE ${1:column} IS NULL"],
+    "description": "Is null check"
+  },
+  "Is Not Null": {
+    "prefix": "nnull",
+    "body": ["WHERE ${1:column} IS NOT NULL"],
+    "description": "Is not null check"
+  },
+  "Count": {
+    "prefix": "cnt",
+    "body": ["SELECT COUNT(*) FROM ${1:table_name};"],
+    "description": "Count rows"
+  },
+  "Sum": {
+    "prefix": "sum",
+    "body": ["SELECT SUM(${1:column}) FROM ${2:table_name};"],
+    "description": "Sum column"
+  },
+  "Avg": {
+    "prefix": "avg",
+    "body": ["SELECT AVG(${1:column}) FROM ${2:table_name};"],
+    "description": "Average column"
+  },
+  "Max": {
+    "prefix": "max",
+    "body": ["SELECT MAX(${1:column}) FROM ${2:table_name};"],
+    "description": "Max column"
+  },
+  "Min": {
+    "prefix": "min",
+    "body": ["SELECT MIN(${1:column}) FROM ${2:table_name};"],
+    "description": "Min column"
+  },
+  "Case When": {
+    "prefix": "case",
+    "body": ["CASE", "  WHEN ${1:condition} THEN ${2:'result1'}", "  ELSE ${3:'default'}", "END AS ${4:alias}"],
+    "description": "Case when statement"
+  },
+  "Subquery": {
+    "prefix": "sub",
+    "body": ["SELECT * FROM (${1:SELECT * FROM table2}) AS ${2:alias};"],
+    "description": "Subquery"
+  },
+  "Union": {
+    "prefix": "uni",
+    "body": ["SELECT ${1:col1, col2} FROM ${2:table1}", "UNION", "SELECT ${1:col1, col2} FROM ${3:table2};"],
+    "description": "Union"
+  },
+  "Create Index": {
+    "prefix": "cri",
+    "body": ["CREATE INDEX idx_${1:name} ON ${2:table_name} (${3:column});"],
+    "description": "Create index"
+  },
+  "Create View": {
+    "prefix": "crv",
+    "body": ["CREATE VIEW ${1:view_name} AS", "SELECT ${2:columns}", "FROM ${3:table_name}", "WHERE ${4:condition};"],
+    "description": "Create view"
+  },
+  "Begin Transaction": {
+    "prefix": "beg",
+    "body": ["BEGIN TRANSACTION;", "$1", "COMMIT;"],
+    "description": "Begin transaction"
+  },
+  "Rollback": {
+    "prefix": "rbl",
+    "body": ["ROLLBACK;"],
+    "description": "Rollback transaction"
+  },
+  "Table Alias": {
+    "prefix": "ta",
+    "body": ["AS ${1:alias}"],
+    "description": "Table alias"
+  }
+}
