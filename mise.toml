@@ -1,0 +1,381 @@
+# Mise tasks for dotfiles management
+# Run with: mise run <task> or mise <task>
+
+[tasks.default]
+run = "mise tasks"
+
+[tasks.sync-kickstart]
+description = "Sync files from kickstart.nvim"
+run = """
+TMP_DIR=$(mktemp -d) && \
+git clone https://github.com/nvim-lua/kickstart.nvim.git "$TMP_DIR" && \
+cp -r "$TMP_DIR"/* neovim/.config/nvim/ && \
+rm -rf "$TMP_DIR"
+"""
+
+[tasks.backup-configs]
+description = "Backup local config files"
+run = """
+echo "Backing up local configs..."
+if [ -f ~/.bashrc ]; then cp ~/.bashrc ~/.bashrc.bak; fi
+if [ -f ~/.zshrc ]; then cp ~/.zshrc ~/.zshrc.bak; fi
+if [ -d ~/.config ]; then cp -R ~/.config ~/.config.bak; fi
+echo "✅ Configs backed up to ~/.bashrc.bak, ~/.zshrc.bak and ~/.config.bak"
+"""
+
+[tasks.stow-deploy]
+description = "Deploy dotfiles using GNU Stow"
+run = """
+echo "Deploying dotfiles with GNU Stow..."
+mkdir -p ~/.config/nvim ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/opencode ~/.claude ~/.gemini ~/.config/tmux ~/.config/k9s/skins
+stow -t ~/.config/nvim neovim
+stow -t ~/.config/Code vscode
+stow -t ~/.config/nushell nushell --adopt
+stow -t ~/.config/wezterm wezterm
+stow -t ~/.config/opencode opencode
+stow -t ~/.gemini gemini
+stow -t ~ shell
+stow -t ~/.config/tmux tmux --adopt
+stow -t ~/.config/k9s k9s --adopt
+echo "Setting up Claude Code symlinks to OpenCode configs..."
+ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
+ln -sf ~/.config/opencode/commands ~/.claude/commands
+ln -sf ~/.config/opencode/skills ~/.claude/skills
+echo "✅ Dotfiles deployed successfully"
+"""
+
+[tasks.stow-remove]
+description = "Remove dotfiles using GNU Stow"
+run = """
+echo "Removing dotfiles with GNU Stow..."
+stow -t ~/.config/nvim -D neovim
+stow -t ~/.config/Code -D vscode
+stow -t ~/.config/nushell -D nushell
+stow -t ~/.config/wezterm -D wezterm
+stow -t ~/.config/opencode -D opencode
+stow -t ~/.gemini -D gemini
+stow -t ~ -D shell
+stow -t ~/.config/tmux -D tmux
+stow -t ~/.config/k9s -D k9s
+echo "Removing Claude Code symlinks..."
+rm -f ~/.claude/CLAUDE.md ~/.claude/agents ~/.claude/commands
+echo "✅ Dotfiles removed successfully"
+"""
+
+[tasks.setup-claude-mcp]
+description = "Setup Claude Code MCP servers"
+run = """
+echo "Setting up Claude Code MCP servers..."
+echo "Checking dependencies..."
+command -v docker >/dev/null 2>&1 || { echo "❌ Docker not found. Install docker first."; exit 1; }
+command -v npx >/dev/null 2>&1 || { echo "❌ npx not found. Install Node.js first."; exit 1; }
+command -v claude >/dev/null 2>&1 || { echo "❌ Claude Code not found. Install claude-code first."; exit 1; }
+echo "✅ All dependencies found"
+echo "Adding Terraform MCP server..."
+claude mcp add --scope user --transport stdio terraform -- docker run -i --rm hashicorp/terraform-mcp-server || echo "⚠️  Terraform MCP may already be configured"
+echo "Adding Kubernetes MCP server (read-only)..."
+claude mcp add --scope user --transport stdio kubernetes -- npx -y kubernetes-mcp-server@latest --read-only || echo "⚠️  Kubernetes MCP may already be configured"
+echo "Adding context7 MCP server..."
+claude mcp remove context7
+claude mcp add --scope user --transport stdio context7 -- npx -y @upstash/context7-mcp --api-key $(bw get item context7_api_key | jq -r .login.password) || echo "⚠️  context7 MCP may already be configured"
+echo "✅ MCP servers configured!"
+echo ""
+echo "To see available tools, start Claude Code and run: /mcp"
+"""
+
+[tasks.fix-symlinks]
+description = "Fix existing symlinks and files that block stow"
+run = """
+echo "Fixing existing symlinks and backing up conflicting files..."
+# Remove existing symlinks
+if [ -L ~/.config/nvim ]; then rm ~/.config/nvim; fi
+if [ -L ~/.config/nushell ]; then rm ~/.config/nushell; fi
+if [ -L ~/.config/Code ]; then rm ~/.config/Code; fi
+if [ -L ~/.config/wezterm ]; then rm ~/.config/wezterm; fi
+if [ -L ~/.config/opencode ]; then rm ~/.config/opencode; fi
+if [ -L ~/.claude/CLAUDE.md ]; then rm ~/.claude/CLAUDE.md; fi
+if [ -L ~/.claude/agents ]; then rm ~/.claude/agents; fi
+if [ -L ~/.claude/commands ]; then rm ~/.claude/commands; fi
+if [ -L ~/.gemini ]; then rm -rf ~/.gemini; fi
+if [ -L ~/.zshrc ]; then rm ~/.zshrc; fi
+if [ -L ~/.bashrc ]; then rm ~/.bashrc; fi
+if [ -L ~/.tmux.conf ]; then rm ~/.tmux.conf; fi
+# Backup existing files/dirs that would conflict with stow
+if [ -f ~/.bashrc ] && [ ! -L ~/.bashrc ]; then mv ~/.bashrc ~/.bashrc.backup; fi
+if [ -f ~/.zshrc ] && [ ! -L ~/.zshrc ]; then mv ~/.zshrc ~/.zshrc.backup; fi
+if [ -f ~/.tmux.conf ] && [ ! -L ~/.tmux.conf ]; then mv ~/.tmux.conf ~/.tmux.conf.backup; fi
+if [ -d ~/.config/nvim ] && [ ! -L ~/.config/nvim ]; then mv ~/.config/nvim ~/.config/nvim.backup; fi
+if [ -d ~/.config/nushell ] && [ ! -L ~/.config/nushell ]; then mv ~/.config/nushell ~/.config/nushell.backup; fi
+if [ -d ~/.config/Code ] && [ ! -L ~/.config/Code ]; then mv ~/.config/Code ~/.config/Code.backup; fi
+if [ -d ~/.config/wezterm ] && [ ! -L ~/.config/wezterm ]; then mv ~/.config/wezterm ~/.config/wezterm.backup; fi
+if [ -d ~/.config/opencode ] && [ ! -L ~/.config/opencode ]; then mv ~/.config/opencode ~/.config/opencode.backup; fi
+if [ -f ~/.claude/CLAUDE.md ] && [ ! -L ~/.claude/CLAUDE.md ]; then mv ~/.claude/CLAUDE.md ~/.claude/CLAUDE.md.backup; fi
+if [ -d ~/.claude/agents ] && [ ! -L ~/.claude/agents ]; then mv ~/.claude/agents ~/.claude/agents.backup; fi
+if [ -d ~/.claude/commands ] && [ ! -L ~/.claude/commands ]; then mv ~/.claude/commands ~/.claude/commands.backup; fi
+if [ -d ~/.gemini ] && [ ! -L ~/.gemini ]; then mv ~/.gemini ~/.gemini.backup; fi
+# Deploy with stow
+echo "Deploying with stow..."
+stow -t ~/.config/nvim neovim
+stow -t ~/.config/Code vscode
+stow -t ~/.config/nushell nushell
+stow -t ~/.config/wezterm wezterm
+stow -t ~/.config/opencode opencode
+stow -t ~/.gemini gemini
+stow -t ~ shell
+stow -t ~ tmux
+stow -t ~/.config/k9s k9s --adopt
+echo "Setting up Claude Code symlinks to OpenCode configs..."
+ln -sf .config/opencode/AGENTS.md ~/.claude/CLAUDE.md
+ln -sf .config/opencode/agents ~/.claude/agents
+ln -sf .config/opencode/commands ~/.claude/commands
+echo "✅ Symlinks fixed and dotfiles deployed"
+"""
+
+[tasks.deploy-windows]
+description = "Deploy configs on Windows (PowerShell/cmd)"
+run = "pwsh -File ./scripts/deploy-windows.ps1"
+
+[tasks.remove-windows]
+description = "Remove Windows configs"
+run = "pwsh -File ./scripts/remove-windows.ps1"
+
+[tasks.setup-bitwarden]
+description = "Setup Bitwarden CLI"
+run = """
+echo "Setting up Bitwarden CLI..."
+echo "1. Login to Bitwarden:"
+bw login
+echo "2. Unlock vault and set session:"
+echo "Run: export BW_SESSION=$(bw unlock --raw)"
+"""
+
+[tasks.create-anthropic-api-key]
+description = "Create Anthropic API key in Bitwarden"
+run = "./scripts/create-anthropic-key.sh"
+
+[tasks.create-gemini-api-key]
+description = "Create Gemini API key in Bitwarden"
+run = "./scripts/create-gemini-key.sh"
+
+[tasks.create-tavily-api-key]
+description = "Create Tavily API key in Bitwarden"
+run = "./scripts/create-tavily-key.sh"
+
+[tasks.create-morph-api-key]
+description = "Create Morph API key in Bitwarden"
+run = "./scripts/create-morph-key.sh"
+
+[tasks.sync-from-local]
+description = "Copy local files to repo (sync from system to repo)"
+run = """
+echo "Syncing configs from local system to repo..."
+cp ~/.zshrc ./shell/.zshrc
+cp -R ~/.config/nvim ./neovim/.config/
+cp -R ~/.config/alacritty ./alacritty/.config/
+cp -R ~/.config/Code/User/* ./vscode/.config/Code/User/
+echo "✅ Local configs synced to repo"
+"""
+
+[tasks.install-deps]
+description = "Install all dependencies using Homebrew Bundle"
+run = """
+echo "Installing dependencies with Homebrew Bundle..."
+brew bundle
+echo "✅ All dependencies installed"
+"""
+
+[tasks.install-system-deps]
+description = "Install system-level dependencies (Linux)"
+run = """
+echo "Installing system-level dependencies..."
+if command -v apt >/dev/null 2>&1; then
+    sudo apt update && sudo apt install -y nfs-common ca-certificates curl gnupg lsb-release apt-transport-https
+elif command -v yum >/dev/null 2>&1; then
+    sudo yum install -y nfs-utils ca-certificates curl gnupg2
+else
+    echo "⚠️  Please install system dependencies manually for your distribution"
+fi
+echo "✅ System dependencies installed"
+"""
+
+[tasks.setup-ssh-server]
+description = "Setup SSH server for WSL (improves WezTerm performance)"
+run = """
+echo "🔧 Setting up SSH server..."
+if command -v apt >/dev/null 2>&1; then
+    echo "Installing OpenSSH via apt..."
+    sudo apt update && sudo apt install -y openssh-server
+else
+    echo "❌ apt not found. This command is designed for Debian/Ubuntu systems."
+    exit 1
+fi
+echo "Configuring SSH to start automatically..."
+if command -v systemctl >/dev/null 2>&1; then
+    sudo systemctl enable ssh
+    sudo systemctl start ssh
+else
+    sudo service ssh start
+fi
+echo "✅ SSH server installed, started, and configured to auto-start"
+echo ""
+echo "Test connection with: ssh localhost"
+"""
+
+[tasks.install-deps-windows]
+description = "Install dependencies on Windows using Scoop"
+run = "pwsh -File ./scripts/install-deps-windows.ps1"
+
+[tasks.bootstrap-unix]
+description = "Bootstrap fresh Unix/Linux/macOS system"
+run = """
+echo "🚀 Bootstrapping fresh Unix system..."
+echo "Installing Homebrew..."
+if ! command -v brew >/dev/null 2>&1; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+echo "Installing dependencies..."
+mise run install-deps
+mise run install-system-deps
+echo "Setting up SSH server for WezTerm..."
+mise run setup-ssh-server
+echo "Deploying configurations..."
+mise run fix-symlinks
+echo "Setting default shell to nushell..."
+if command -v nu >/dev/null 2>&1; then
+    sudo chsh -s "$(which nu)" "$(whoami)"
+    echo "✅ Default shell set to nushell"
+else
+    echo "⚠️  nushell not found in PATH, skipping shell change"
+fi
+echo "✅ Bootstrap complete!"
+"""
+depends = ["install-deps", "install-system-deps", "setup-ssh-server", "fix-symlinks"]
+
+[tasks.bootstrap-windows]
+description = "Bootstrap fresh Windows system"
+run = """
+echo "🚀 Bootstrapping fresh Windows system..."
+mise run install-deps-windows
+mise run deploy-windows
+echo "✅ Bootstrap complete!"
+"""
+depends = ["install-deps-windows", "deploy-windows"]
+
+[tasks.check-secrets]
+description = "Security checks using GitLeaks"
+run = """
+if command -v gitleaks >/dev/null 2>&1; then
+    echo "Running GitLeaks scan..."
+    gitleaks detect --config .gitleaks.toml --verbose
+else
+    echo "❌ GitLeaks not installed. Run: mise run install-deps"
+    exit 1
+fi
+"""
+
+[tasks.help]
+description = "Help system - with optional parameter"
+run = """
+nu -c '
+    cd help;
+    if ($env.MISE_TASK_ARGS? != "" and $env.MISE_TASK_ARGS? != null) {
+        let topic = $env.MISE_TASK_ARGS | split row " " | first
+        if (($"($topic).txt" | path exists)) {
+            open $"($topic).txt"
+        } else {
+            print $"Help topic ($topic) not found"
+            print "Available topics:"
+            ls *.txt | get name | str replace ".txt" "" | each { |it| $"  - ($it)" }
+        }
+    } else if (which fzf | is-not-empty) {
+        let selected = (ls *.txt | get name | str replace ".txt" "" | to text | fzf --prompt="Select help topic: ");
+        if ($selected != "") {
+            open $"($selected).txt"
+        } else {
+            print "No help topic selected"
+        }
+    } else {
+        print "Available help topics:"
+        ls *.txt | get name | str replace ".txt" "" | each { |it| $"  - ($it)" }
+        print "Usage: mise run help -- [topic] or install fzf for interactive selection"
+    }
+'
+"""
+
+[tasks.test-ci]
+description = "Run GitHub Actions locally using act"
+run = """
+echo "Running GitHub Actions locally with act..."
+if ! command -v act >/dev/null 2>&1; then
+    echo "Installing act..."
+    if command -v brew >/dev/null 2>&1; then
+        brew install act
+    else
+        curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+    fi
+fi
+echo "Running CI workflow..."
+act -j lint-and-test
+"""
+
+[tasks.test-ci-job]
+description = "Run specific CI job locally"
+run = """
+if $env.MISE_TASK_ARGS? == "" or $env.MISE_TASK_ARGS? == null {
+    echo "Usage: mise run test-ci-job -- <job-name>"
+    exit 1
+}
+let job = $env.MISE_TASK_ARGS | split row " " | first
+echo $"Running GitHub Actions job: ($job)"
+if ! (command -v act | is-empty) {
+    echo "❌ act not installed. Run: mise run test-ci"
+    exit 1
+}
+act -j $job
+"""
+shell = "nu"
+
+[tasks.list-ci-jobs]
+description = "List available CI jobs"
+run = """
+echo "Available GitHub Actions jobs:"
+if [ -f ".github/workflows/ci.yml" ]; then
+    grep "^  [a-zA-Z].*:$" .github/workflows/ci.yml | sed 's/:$//' | sed 's/^  /  - /'
+else
+    echo "❌ No CI workflow found at .github/workflows/ci.yml"
+fi
+"""
+
+[tasks.setup-ollama]
+description = "Setup Ollama for local AI code completion"
+run = """
+echo "🦙 Setting up Ollama for code completion..."
+if ! command -v ollama >/dev/null 2>&1; then
+    echo "Installing Ollama with GPU support..."
+    curl -fsSL https://ollama.com/install.sh | sh
+fi
+echo "Starting Ollama service..."
+ollama serve > /dev/null 2>&1 &
+sleep 3
+echo "Pulling qwen2.5-coder:7b model (this may take a few minutes)..."
+ollama pull qwen2.5-coder:7b
+echo "✅ Ollama setup complete!"
+echo ""
+echo "To use in Neovim:"
+echo "  1. Make sure Ollama is running: mise run start-ollama"
+echo "  2. Press <C-k> in insert mode for AI completion"
+echo ""
+echo "Model info: qwen2.5-coder:7b (~5GB, runs on RTX 4070 GPU)"
+"""
+
+[tasks.start-ollama]
+description = "Start Ollama service (run this before using Neovim AI completion)"
+run = """
+echo "Starting Ollama service..."
+if pgrep -x ollama > /dev/null; then
+    echo "✅ Ollama is already running"
+else
+    ollama serve > /dev/null 2>&1 &
+    echo "✅ Ollama started in background"
+fi
+"""

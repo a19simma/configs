@@ -80,6 +80,26 @@ alias claude = claude --dangerously-skip-permissions
 
 # Custom Commands
 
+# Run gvisor-isolated dev container
+def gvisor-dev [] {
+    let script = ( $nu.default-config-dir | path join ".." "gvisor-dev" "run.sh" | into string)
+    if ($script | path exists) {
+        nu $script
+    } else if ("~/repos/configs/gvisor-dev/run.sh" | path exists) {
+        nu ~/repos/configs/gvisor-dev/run.sh
+    } else {
+        print $"Error: gvisor-dev script not found at: ($script)"
+    }
+}
+
+# Attach to running dev container with fzf
+def gvisor-attach [] {
+    let selected = (^bash -c "docker ps --filter 'name=dev-' --format '{{.Names}}' | fzf" | str trim)
+    if not ($selected | is-empty) {
+        docker exec -it $selected nu
+    }
+}
+
 # Pull and run the qwen2.5-coder model in Ollama
 def ollama-run [] {
     ollama pull qwen2.5-coder:7b
