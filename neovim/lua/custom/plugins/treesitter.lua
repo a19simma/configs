@@ -8,31 +8,29 @@ return {
 		lazy = false,
 		build = ":TSUpdate",
 		config = function()
-			local configs = require("nvim-treesitter.configs")
+			local ts = require("nvim-treesitter")
 
-			configs.setup({
-				ensure_installed = {
-					"bash",
-					"c",
-					"cpp",
-					"c_sharp",
-					"diff",
-					"go",
-					"html",
-					"javascript",
-					"lua",
-					"luadoc",
-					"markdown",
-					"markdown_inline",
-					"python",
-					"query",
-					"rust",
-					"svelte",
-					"typescript",
-					"vim",
-					"vimdoc",
-					"yaml",
-				},
+			ts.install({
+				"bash",
+				"c",
+				"cpp",
+				"c_sharp",
+				"diff",
+				"go",
+				"html",
+				"javascript",
+				"lua",
+				"luadoc",
+				"markdown",
+				"markdown_inline",
+				"python",
+				"query",
+				"rust",
+				"svelte",
+				"typescript",
+				"vim",
+				"vimdoc",
+				"yaml",
 			})
 
 			-- Enable highlighting, folding, and indentation for all filetypes
@@ -61,21 +59,4 @@ return {
 			})
 		end,
 	},
-
-	-- Incremental selection (removed from nvim-treesitter main branch)
-	-- {
-	-- 	"daliusd/incr.nvim",
-	-- 	config = function()
-	-- 		require("incr").setup({})
-	-- 		vim.keymap.set("n", "<C-n>", function()
-	-- 			require("incr").init_selection()
-	-- 		end, { desc = "Treesitter: start selection" })
-	-- 		vim.keymap.set("v", "<C-n>", function()
-	-- 			require("incr").node_incremental()
-	-- 		end, { desc = "Treesitter: expand selection" })
-	-- 		vim.keymap.set("v", "<C-m>", function()
-	-- 			require("incr").node_decremental()
-	-- 		end, { desc = "Treesitter: shrink selection" })
-	-- 	end,
-	-- },
 }

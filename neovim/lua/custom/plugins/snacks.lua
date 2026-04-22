@@ -60,9 +60,6 @@ return {
     -- Terminal integration
     terminal = { enabled = true },
 
-    -- LazyGit integration
-    lazygit = { enabled = true },
-
     -- File explorer (replaces neo-tree)
     explorer = {
       enabled = true,
@@ -103,11 +100,6 @@ return {
     -- Terminal
     { '<leader>tt', function() Snacks.terminal() end, desc = 'Toggle terminal' },
     { '<c-\\>',     function() Snacks.terminal() end, desc = 'Toggle terminal', mode = { 'n', 't' } },
-
-    -- LazyGit
-    { '<leader>gg', function() Snacks.lazygit() end, desc = 'Lazygit' },
-    { '<leader>gl', function() Snacks.lazygit.log() end, desc = 'Lazygit log' },
-    { '<leader>gf', function() Snacks.lazygit.log_file() end, desc = 'Lazygit current file history' },
 
     -- Notifications
     { '<leader>un', function() Snacks.notifier.hide() end, desc = 'Dismiss all notifications' },

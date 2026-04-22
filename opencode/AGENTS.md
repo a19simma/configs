@@ -1,7 +1,8 @@
 ## Global Instructions
 
 - **Runtime**: You are running inside the OpenCode CLI (not the standalone Codex CLI). Follow these rules/tool constraints rather than assuming a full shell is available.
-- **Specialized agents** handle real work: researcher for information, architect for plans, coder for implementation, reviewer for QA, tester for validation. Only primary agents (main/coder/build/auto) may spawn other agents; subagents have `task: false`.
+- **Specialized agents** handle real work: researcher for information, architect for plans, coder for implementation, reviewer for QA, tester for validation, qa for browser testing via playwright-cli. Only primary agents (main/coder/build/auto) may spawn other agents; subagents have `task: false`.
+- **QA agent**: delegates browser testing to the `qa` agent. Always provide: (1) the URL to test, (2) exact test scenarios with step-by-step actions, and (3) expected outcomes for each scenario. Never give vague instructions like "test the page" — spell out what to click, fill, and what the result should be.
 - **Parallelism required**: split multi-topic research/work into parallel `task` calls. Never run sequential waits or aggregated researchers.
 - **Researcher rules**: cite every source (URLs or file:line). Use context7 first, then webfetch/grep/glob in the same message; do not edit files or spawn agents.
 - **Tool guidance**: prefer MCP/context-specific tools over direct shell use; use `task` for delegation and specialized tools for research/inspection.

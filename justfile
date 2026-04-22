@@ -15,7 +15,8 @@ backup-configs:
 # Deploy dotfiles using GNU Stow
 stow-deploy:
     @echo "Deploying dotfiles with GNU Stow..."
-    @mkdir -p ~/.config/nvim ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/opencode ~/.claude ~/.gemini ~/.config/tmux ~/.config/k9s/skins
+    @mkdir -p ~/.config/nvim ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/opencode ~/.claude ~/.gemini ~/.config/tmux ~/.config/k9s/skins ~/.config/lazygit ~/.config/gh-dash
+    stow -t ~/.config/gh-dash gh-dash --adopt
     stow -t ~/.config/nvim neovim
     stow -t ~/.config/Code vscode
     stow -t ~/.config/nushell nushell --adopt
@@ -25,8 +26,11 @@ stow-deploy:
     stow -t ~ shell
     stow -t ~/.config/tmux tmux --adopt
     stow -t ~/.config/k9s k9s --adopt
+    stow -t ~/.config/lazygit lazygit --adopt
     @echo "Setting up Claude Code symlinks to OpenCode configs..."
+    @rm -f ~/.claude/agents
     @ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
+    @ln -sf ~/.config/opencode/agents ~/.claude/agents
     @ln -sf ~/.config/opencode/commands ~/.claude/commands
     @ln -sf ~/.config/opencode/skills ~/.claude/skills
     @echo "✅ Dotfiles deployed successfully"
@@ -43,8 +47,9 @@ stow-remove:
     stow -t ~ -D shell
     stow -t ~/.config/tmux -D tmux
     stow -t ~/.config/k9s -D k9s
+    stow -t ~/.config/gh-dash -D gh-dash
     @echo "Removing Claude Code symlinks..."
-    @rm -f ~/.claude/CLAUDE.md ~/.claude/agents ~/.claude/commands
+    @rm -f ~/.claude/CLAUDE.md ~/.claude/agents ~/.claude/commands ~/.claude/skills
     @echo "✅ Dotfiles removed successfully"
 
 # Setup Claude Code MCP servers

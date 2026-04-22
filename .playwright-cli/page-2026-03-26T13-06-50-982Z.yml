@@ -1,0 +1,23 @@
+- generic [ref=e1]:
+  - generic [ref=e6]:
+    - banner [ref=e7]:
+      - button "languages" [ref=e11] [cursor=pointer]: English
+      - heading "Sign in to your account" [level=1] [ref=e12]
+    - generic [ref=e14]:
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - generic [ref=e19]: Username or email
+          - textbox "Username or email" [active] [ref=e20]
+        - generic [ref=e21]:
+          - generic [ref=e22]: Password
+          - generic [ref=e23]:
+            - textbox "Password" [ref=e24]
+            - button "Show password" [ref=e25] [cursor=pointer]:
+              - generic [ref=e26]: 
+        - link "Forgot Password?" [ref=e30] [cursor=pointer]:
+          - /url: /realms/done/login-actions/reset-credentials?client_id=portal-app&tab_id=LBNzCTEgDeA&client_data=eyJydSI6Imh0dHBzOi8vbG9jYWxob3N0OjUxNzMvIiwicnQiOiJjb2RlIiwicm0iOiJmcmFnbWVudCIsInN0IjoiMTYwYzEwMjItZDY1MC00YWY4LThhYmQtOTVhYmRlODJiYmE5In0
+        - button "Sign In" [ref=e32] [cursor=pointer]
+      - group [ref=e34]:
+        - generic "Or sign in with" [ref=e35] [cursor=pointer]
+        - text: 
+  - text: 

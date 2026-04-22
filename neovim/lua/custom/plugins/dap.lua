@@ -1,6 +1,5 @@
 -- Debug Adapter Protocol (DAP) configuration for Neovim
 -- Simple setup using js-debug-adapter from Mason
--- Server-side debugging only (use Chrome DevTools for client-side)
 return {
 	{
 		"mfussenegger/nvim-dap",
@@ -32,6 +31,49 @@ return {
 					require("dap").continue()
 				end,
 				desc = "Debug: [C]ontinue",
+			},
+			{
+				"<leader>dC",
+				function()
+					local url = vim.fn.input("URL: ", "http://localhost:5173")
+					vim.fn.jobstart({
+						"google-chrome",
+						"--remote-debugging-port=9222",
+						"--user-data-dir=C:\\temp\\chrome-dap",
+						"--no-first-run",
+						"--no-default-browser-check",
+						url,
+					}, { detach = true })
+					vim.defer_fn(function()
+						require("dap").run({
+							type = "pwa-chrome",
+							request = "attach",
+							name = "Launch Chrome",
+							port = 9222,
+							webRoot = "${workspaceFolder}",
+						})
+					end, 1500)
+				end,
+				desc = "Launch [C]hrome",
+			},
+			{
+				"<leader>dW",
+				function()
+					-- Use the WSL default gateway as the Windows host IP
+					local host = vim.fn.trim(vim.fn.system("ip route show default | awk '{print $3; exit}'"))
+					if host == "" then
+						host = "localhost"
+					end
+					require("dap").run({
+						type = "pwa-chrome",
+						request = "attach",
+						name = "Attach Chrome (WSL→Windows)",
+						address = host,
+						port = 9222,
+						webRoot = "${workspaceFolder}",
+					})
+				end,
+				desc = "Attach Chrome ([W]SL→Windows)",
 			},
 			{
 				"<leader>di",
@@ -99,18 +141,15 @@ return {
 			dapui.setup()
 
 			-- Setup adapters using js-debug-adapter from Mason
-			-- Note: Mason's js-debug-adapter uses DAP debug server, not VSCode debug server
-			for _, adapter in pairs({ "pwa-node", "pwa-chrome" }) do
-				dap.adapters[adapter] = {
-					type = "server",
-					host = "localhost",
-					port = "${port}",
-					executable = {
-						command = "js-debug-adapter",
-						args = { "${port}" },
-					},
-				}
-			end
+			dap.adapters["pwa-chrome"] = {
+				type = "server",
+				host = "localhost",
+				port = "${port}",
+				executable = {
+					command = "js-debug-adapter",
+					args = { "${port}" },
+				},
+			}
 
 			-- Python adapter configuration
 			dap.adapters.python = function(cb, config)
@@ -143,7 +182,6 @@ return {
 					name = "Launch file",
 					program = "${file}",
 					pythonPath = function()
-						-- Automatically detect virtualenv
 						local cwd = vim.fn.getcwd()
 						if vim.fn.executable(cwd .. "/venv/bin/python") == 1 then
 							return cwd .. "/venv/bin/python"
@@ -156,108 +194,76 @@ return {
 				},
 			}
 
-			-- Configure debug configurations for JavaScript/TypeScript/Svelte
-			local js_based_languages = { "typescript", "javascript", "svelte" }
+			-- netcoredbg adapter for C#
+			dap.adapters.coreclr = {
+				type = "executable",
+				command = "netcoredbg",
+				args = { "--interpreter=vscode" },
+			}
 
-			for _, language in ipairs(js_based_languages) do
-				dap.configurations[language] = {
-					-- Server-side: Attach to running Node process
-					{
-						type = "pwa-node",
-						request = "attach",
-						name = "Attach to Node Process",
-						processId = require("dap.utils").pick_process,
-						cwd = "${workspaceFolder}",
-						sourceMaps = true,
-						skipFiles = { "<node_internals>/**" },
-					},
-					-- Server-side: Launch a single file
-					{
-						type = "pwa-node",
-						request = "launch",
-						name = "Launch file",
-						program = "${file}",
-						cwd = "${workspaceFolder}",
-						sourceMaps = true,
-					},
-					-- Client-side: Launch Chrome (minimal config)
-					{
-						type = "pwa-chrome",
-						request = "launch",
-						name = "Launch Chrome",
-						url = "http://localhost:5173",
-						webRoot = function()
-							return vim.fn.getcwd()
+			-- C# debug configurations
+			local function pick_dotnet_dll()
+				return coroutine.create(function(dap_run_co)
+					if vim.fn.confirm("Build before debug?", "&Yes\n&No", 1) == 1 then
+						vim.notify("Building...")
+						local result = vim.fn.system("dotnet build -c Debug")
+						if vim.v.shell_error ~= 0 then
+							vim.notify("Build failed:\n" .. result, vim.log.levels.ERROR)
+							coroutine.resume(dap_run_co, vim.NIL)
+							return
+						end
+					end
+					local dlls = vim.fn.globpath(vim.fn.getcwd(), "**/bin/Debug/**/*.dll", 0, 1)
+					local items = vim.tbl_filter(function(p)
+						return not p:match("/ref/")
+					end, dlls)
+					if #items == 0 then
+						vim.notify("No dlls found under bin/Debug/", vim.log.levels.ERROR)
+						coroutine.resume(dap_run_co, vim.NIL)
+						return
+					end
+					vim.ui.select(items, {
+						prompt = "Select dll to debug:",
+						format_item = function(p)
+							return vim.fn.fnamemodify(p, ":.")
 						end,
-					},
-					{
-						type = "pwa-chrome",
-						request = "attach",
-						name = "Attach Chrome",
-						port = 9222,
-						webRoot = function()
-							return vim.fn.getcwd()
-						end,
-					},
-					{
-						type = "pwa-chrome",
-						request = "attach",
-						name = "Attach Vitest Browser",
-						port = 9229,
-						webRoot = function()
-							return vim.fn.getcwd()
-						end,
-					},
-					-- -- WSL: Launch Chrome helper (runs script then attaches)
-					-- {
-					-- 	type = "pwa-chrome",
-					-- 	request = "attach",
-					-- 	name = "Launch Chrome (WSL)",
-					-- 	port = 9222,
-					-- 	webRoot = function()
-					-- 		return vim.fn.getcwd()
-					-- 	end,
-					-- 	sourceMaps = true,
-					-- 	-- Source map path overrides for common build tools
-					-- 	sourceMapPathOverrides = {
-					-- 		["webpack:///./*"] = "${webRoot}/*",
-					-- 		["webpack://?:*/*"] = "${webRoot}/*",
-					-- 		["webpack:///*"] = "*",
-					-- 		["webpack:///./~/*"] = "${webRoot}/node_modules/*",
-					-- 		["meteor://💻app/*"] = "${webRoot}/*",
-					-- 	},
-					-- 	-- This will be triggered by a custom command
-					-- 	-- Use :DapLaunchChrome instead of selecting this directly
-					-- },
-					-- -- WSL: Attach to Chrome running in Windows
-					-- -- Instructions:
-					-- --   1. From Windows PowerShell: .\Start-ChromeDebug.ps1
-					-- --      (Script located at: \\wsl$\Ubuntu\home\simon\repos\configs\wsl-scripts\Start-ChromeDebug.ps1)
-					-- --   2. Or manually run:
-					-- --      & "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug" http://localhost:5173
-					-- --   3. Then use this attach configuration
-					-- {
-					-- 	type = "pwa-chrome",
-					-- 	request = "attach",
-					-- 	name = "Attach to Chrome (WSL)",
-					-- 	port = 9222,
-					-- 	webRoot = function()
-					-- 		return vim.fn.getcwd()
-					-- 	end,
-					-- 	sourceMaps = true,
-					-- 	-- Source map path overrides for common build tools
-					-- 	sourceMapPathOverrides = {
-					-- 		["webpack:///./*"] = "${webRoot}/*",
-					-- 		["webpack://?:*/*"] = "${webRoot}/*",
-					-- 		["webpack:///*"] = "*",
-					-- 		["webpack:///./~/*"] = "${webRoot}/node_modules/*",
-					-- 		["meteor://💻app/*"] = "${webRoot}/*",
-					-- 	},
-					-- },
-				}
+					}, function(choice)
+						coroutine.resume(dap_run_co, choice)
+					end)
+				end)
 			end
 
-			-- Auto-open/close DAP UI
+			dap.configurations.cs = {
+				{
+					type = "coreclr",
+					name = "Launch project (build & pick)",
+					request = "launch",
+					program = pick_dotnet_dll,
+					cwd = "${workspaceFolder}",
+					console = "integratedTerminal",
+				},
+				{
+					type = "coreclr",
+					name = "Attach (pick process)",
+					request = "attach",
+					processId = require("dap.utils").pick_process,
+				},
+			}
+
+			-- Chrome attach configuration for JS/TS/Svelte
+		for _, language in ipairs({ "typescript", "javascript", "svelte" }) do
+			dap.configurations[language] = {
+				{
+					type = "pwa-chrome",
+					request = "attach",
+					name = "Attach to Chrome",
+					port = 9222,
+					webRoot = "${workspaceFolder}",
+				},
+			}
+		end
+
+		-- Auto-open/close DAP UI
 			dap.listeners.after.event_initialized["dapui_config"] = function()
 				dapui.open({ reset = true })
 			end
@@ -277,44 +283,6 @@ return {
 			-- Highlight groups
 			vim.api.nvim_set_hl(0, "DapBreakpoint", { fg = "#e51400" })
 			vim.api.nvim_set_hl(0, "DapStopped", { fg = "#98c379" })
-
-			-- Custom command: Launch Chrome and attach (WSL)
-			vim.api.nvim_create_user_command("DapLaunchChrome", function()
-				-- Kill existing Chrome
-				print("Stopping existing Chrome instances...")
-				vim.fn.system(
-					'powershell.exe -Command "Stop-Process -Name chrome -Force -ErrorAction SilentlyContinue"'
-				)
-				vim.wait(500)
-
-				-- Launch Chrome with debugging
-				print("Launching Chrome with debugging on port 9222...")
-				vim.fn.jobstart(
-					'powershell.exe -Command "& \\"C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\\" --remote-debugging-port=9222 --user-data-dir=\\"C:\\\\temp\\\\chrome-debug\\" --no-first-run --no-default-browser-check http://localhost:5173"',
-					{ detach = true }
-				)
-
-				-- Wait for Chrome to start
-				print("Waiting for Chrome to start...")
-				vim.wait(3000)
-
-				-- Verify debug server is ready
-				local result = vim.fn.system("curl -s http://localhost:9222/json/version")
-				if result:match("Browser") then
-					print("✓ Chrome debug server ready! Starting DAP...")
-					-- Find and run the "Attach to Chrome (WSL)" configuration
-					local configs = dap.configurations[vim.bo.filetype] or {}
-					for _, config in ipairs(configs) do
-						if config.name == "Attach to Chrome (WSL)" then
-							dap.run(config)
-							return
-						end
-					end
-					print("Error: Could not find 'Attach to Chrome (WSL)' configuration")
-				else
-					print("✗ Chrome debug server not responding. Try manually: :DapLaunchChrome")
-				end
-			end, { desc = "Launch Chrome with debugging and attach DAP (WSL)" })
 		end,
 	},
 
@@ -326,6 +294,7 @@ return {
 			vim.list_extend(opts.ensure_installed, {
 				"js-debug-adapter",
 				"debugpy",
+				"netcoredbg",
 			})
 			return opts
 		end,

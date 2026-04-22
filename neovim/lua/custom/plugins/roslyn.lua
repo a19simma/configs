@@ -27,28 +27,17 @@ return {
 	-- Roslyn.nvim plugin
 	{
 		"seblj/roslyn.nvim",
-		ft = "cs", -- Only load for C# files
-		opts = {
-			-- Plugin options (different from LSP config)
-			filewatching = "auto",
-			broad_search = false,
-			silent = false,
-		},
-		config = function(_, opts)
-			-- Setup the plugin
-			require("roslyn").setup(opts)
-
-		-- Configure LSP settings using vim.lsp.config as a FUNCTION
-		vim.lsp.config("roslyn", {
-			on_attach = function(client, bufnr)
-					-- Set up LSP keymaps (same as other LSP servers)
+		ft = "cs",
+		-- init runs at startup, before plugin loads and before vim.lsp.enable fires,
+		-- so on_attach/settings are registered before the first client starts.
+		init = function()
+			vim.lsp.config("roslyn", {
+				on_attach = function(client, bufnr)
 					local snacks = require("snacks")
 					local map = function(keys, func, desc, mode)
 						mode = mode or "n"
 						vim.keymap.set(mode, keys, func, { buffer = bufnr, desc = "LSP: " .. desc })
 					end
-
-					-- LSP Keymaps (using snacks.picker for navigation)
 					map("grn", vim.lsp.buf.rename, "[R]e[n]ame")
 					map("gra", vim.lsp.buf.code_action, "[C]ode [A]ction", { "n", "x" })
 					map("grr", function()
@@ -71,13 +60,11 @@ return {
 						snacks.picker.lsp_type_definitions()
 					end, "[G]oto [T]ype Definition")
 				end,
-			settings = {
-				-- Enable formatting (respects .editorconfig)
-				["csharp|formatting"] = {
-					dotnet_organize_imports_on_format = true,
-					dotnet_sort_system_directives_first = true,
-				},
-				-- Enable inlay hints for better type visibility
+				settings = {
+					["csharp|formatting"] = {
+						dotnet_organize_imports_on_format = true,
+						dotnet_sort_system_directives_first = true,
+					},
 					["csharp|inlay_hints"] = {
 						csharp_enable_inlay_hints_for_implicit_object_creation = true,
 						csharp_enable_inlay_hints_for_implicit_variable_types = true,
@@ -92,23 +79,25 @@ return {
 						dotnet_suppress_inlay_hints_for_parameters_that_match_argument_name = true,
 						dotnet_suppress_inlay_hints_for_parameters_that_match_method_intent = true,
 					},
-					-- Enable code lens for references
 					["csharp|code_lens"] = {
 						dotnet_enable_references_code_lens = true,
 						dotnet_enable_tests_code_lens = true,
 					},
-					-- Enable completion settings
 					["csharp|completion"] = {
 						dotnet_provide_regex_completions = true,
 						dotnet_show_completion_items_from_unimported_namespaces = true,
 						dotnet_show_name_completion_suggestions = true,
 					},
-					-- Symbol search settings
 					["csharp|symbol_search"] = {
 						dotnet_search_reference_assemblies = true,
 					},
 				},
 			})
 		end,
+		opts = {
+			filewatching = "auto",
+			broad_search = false,
+			silent = false,
+		},
 	},
 }
