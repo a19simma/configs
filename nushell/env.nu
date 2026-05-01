@@ -26,7 +26,9 @@ if not ("~/.cache/starship/init.nu" | path expand | path exists) {
 }
 
 # Initialize zoxide
-zoxide init nushell | save -f ~/.zoxide.nu
+if not ("~/.zoxide.nu" | path expand | path exists) {
+    zoxide init nushell | save -f ~/.zoxide.nu
+}
 
 # Configuration management commands (work from any directory)
 def --env install-deps [] {
