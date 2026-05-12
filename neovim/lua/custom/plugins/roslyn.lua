@@ -26,7 +26,7 @@ return {
 
 	-- Roslyn.nvim plugin
 	{
-		"seblj/roslyn.nvim",
+		"seblyng/roslyn.nvim",
 		ft = "cs",
 		-- init runs at startup, before plugin loads and before vim.lsp.enable fires,
 		-- so on_attach/settings are registered before the first client starts.

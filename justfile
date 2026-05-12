@@ -21,6 +21,7 @@ stow-deploy:
     stow -t ~/.config/Code vscode
     stow -t ~/.config/nushell nushell --adopt
     stow -t ~/.config/wezterm wezterm
+    @rm -f ~/.config/opencode/AGENTS.md
     stow -t ~/.config/opencode opencode
     stow -t ~/.gemini gemini
     stow -t ~ shell
@@ -29,6 +30,7 @@ stow-deploy:
     stow -t ~/.config/lazygit lazygit --adopt
     @echo "Setting up Claude Code symlinks to OpenCode configs..."
     @rm -f ~/.claude/agents
+    @ln -sf ~/repos/configs/opencode/AGENTS.md ~/.config/opencode/AGENTS.md
     @ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
     @ln -sf ~/.config/opencode/agents ~/.claude/agents
     @ln -sf ~/.config/opencode/commands ~/.claude/commands

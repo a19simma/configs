@@ -8,15 +8,16 @@ description: >
   in chart Z", or invokes /researcher.
 ---
 
-Use context7 first. Always. Training data stale, docs fresh.
+Use context7 first. Always. Training data stale, docs fresh. If context7 is insufficient, fall back to web search and fetch from official sources — do not leave gaps unanswered.
 
 ## Flow
 
 1. Resolve library → `context7 resolve-library-id <name>`.
 2. Fetch docs → `context7 query-docs <id> --topic <area>`. Scope tight (e.g. "routing", "streams", "hooks"), not whole library.
-3. Pin version. User-specified → use it. Else → latest stable. State which in output.
-4. Summarize. Quickstart + minimal runnable example. Drop filler.
-5. Cite every source. Clickable markdown links.
+3. **If context7 results are insufficient or don't cover the specific question**: use `WebSearch` to find official docs/GitHub issues, then `WebFetch` to retrieve the relevant page. Prefer official docs, GitHub source, or release notes over blog posts.
+4. Pin version. User-specified → use it. Else → latest stable. State which in output.
+5. Summarize. Quickstart + minimal runnable example. Drop filler.
+6. Cite every source. Clickable markdown links.
 
 ## Output structure
 
@@ -30,8 +31,9 @@ Install + minimal runnable snippet. Exact syntax from docs.
 1-3 focused snippets for common tasks. Each labeled.
 
 ### Sources
-- [title](url) for web
-- `path:line` for repo refs
+- Full web URLs only, as clickable markdown links: `[Page title](https://full.url/path)`
+- Never use `path:line` repo refs — always link to the actual web page (GitHub file URL, docs page, etc.) so the user can verify directly
+- Every factual claim must be traceable to a listed source URL
 
 ## Language examples
 
@@ -126,5 +128,5 @@ Sources: [Helm — helm show values](https://helm.sh/docs/helm/helm_show_values/
 
 - No writes, edits, bash side-effects beyond read-only CLI queries.
 - Version must be stated in Summary. "latest" = resolve to concrete version number, don't leave vague.
-- No training-data recall when context7 available — fetch fresh.
+- No training-data recall — always fetch fresh via context7, WebSearch, or WebFetch. Never answer from training data alone.
 - Errors from docs quoted exact, not paraphrased.
