@@ -31,7 +31,15 @@ return {
 		-- init runs at startup, before plugin loads and before vim.lsp.enable fires,
 		-- so on_attach/settings are registered before the first client starts.
 		init = function()
+			local capabilities = vim.lsp.protocol.make_client_capabilities()
+			if pcall(require, "blink.cmp") then
+				capabilities = require("blink.cmp").get_lsp_capabilities(capabilities)
+			end
+			capabilities.workspace = capabilities.workspace or {}
+			capabilities.workspace.didChangeWatchedFiles = { dynamicRegistration = false }
+
 			vim.lsp.config("roslyn", {
+				capabilities = capabilities,
 				on_attach = function(client, bufnr)
 					local snacks = require("snacks")
 					local map = function(keys, func, desc, mode)
@@ -91,13 +99,43 @@ return {
 					["csharp|symbol_search"] = {
 						dotnet_search_reference_assemblies = true,
 					},
+					["csharp|background_analysis"] = {
+						dotnet_analyzer_diagnostics_scope = "openFiles",
+						dotnet_compiler_diagnostics_scope = "openFiles",
+					},
 				},
 			})
 		end,
 		opts = {
-			filewatching = "auto",
+			filewatching = "off",
 			broad_search = false,
 			silent = false,
 		},
+		init = function()
+			vim.api.nvim_create_user_command("RoslynCleanup", function()
+				vim.fn.system(
+					"for d in /tmp/roslyn-canonical-misc/*/; do"
+					.. " uuid=$(basename $d);"
+					.. " pgrep -f $uuid > /dev/null || rm -rf $d;"
+					.. " done"
+				)
+				vim.notify("Roslyn: cleaned up orphaned instance dirs", vim.log.levels.INFO)
+			end, { desc = "Remove orphaned roslyn instance dirs from /tmp" })
+
+			vim.api.nvim_create_autocmd("VimLeavePre", {
+				callback = function()
+					for _, client in ipairs(vim.lsp.get_clients({ name = "roslyn" })) do
+						local pipe = client.rpc and client.rpc.cmd and client.rpc.cmd[#client.rpc.cmd]
+						if pipe then
+							-- pipe arg is the named pipe path; parent dir is the instance dir
+							local instance_dir = vim.fn.fnamemodify(pipe, ":h")
+							if instance_dir:find("/tmp/roslyn-canonical-misc/", 1, true) then
+								vim.fn.system({ "rm", "-rf", instance_dir })
+							end
+						end
+					end
+				end,
+			})
+		end,
 	},
 }

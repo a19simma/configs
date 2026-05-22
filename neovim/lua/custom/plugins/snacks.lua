@@ -120,6 +120,33 @@ return {
     -- Toggle features
     { '<leader>td', function() Snacks.toggle.dim():toggle() end, desc = 'Toggle dim' },
     { '<leader>ts', function() Snacks.toggle.scroll():toggle() end, desc = 'Toggle scroll animation' },
+
+    -- LSP log picker
+    {
+      '<leader>ll',
+      function()
+        local clients = vim.lsp.get_clients()
+        if #clients == 0 then
+          vim.notify('No active LSP clients', vim.log.levels.WARN)
+          return
+        end
+        local items = vim.tbl_map(function(c)
+          return { text = c.name, client = c }
+        end, clients)
+        Snacks.picker.pick({
+          title = 'LSP Logs',
+          items = items,
+          format = function(item) return { { item.text } } end,
+          confirm = function(picker, item)
+            picker:close()
+            vim.lsp.set_log_level('debug')
+            vim.cmd('tabnew ' .. vim.lsp.get_log_path())
+            vim.notify('Showing log for: ' .. item.text, vim.log.levels.INFO)
+          end,
+        })
+      end,
+      desc = 'LSP log picker',
+    },
   },
 
   init = function()
