@@ -1,8 +1,4 @@
--- Roslyn LSP for C# (.NET)
--- roslyn.nvim: Microsoft's official Roslyn language server for Neovim
--- Provides advanced C# features: IntelliSense, refactoring, code lens, analyzers, etc.
 return {
-	-- First, we need to add the custom mason registry for roslyn
 	{
 		"williamboman/mason.nvim",
 		opts = function(_, opts)
@@ -12,25 +8,20 @@ return {
 		end,
 	},
 
-	-- Install roslyn via mason-tool-installer
 	{
 		"WhoIsSethDaniel/mason-tool-installer.nvim",
 		opts = function(_, opts)
 			opts.ensure_installed = opts.ensure_installed or {}
-			vim.list_extend(opts.ensure_installed, {
-				"roslyn", -- Roslyn language server for C#
-			})
+			vim.list_extend(opts.ensure_installed, { "roslyn" })
 			return opts
 		end,
 	},
 
-	-- Roslyn.nvim plugin
 	{
 		"seblyng/roslyn.nvim",
 		ft = "cs",
-		-- init runs at startup, before plugin loads and before vim.lsp.enable fires,
-		-- so on_attach/settings are registered before the first client starts.
 		init = function()
+			-- Capabilities: disable dynamic file watching (roslyn registers too many)
 			local capabilities = vim.lsp.protocol.make_client_capabilities()
 			if pcall(require, "blink.cmp") then
 				capabilities = require("blink.cmp").get_lsp_capabilities(capabilities)
@@ -40,7 +31,8 @@ return {
 
 			vim.lsp.config("roslyn", {
 				capabilities = capabilities,
-				on_attach = function(client, bufnr)
+				cmd_env = { DOTNET_USE_POLLING_FILE_WATCHER = "1" },
+				on_attach = function(_, bufnr)
 					local snacks = require("snacks")
 					local map = function(keys, func, desc, mode)
 						mode = mode or "n"
@@ -48,25 +40,13 @@ return {
 					end
 					map("grn", vim.lsp.buf.rename, "[R]e[n]ame")
 					map("gra", vim.lsp.buf.code_action, "[C]ode [A]ction", { "n", "x" })
-					map("grr", function()
-						snacks.picker.lsp_references()
-					end, "[G]oto [R]eferences")
-					map("gri", function()
-						snacks.picker.lsp_implementations()
-					end, "[G]oto [I]mplementation")
-					map("grd", function()
-						snacks.picker.lsp_definitions()
-					end, "[G]oto [D]efinition")
+					map("grr", function() snacks.picker.lsp_references() end, "[G]oto [R]eferences")
+					map("gri", function() snacks.picker.lsp_implementations() end, "[G]oto [I]mplementation")
+					map("grd", function() snacks.picker.lsp_definitions() end, "[G]oto [D]efinition")
 					map("grD", vim.lsp.buf.declaration, "[G]oto [D]eclaration")
-					map("gO", function()
-						snacks.picker.lsp_symbols()
-					end, "Document [S]ymbols")
-					map("gW", function()
-						snacks.picker.lsp_workspace_symbols()
-					end, "Workspace [S]ymbols")
-					map("grt", function()
-						snacks.picker.lsp_type_definitions()
-					end, "[G]oto [T]ype Definition")
+					map("gO",  function() snacks.picker.lsp_symbols() end, "Document [S]ymbols")
+					map("gW",  function() snacks.picker.lsp_workspace_symbols() end, "Workspace [S]ymbols")
+					map("grt", function() snacks.picker.lsp_type_definitions() end, "[G]oto [T]ype Definition")
 				end,
 				settings = {
 					["csharp|formatting"] = {
@@ -105,37 +85,83 @@ return {
 					},
 				},
 			})
+
+			local function kill_roslyn_processes()
+				-- Kill dotnet processes running the Roslyn language server
+				vim.fn.system("pkill -f 'Microsoft.CodeAnalysis.LanguageServer' 2>/dev/null")
+				-- Clean up orphaned instance dirs (no matching live process)
+				vim.fn.system(
+					"for d in /tmp/roslyn-canonical-misc/*/; do"
+					.. " [ -d \"$d\" ] || continue;"
+					.. " uuid=$(basename \"$d\");"
+					.. " pgrep -f \"$uuid\" > /dev/null || rm -rf \"$d\";"
+					.. " done"
+				)
+			end
+
+			-- Extend :Lsp with a 'log' subcommand; delegate the rest to neovim's built-in ex_cmd
+			local ex_cmd = require("vim._core.ex_cmd")
+			vim.api.nvim_create_user_command("Lsp", function(args)
+				local fargs = args.fargs
+				local subcmd = fargs[1]
+				if subcmd == "log" then
+					local filter = fargs[2]
+					local log_path = vim.lsp.get_log_path()
+					if not filter then
+						vim.cmd("tabnew " .. log_path)
+						return
+					end
+					local lines = vim.fn.readfile(log_path)
+					local filtered = vim.tbl_filter(function(l)
+						return l:lower():find(filter:lower(), 1, true) ~= nil
+					end, lines)
+					local buf = vim.api.nvim_create_buf(false, true)
+					vim.api.nvim_buf_set_lines(buf, 0, -1, false, filtered)
+					vim.bo[buf].filetype = "log"
+					vim.bo[buf].modifiable = false
+					vim.bo[buf].bufhidden = "wipe"
+					vim.api.nvim_buf_set_name(buf, "lsp log: " .. filter)
+					vim.cmd("tabnew")
+					vim.api.nvim_win_set_buf(0, buf)
+					vim.cmd("normal! G")
+				else
+					ex_cmd.ex_lsp(args.args)
+				end
+			end, {
+				nargs = "+",
+				complete = function(arglead, cmdline, _)
+					local split = vim.split(cmdline, "%s+")
+					if #split <= 2 then
+						local subcmds = vim.list_extend({ "log" }, ex_cmd.lsp_complete(cmdline))
+						return vim.tbl_filter(function(s) return s:find(arglead, 1, true) == 1 end, subcmds)
+					elseif split[2] == "log" then
+						return vim.tbl_map(function(c) return c.name end, vim.lsp.get_clients())
+					else
+						return ex_cmd.lsp_complete(cmdline)
+					end
+				end,
+				desc = "LSP subcommands: enable/disable/restart/stop/log [server]",
+			})
+
+			vim.api.nvim_create_user_command("RoslynCleanup", function()
+				kill_roslyn_processes()
+				vim.notify("Roslyn: killed orphaned processes and cleaned instance dirs", vim.log.levels.INFO)
+			end, { desc = "Kill orphaned roslyn/dotnet processes and clean /tmp instance dirs" })
+
+			-- On exit: stop attached clients gracefully then force-kill any remaining process
+			vim.api.nvim_create_autocmd("VimLeavePre", {
+				callback = function()
+					for _, client in ipairs(vim.lsp.get_clients({ name = "roslyn" })) do
+						client.stop(true)
+					end
+					kill_roslyn_processes()
+				end,
+			})
 		end,
 		opts = {
 			filewatching = "off",
 			broad_search = false,
 			silent = false,
 		},
-		init = function()
-			vim.api.nvim_create_user_command("RoslynCleanup", function()
-				vim.fn.system(
-					"for d in /tmp/roslyn-canonical-misc/*/; do"
-					.. " uuid=$(basename $d);"
-					.. " pgrep -f $uuid > /dev/null || rm -rf $d;"
-					.. " done"
-				)
-				vim.notify("Roslyn: cleaned up orphaned instance dirs", vim.log.levels.INFO)
-			end, { desc = "Remove orphaned roslyn instance dirs from /tmp" })
-
-			vim.api.nvim_create_autocmd("VimLeavePre", {
-				callback = function()
-					for _, client in ipairs(vim.lsp.get_clients({ name = "roslyn" })) do
-						local pipe = client.rpc and client.rpc.cmd and client.rpc.cmd[#client.rpc.cmd]
-						if pipe then
-							-- pipe arg is the named pipe path; parent dir is the instance dir
-							local instance_dir = vim.fn.fnamemodify(pipe, ":h")
-							if instance_dir:find("/tmp/roslyn-canonical-misc/", 1, true) then
-								vim.fn.system({ "rm", "-rf", instance_dir })
-							end
-						end
-					end
-				end,
-			})
-		end,
 	},
 }
