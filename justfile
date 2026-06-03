@@ -29,10 +29,10 @@ stow-deploy:
     stow -t ~/.config/k9s k9s --adopt
     stow -t ~/.config/lazygit lazygit --adopt
     @echo "Setting up Claude Code symlinks to OpenCode configs..."
-    @rm -f ~/.claude/agents
     @ln -sf ~/repos/configs/opencode/AGENTS.md ~/.config/opencode/AGENTS.md
     @ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
-    @ln -sf ~/.config/opencode/agents ~/.claude/agents
+    @rm -rf ~/.claude/agents && mkdir -p ~/.claude/agents
+    @for f in ~/repos/configs/opencode/agents/*.md; do ln -sf "$f" ~/.claude/agents/; done
     @ln -sf ~/.config/opencode/commands ~/.claude/commands
     @ln -sf ~/.config/opencode/skills ~/.claude/skills
     @echo "✅ Dotfiles deployed successfully"
@@ -115,7 +115,8 @@ fix-symlinks:
     stow -t ~/.config/k9s k9s --adopt
     @echo "Setting up Claude Code symlinks to OpenCode configs..."
     @ln -sf .config/opencode/AGENTS.md ~/.claude/CLAUDE.md
-    @ln -sf .config/opencode/agents ~/.claude/agents
+    @rm -rf ~/.claude/agents && mkdir -p ~/.claude/agents
+    @for f in ~/repos/configs/opencode/agents/*.md; do ln -sf "$f" ~/.claude/agents/; done
     @ln -sf .config/opencode/commands ~/.claude/commands
     @echo "✅ Symlinks fixed and dotfiles deployed"
 

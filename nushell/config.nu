@@ -11,7 +11,7 @@ $env.config = {
         vi_normal: block
     }
     use_ansi_coloring: true
-    bracketed_paste: true
+    bracketed_paste: false
     render_right_prompt_on_last_line: false
     shell_integration: {
         osc2: true
@@ -109,4 +109,4 @@ def ollama-run [] {
 
 
 
-use ($nu.default-config-dir | path join mise.nu)
+# mise.nu already sourced above - do not use/source again

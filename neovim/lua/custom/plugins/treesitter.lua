@@ -8,29 +8,29 @@ return {
 		lazy = false,
 		build = ":TSUpdate",
 		config = function()
-			local ts = require("nvim-treesitter")
-
-			ts.install({
-				"bash",
-				"c",
-				"cpp",
-				"c_sharp",
-				"diff",
-				"go",
-				"html",
-				"javascript",
-				"lua",
-				"luadoc",
-				"markdown",
-				"markdown_inline",
-				"python",
-				"query",
-				"rust",
-				"svelte",
-				"typescript",
-				"vim",
-				"vimdoc",
-				"yaml",
+			require("nvim-treesitter").setup({
+				ensure_installed = {
+					"bash",
+					"c",
+					"cpp",
+					"c_sharp",
+					"diff",
+					"go",
+					"html",
+					"javascript",
+					"lua",
+					"luadoc",
+					"markdown",
+					"markdown_inline",
+					"python",
+					"query",
+					"rust",
+					"svelte",
+					"typescript",
+					"vim",
+					"vimdoc",
+					"yaml",
+				},
 			})
 
 			-- Enable highlighting, folding, and indentation for all filetypes

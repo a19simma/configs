@@ -1,0 +1,9 @@
+{
+  "enabledPlugins": {},
+  "effortLevel": "low",
+  "showClearContextOnPlanAccept": true,
+  "tui": "fullscreen",
+  "autoMemoryEnabled": false,
+  "skipDangerousModePermissionPrompt": true,
+  "agentPushNotifEnabled": true
+}

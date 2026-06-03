@@ -27,9 +27,11 @@ $env.PATH = ($env.PATH | prepend ($env.HOME | path join ".cargo" "bin"))
 # Add .NET tools to PATH
 $env.PATH = ($env.PATH | prepend ($env.HOME | path join ".dotnet" "tools"))
 
-# Generate and load mise configuration
+# Generate and load mise configuration (only regenerate if missing)
 let mise_path = $nu.default-config-dir | path join mise.nu
-^mise activate nu | save $mise_path --force
+if not ($mise_path | path exists) {
+    ^mise activate nu | save $mise_path --force
+}
 $env.MISE_TRUSTED_CONFIG_PATHS = ($env.HOME | path join "repos")
 
 # WSL Clipboard integration
