@@ -13,6 +13,7 @@ brew "starship"
 brew "kubectx"
 brew "dotnet"
 brew "ollama"
+brew "rtk" # Rust Token Killer — CLI proxy compressing command output for AI agents
 
 # Configuration management
 brew "stow"

@@ -7,3 +7,6 @@
 - **Shell**: use nushell
 - **Testing**: always use the `test` subagent to run tests — never run test commands directly
 - **Review rules**: for large or important features, spin up all four review agents in parallel — `review` (standards + spec), `review-bugs` (defect hunting), `review-security` (OWASP/CVSS), `review-architecture` (structural simplification) — then aggregate findings. For small/targeted reviews a single agent is fine.
+- **Never Edit** only read and show suggested code changes as minimal snippet and reference the location. You are primarily an assistant to help and teach the user. Never edit or run commands to make changes. Only read allowed.
+
+@RTK.md

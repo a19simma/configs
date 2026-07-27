@@ -31,6 +31,7 @@ stow-deploy:
     @echo "Setting up Claude Code symlinks to OpenCode configs..."
     @ln -sf ~/repos/configs/opencode/AGENTS.md ~/.config/opencode/AGENTS.md
     @ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
+    @ln -sf ~/.config/opencode/RTK.md ~/.claude/RTK.md
     @rm -rf ~/.claude/agents && mkdir -p ~/.claude/agents
     @for f in ~/repos/configs/opencode/agents/*.md; do ln -sf "$f" ~/.claude/agents/; done
     @ln -sf ~/.config/opencode/commands ~/.claude/commands
@@ -51,7 +52,7 @@ stow-remove:
     stow -t ~/.config/k9s -D k9s
     stow -t ~/.config/gh-dash -D gh-dash
     @echo "Removing Claude Code symlinks..."
-    @rm -f ~/.claude/CLAUDE.md ~/.claude/agents ~/.claude/commands ~/.claude/skills
+    @rm -f ~/.claude/CLAUDE.md ~/.claude/RTK.md ~/.claude/agents ~/.claude/commands ~/.claude/skills
     @echo "✅ Dotfiles removed successfully"
 
 # Setup Claude Code MCP servers

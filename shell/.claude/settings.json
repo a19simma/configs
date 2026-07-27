@@ -1,9 +1,27 @@
 {
+  "model": "claude-opus-4-8",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {},
   "effortLevel": "low",
   "showClearContextOnPlanAccept": true,
   "tui": "fullscreen",
   "autoMemoryEnabled": false,
   "skipDangerousModePermissionPrompt": true,
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "statusLine": {
+    "type": "command",
+    "command": "bash /home/simon/.claude/statusline-command.sh"
+  }
 }
