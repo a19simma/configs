@@ -34,7 +34,7 @@ stow -t ~/.config/Code vscode
 stow -t ~/.config/nushell nushell --adopt
 stow -t ~/.config/wezterm wezterm
 rm -f ~/.config/opencode/AGENTS.md
-stow -t ~/.config/opencode opencode
+stow -t ~/.config/opencode opencode --adopt
 stow -t ~/.gemini gemini
 stow -t ~ shell
 stow -t ~/.config/tmux tmux --adopt

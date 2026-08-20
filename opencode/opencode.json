@@ -68,10 +68,7 @@
     "context7_*": false,
     "exa_*": true,
     "terraform_*": false,
-    "kubernetes_*": false,
-    "git_*": false,
-    "playwright_*": false,
-    "memory_*": false
+    "playwright_*": false
   },
   "mcp": {
     "context7": {
@@ -91,25 +88,10 @@
         "Authorization": "Bearer {env:EXA_API_KEY}"
       }
     },
-    "kubernetes": {
-      "type": "local",
-      "command": ["npx", "-y", "kubernetes-mcp-server@latest"],
-      "enabled": true
-    },
-    "git": {
-      "type": "local",
-      "command": ["uv", "tool", "run", "mcp-server-git"],
-      "enabled": true
-    },
     "playwright": {
       "type": "local",
       "command": ["npx", "@playwright/mcp@latest"],
       "enabled": true
-    },
-    "memory": {
-      "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-memory"],
-      "enabled": false
     }
   },
   "lsp": {
@@ -118,36 +100,8 @@
     }
   },
   "agent": {
-    "coder": {
-      "mode": "subagent",
-      "model": "google/antigravity-claude-sonnet-4-5-thinking",
-      "description": "Implementation subagent for writing code and fixes",
-      "temperature": 0.3,
-      "tools": {
-        "context7_*": true
-      }
-    },
-    "build": {
-      "mode": "primary",
-      "model": "google/antigravity-claude-sonnet-4-5-thinking",
-      "description": "Primary build agent (can edit/write by default)",
-      "temperature": 0.2,
-      "tools": {
-        "edit": true,
-        "write": true,
-        "bash": true,
-        "context7_*": true,
-        "exa_*": true
-      },
-      "permission": {
-        "edit": "allow",
-        "write": "allow",
-        "bash": "allow"
-      }
-    },
     "research": {
       "mode": "primary",
-      "model": "google/antigravity-gemini-3-flash",
       "description": "Primary research agent (copy of researcher)",
       "temperature": 0.1,
       "tools": {
@@ -156,7 +110,6 @@
     },
     "tutor": {
       "mode": "primary",
-      "model": "google/antigravity-gemini-3-pro",
       "description": "Primary tutoring agent for explanations and guidance",
       "temperature": 0.4,
       "system_prompt": "You are a concise tutor. Give brief, clear explanations. Use bullet points. Avoid verbosity. Get to the point quickly.",
@@ -166,7 +119,6 @@
     },
     "auto": {
       "mode": "primary",
-      "model": "google/antigravity-claude-sonnet-4-5-thinking",
       "description": "Primary autonomous agent (all permissions enabled)",
       "temperature": 0.3,
       "tools": {
@@ -178,10 +130,7 @@
         "edit": true,
         "context7_*": true,
         "terraform_*": true,
-        "kubernetes_*": true,
-        "git_*": true,
-        "playwright_*": true,
-        "memory_*": true
+        "playwright_*": true
       },
       "permission": {
         "read": "allow",
@@ -197,29 +146,6 @@
         "external_directory": "allow"
       }
     },
-    "researcher": {
-      "mode": "subagent",
-      "model": "google/antigravity-gemini-3-flash",
-      "description": "Research specialist for web/filesystem exploration",
-      "temperature": 0.1,
-      "system_prompt": "You are a research specialist. Use context7 first, cite sources, and gather information without editing files.",
-      "tools": {
-        "context7_*": true,
-        "exa_*": true,
-        "webfetch": true,
-        "websearch": true,
-        "read": true,
-        "glob": true,
-        "grep": true,
-        "todoread": true,
-        "todowrite": true
-      },
-      "permission": {
-        "write": "deny",
-        "edit": "deny",
-        "bash": "deny"
-      }
-    },
     "architect": {
       "tools": {}
     },
@@ -229,15 +155,12 @@
       }
     },
     "reviewer": {
-      "tools": {
-        "git_*": true
-      }
+      "tools": {}
     },
     "infrastructure": {
       "tools": {
         "context7_*": true,
-        "terraform_*": true,
-        "kubernetes_*": true
+        "terraform_*": true
       }
     }
   }
