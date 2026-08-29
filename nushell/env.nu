@@ -1,3 +1,12 @@
+# --- mise: put managed tools on PATH -----------------------------------------
+# Must come before anything that calls a mise-installed binary (starship, etc).
+# Guarded so machines without mise are unaffected.
+let mise_shims = ($env.HOME | path join ".local" "share" "mise" "shims")
+if ($mise_shims | path exists) {
+    $env.PATH = ($env.PATH | split row (char esep) | prepend $mise_shims | uniq)
+}
+# -----------------------------------------------------------------------------
+
 # Nushell Environment Configuration
 # This file is loaded before config.nu
 
@@ -9,6 +18,10 @@ $env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY = "1"
 if $nu.os-info.name == "windows" {
     try {
         source env-windows.nu
+    }
+} else if $nu.os-info.name == "macos" {
+    try {
+        source env-macos.nu
     }
 } else {
     try {
@@ -28,6 +41,14 @@ if not ("~/.cache/starship/init.nu" | path expand | path exists) {
 # Initialize zoxide
 if not ("~/.zoxide.nu" | path expand | path exists) {
     zoxide init nushell | save -f ~/.zoxide.nu
+}
+
+# Atuin — nushell's `source` needs a static path, so the init script is
+# pre-generated here rather than eval'd. Regenerate after upgrading atuin:
+#   atuin init nu | save -f ~/.local/share/atuin/init.nu
+if (which atuin | is-not-empty) and not ("~/.local/share/atuin/init.nu" | path expand | path exists) {
+    mkdir ~/.local/share/atuin
+    atuin init nu | save -f ~/.local/share/atuin/init.nu
 }
 
 # Configuration management commands (work from any directory)
@@ -396,7 +417,7 @@ def kclean-evicted [] {
     print $"Found ($evicted_pods | length) evicted pods:"
     $evicted_pods | each { |pod| print $"  ($pod)" }
     let confirm = (input "Delete all evicted pods? (y/N): ")
-    if ($confirm | str downcase) == "y" {
+    if ($confirm | str lowercase) == "y" {
         kubectl get pods --field-selector=status.phase=Failed --all-namespaces --no-headers -o custom-columns=":metadata.namespace,:metadata.name" | lines | where $it =~ "Evicted" | each { |line|
             let parts = ($line | split column " ")
             let namespace = ($parts | get 0)
@@ -426,7 +447,7 @@ def kclean-completed [] {
     }
     
     let confirm = (input "Delete all completed jobs and pods? (y/N): ")
-    if ($confirm | str downcase) == "y" {
+    if ($confirm | str lowercase) == "y" {
         if ($completed_jobs | is-not-empty) {
             kubectl delete jobs --field-selector=status.successful=1 --all-namespaces
         }
@@ -463,7 +484,7 @@ def kjobs [] {
                 }
                 "delete" => {
                     let confirm = (input $"Delete job ($job)? (y/N): ")
-                    if ($confirm | str downcase) == "y" {
+                    if ($confirm | str lowercase) == "y" {
                         kubectl delete job $job
                         print $"✅ Job ($job) deleted"
                     }
@@ -501,7 +522,7 @@ def knodes [] {
                 }
                 "drain" => {
                     let confirm = (input $"Drain node ($node)? This will evict pods (y/N): ")
-                    if ($confirm | str downcase) == "y" {
+                    if ($confirm | str lowercase) == "y" {
                         print $"Draining node: ($node)"
                         kubectl drain $node --ignore-daemonsets --delete-emptydir-data
                     }
@@ -590,7 +611,7 @@ def kget-all [] {
     ]
     
     $resource_types | each { |resource|
-        print $"\n=== ($resource | str upcase) ==="
+        print $"\n=== ($resource | str uppercase) ==="
         if ($namespace | is-not-empty) {
             kubectl get $resource -n $namespace --no-headers 2>/dev/null | lines | length | $in > 0
         } else {

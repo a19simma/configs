@@ -1,0 +1,32 @@
+# Atuin — shell history in SQLite.
+# Stowed to ~/.config/atuin. Full key reference:
+#   https://docs.atuin.sh/configuration/config/
+
+## Search
+search_mode = "fuzzy"      # prefix | fulltext | fuzzy | daemon-fuzzy
+filter_mode = "global"     # global | host | session | directory | workspace
+# Up-arrow searches the current directory; Ctrl-R stays global.
+filter_mode_shell_up_key_binding = "directory"
+
+## UI
+style = "compact"          # compact | full | auto
+inline_height = 20         # 0 = full screen
+show_preview = true
+show_help = true
+show_tabs = true
+keymap_mode = "auto"       # follows nushell's edit mode
+# Enter runs the selected command immediately; Tab puts it on the line to edit.
+enter_accept = true
+exit_mode = "return-original"
+
+## Local only. No account, no server, nothing leaves the machine.
+## History lives in ~/.local/share/atuin/history.db and is not in this repo.
+auto_sync = false
+update_check = false
+
+## Never record these. secrets_filter already strips obvious tokens;
+## these are the repo-specific extras.
+secrets_filter = true
+history_filter = [
+  "^\\s",              # leading space = deliberately not recorded
+]

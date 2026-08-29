@@ -1,0 +1,364 @@
+# macOS configuration.
+#
+# Loaded AUTOMATICALLY on macOS — no -f flag, no MISE_ENV. This works because
+# `.miserc.toml` sets auto_env = true, which makes mise treat the platform as a
+# config environment and pick up `mise.{os}.toml`. It merges on top of the root
+# mise.toml, so Linux and Windows never see any of this.
+#
+# mise is the package manager here in the full sense: it installs Homebrew
+# formulae AND casks itself, pouring bottles into /opt/homebrew directly.
+# Homebrew is never installed. See `mise bootstrap packages brew`.
+#
+# Requires Apple Silicon — mise's brew manager reports itself unavailable on
+# Intel Macs. On Intel, install Homebrew and use the Brewfile instead.
+
+# ---------------------------------------------------------------------------
+# Settings
+# ---------------------------------------------------------------------------
+[settings]
+# Most of these tools resolve "latest" by asking the GitHub releases API. The
+# 3s default is tight on a cold cache, where mise queries ~20 repos at once —
+# unauthenticated requests are also rate-limited per IP, which shows up as slow
+# responses rather than clean errors.
+fetch_remote_versions_timeout = "30s"
+
+# ---------------------------------------------------------------------------
+# Dev tools — versioned, per-project, mise's native backends
+# ---------------------------------------------------------------------------
+# Versions are PINNED, not "latest". Two reasons:
+#   1. Reproducible — a machine built next year gets this same set.
+#   2. "latest" makes every fresh bootstrap depend on the GitHub releases API
+#      being reachable and un-throttled. Pinned versions skip version
+#      resolution entirely, which is what unblocked this machine.
+#
+# Pinned 2026-08-25 from mise's own version index (mise-versions.jdx.dev).
+# To bump:  mise outdated     then edit here, or  mise upgrade --bump
+[tools]
+gh       = "2.98.0"
+neovim   = "0.12.5"
+node     = "24.19.0"   # current LTS
+go       = "1.27.0"
+usage    = "6.4.0"     # powers mise shell completions
+jq       = "1.8.2"
+yq       = "4.53.6"
+fzf      = "0.74.3"
+ripgrep  = "15.2.0"
+fd       = "10.4.2"
+bat      = "0.26.1"
+eza      = "0.23.5"
+zoxide   = "0.10.0"
+atuin    = "18.20.1"
+starship = "1.26.0"
+lazygit  = "0.64.1"
+just     = "1.58.0"
+k9s      = "0.51.0"
+kubectl  = "1.36.4"
+act      = "0.2.89"
+gitleaks = "8.30.1"
+
+# RTK (Rust Token Killer) — CLI proxy that compresses command output for agents.
+# github backend pulls the release asset; no rust toolchain needed.
+"github:rtk-ai/rtk" = "0.45.0"
+
+# ---------------------------------------------------------------------------
+# System packages — poured by mise, not by brew
+#
+# CLI tools live in [tools] above. These are here because they're system-
+# integrated (nushell as a login-capable shell, stow's Perl dependency) or are
+# GUI apps, which have no mise backend other than brew-cask.
+# ---------------------------------------------------------------------------
+[bootstrap.packages]
+"brew:stow"    = "latest"
+"brew:nushell" = "latest"
+"brew:tmux"    = "latest"
+
+# GUI apps
+"brew-cask:alacritty" = "latest"
+"brew-cask:raycast"   = "latest"
+"brew-cask:wezterm"   = "latest"
+
+# AeroSpace is NOT here. Its tap (nikitabobko/tap) doesn't publish Homebrew API
+# metadata at api/cask/aerospace.json, which is what mise needs to install a
+# tapped cask — it 404s. Installed by the `install-aerospace` task instead.
+
+# Nerd font for starship / neovim devicons
+"brew-cask:font-jetbrains-mono-nerd-font" = "latest"
+
+# Adopt apps already sitting in /Applications rather than replacing the bundle.
+# Replacing a .app resets its macOS Privacy & Security grants — which would mean
+# re-granting Accessibility to AeroSpace and Raycast on every upgrade.
+[bootstrap.brew]
+adopt = true
+
+# ---------------------------------------------------------------------------
+# macOS defaults — declarative, replaces a pile of `defaults write` calls.
+# Apply with: mise bootstrap macos defaults apply
+# Inspect drift with: mise bootstrap macos defaults status
+# On Linux this whole section is inert.
+# ---------------------------------------------------------------------------
+[bootstrap.macos.keyboard]
+key_repeat = 2            # fastest; below what the System Settings slider allows
+initial_key_repeat = 15   # shortest delay
+press_and_hold = false    # kill the accent popup so holding hjkl repeats
+
+[bootstrap.macos.dock]
+autohide = true
+show_recents = false
+tilesize = 36
+mru_spaces = false        # critical: AeroSpace breaks if macOS reorders Spaces
+
+[bootstrap.macos.finder]
+show_all_files = true
+show_pathbar = true
+show_status_bar = true
+preferred_view_style = "list"
+show_extensions_warning = false
+
+[bootstrap.macos.trackpad]
+tap_to_click = true
+
+# Everything the friendly sections don't cover.
+# Written as sub-tables, not inline tables: TOML inline tables must fit on one
+# line, so `{ a = 1,\n b = 2 }` is a parse error.
+[bootstrap.macos.defaults.NSGlobalDomain]
+AppleShowAllExtensions = true
+AppleKeyboardUIMode = 3                       # Tab reaches every control
+NSAutomaticSpellingCorrectionEnabled = false  # autocorrect mangles code
+NSAutomaticQuoteSubstitutionEnabled = false   # smart quotes break configs
+NSAutomaticDashSubstitutionEnabled = false
+NSAutomaticCapitalizationEnabled = false
+NSAutomaticPeriodSubstitutionEnabled = false
+NSDocumentSaveNewDocumentsToCloud = false
+NSNavPanelExpandedStateForSaveMode = true
+NSAutomaticWindowAnimationsEnabled = false
+AppleSpacesSwitchOnActivate = false
+_HIHideMenuBar = true                         # auto-hide menu bar; needs re-login
+
+[bootstrap.macos.defaults."com.apple.finder"]
+_FXSortFoldersFirst = true
+FXDefaultSearchScope = "SCcf"                 # search this folder, not the Mac
+
+[bootstrap.macos.defaults."com.apple.desktopservices"]
+DSDontWriteNetworkStores = true               # stop .DS_Store on network shares
+DSDontWriteUSBStores = true
+
+[bootstrap.macos.defaults."com.apple.screencapture"]
+"disable-shadow" = true
+
+[bootstrap.macos.defaults."com.apple.dock"]
+"expose-group-apps" = true
+"wvous-br-corner" = 0                         # kill the Quick Note hot corner
+"autohide-delay" = 1000.0                     # Dock never pops out on hover
+"autohide-time-modifier" = 0.0
+
+# mise never kills apps itself; without this the Dock/Finder changes look
+# unapplied until next login.
+[bootstrap.hooks.post-defaults]
+run = "killall Dock Finder SystemUIServer || true"
+
+# ---------------------------------------------------------------------------
+# Tasks
+# ---------------------------------------------------------------------------
+
+[tasks.install-aerospace]
+description = "Install AeroSpace from its GitHub release (tap has no cask API)"
+run = """
+set -e
+VERSION="${AEROSPACE_VERSION:-v0.21.3-Beta}"
+APP="/Applications/AeroSpace.app"
+
+if [ -d "$APP" ]; then
+  CURRENT="$(defaults read "$APP/Contents/Info" CFBundleShortVersionString 2>/dev/null || echo unknown)"
+  echo "AeroSpace already installed (version: $CURRENT)"
+  echo "Not replacing it — that would reset its Accessibility permission."
+  echo "To force: rm -rf $APP && mise run install-aerospace"
+  exit 0
+fi
+
+command -v gh >/dev/null 2>&1 || { echo "gh not found — run 'mise install' first"; exit 1; }
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+echo "Downloading AeroSpace $VERSION..."
+# Let gh resolve the asset name rather than hardcoding it — the naming has
+# changed across releases.
+gh release download "$VERSION" --repo nikitabobko/AeroSpace --pattern '*.zip' --dir "$TMP"
+
+ZIP="$(find "$TMP" -name '*.zip' | head -1)"
+[ -n "$ZIP" ] || { echo "No .zip asset found in release $VERSION"; exit 1; }
+echo "Got $(basename "$ZIP")"
+
+unzip -q "$ZIP" -d "$TMP/extracted"
+SRC_APP="$(find "$TMP/extracted" -maxdepth 3 -name 'AeroSpace.app' -type d | head -1)"
+[ -n "$SRC_APP" ] || { echo "AeroSpace.app not found inside the archive"; exit 1; }
+
+echo "Installing to $APP"
+cp -R "$SRC_APP" /Applications/
+# Strip the quarantine flag so macOS doesn't refuse to open it.
+xattr -dr com.apple.quarantine "$APP" 2>/dev/null || true
+
+# The CLI ships alongside the app bundle; link it onto PATH.
+CLI="$(find "$TMP/extracted" -type f -name 'aerospace' -perm -u+x | head -1)"
+if [ -n "$CLI" ]; then
+  mkdir -p "$HOME/.local/bin"
+  cp "$CLI" "$HOME/.local/bin/aerospace"
+  echo "CLI installed to ~/.local/bin/aerospace"
+else
+  echo "Note: no separate CLI binary in the archive."
+  echo "It may live at $APP/Contents/MacOS/aerospace"
+fi
+
+echo "✅ AeroSpace $VERSION installed"
+echo "NEXT: open it once, then grant Accessibility in System Settings."
+"""
+
+[tasks.stow-deploy-macos]
+description = "Deploy dotfiles on macOS (adds alacritty + aerospace)"
+run = """
+set -e
+echo "Deploying dotfiles with GNU Stow..."
+mkdir -p ~/.config/nvim ~/.config/nushell ~/.config/wezterm ~/.config/opencode \\
+         ~/.config/alacritty ~/.config/aerospace ~/.config/tmux \\
+         ~/.config/k9s/skins ~/.config/lazygit ~/.config/gh-dash \
+         ~/.config/atuin \\
+         ~/.claude ~/.gemini
+# macOS keeps VS Code settings here, NOT in ~/.config/Code
+mkdir -p "$HOME/Library/Application Support/Code/User"
+
+stow -t ~/.config/gh-dash   gh-dash   --adopt
+stow -t ~/.config/nvim      neovim
+stow -t ~/.config/nushell   nushell   --adopt
+stow -t ~/.config/wezterm   wezterm
+stow -t ~/.config/alacritty alacritty --adopt
+stow -t ~/.config/aerospace aerospace --adopt
+rm -f ~/.config/opencode/AGENTS.md
+stow -t ~/.config/opencode  opencode  --adopt
+stow -t ~/.gemini           gemini
+stow -t ~                   shell
+stow -t ~/.config/tmux      tmux      --adopt
+stow -t ~/.config/k9s       k9s       --adopt
+stow -t ~/.config/lazygit   lazygit   --adopt
+stow -t ~/.config/atuin     atuin     --adopt
+
+echo "Linking Claude Code configs to OpenCode configs..."
+ln -sf ~/repos/configs/opencode/AGENTS.md ~/.config/opencode/AGENTS.md
+ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
+rm -rf ~/.claude/agents && mkdir -p ~/.claude/agents
+for f in ~/repos/configs/opencode/agents/*.md; do ln -sf "$f" ~/.claude/agents/; done
+ln -sf ~/.config/opencode/commands ~/.claude/commands
+ln -sf ~/.config/opencode/skills   ~/.claude/skills
+echo "✅ Dotfiles deployed"
+"""
+
+[tasks.backup-configs-macos]
+description = "Back up configs that stow would clobber"
+run = """
+ts=$(date +%Y%m%d-%H%M%S)
+# Every path the stow packages own. A plain file where stow wants a symlink
+# aborts the WHOLE deploy, so anything the packages cover must be listed here.
+# Deliberately not using `stow --adopt` for these: adopt pulls the local file
+# into the repo, silently overwriting the version you committed.
+for p in ~/.zshrc ~/.bashrc ~/.tmux.conf \\
+         ~/.config/nvim ~/.config/nushell ~/.config/wezterm \\
+         ~/.config/alacritty ~/.config/opencode ~/.gemini \
+         ~/.config/atuin \\
+         ~/.claude/settings.json ~/.claude/CLAUDE.md; do
+  if [ -e "$p" ] && [ ! -L "$p" ]; then
+    mv "$p" "$p.backup-$ts" && echo "backed up $p"
+  fi
+done
+echo "✅ Backups tagged $ts"
+"""
+
+[tasks.bootstrap-macos]
+description = "Bootstrap a fresh macOS machine"
+run = """
+# Deliberately NOT `set -e`. A single failing step (a cask that can't be
+# fetched, a stow conflict) should not abandon the rest of the machine
+# half-configured. Failures are collected and reported at the end.
+FAILED=""
+step() {
+  LABEL="$1"; shift
+  echo ""
+  echo "==> $LABEL"
+  if ! "$@"; then FAILED="$FAILED\\n  ✗ $LABEL"; echo "  ⚠️  failed, continuing"; fi
+}
+
+echo "🚀 Bootstrapping macOS..."
+step "Tools, brew formulae and casks"  mise bootstrap
+step "AeroSpace"                       mise run install-aerospace
+step "macOS system defaults"           mise bootstrap macos defaults apply --yes
+step "Backing up existing configs"     mise run backup-configs-macos
+step "Deploying dotfiles"              mise run stow-deploy-macos
+step "Registering nushell"             mise run register-nushell
+
+echo ""
+if [ -n "$FAILED" ]; then
+  printf "⚠️  Completed with failures:%b\\n" "$FAILED"
+else
+  echo "✅ All steps succeeded"
+fi
+echo ""
+mise run doctor-macos || true
+echo ""
+echo "See readme-macos.md for the manual steps macOS requires."
+"""
+
+[tasks.register-nushell]
+description = "Add nushell to /etc/shells without making it the login shell"
+run = """
+NU="$(command -v nu || true)"
+if [ -z "$NU" ]; then echo "nu not found — run 'mise bootstrap' first"; exit 1; fi
+if grep -qx "$NU" /etc/shells; then
+  echo "✅ $NU already registered"
+else
+  echo "Adding $NU to /etc/shells (sudo)"
+  echo "$NU" | sudo tee -a /etc/shells >/dev/null
+fi
+echo "Login shell left as-is. Alacritty launches nu directly."
+echo "To switch anyway:  chsh -s \\"$NU\\""
+"""
+
+[tasks.doctor-macos]
+description = "Check that the macOS setup is wired up correctly"
+run = """
+ok()  { printf '  \\033[32m✓\\033[0m %s\\n' "$1"; }
+bad() { printf '  \\033[31m✗\\033[0m %s\\n' "$1"; }
+
+echo "Config environment:"
+mise config ls | sed 's/^/  /'
+
+echo "CLI tools:"
+for t in mise gh nu nvim stow starship zoxide fzf rg fd bat eza lazygit just k9s atuin; do
+  command -v "$t" >/dev/null 2>&1 && ok "$t" || bad "$t missing"
+done
+
+echo "GUI apps:"
+for a in Alacritty Raycast AeroSpace WezTerm; do
+  [ -d "/Applications/$a.app" ] && ok "$a.app" || bad "$a.app not in /Applications"
+done
+
+echo "Stowed configs:"
+# NOTE: `stow -t ~/.config/nvim neovim` links the files INSIDE that directory;
+# the directory itself is a real dir, never a symlink. So check contents, not
+# the directory — an empty dir here means stow created it then bailed.
+check_stow() {
+  if [ -L "$1" ]; then
+    ok "$1"
+  elif [ -d "$1" ]; then
+    n=$(find "$1" -maxdepth 1 -type l 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$n" -gt 0 ]; then ok "$1 ($n links)"; else bad "$1 exists but is EMPTY — stow did not run"; fi
+  else
+    bad "$1 missing"
+  fi
+}
+for l in ~/.zshrc ~/.config/nvim ~/.config/nushell ~/.config/aerospace \\
+         ~/.config/alacritty ~/.config/wezterm ~/.config/tmux; do
+  check_stow "$l"
+done
+
+echo "Package + defaults drift:"
+mise bootstrap status        | sed 's/^/  /'
+mise bootstrap macos defaults status | sed 's/^/  /'
+"""

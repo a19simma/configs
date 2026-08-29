@@ -27,7 +27,7 @@ echo "✅ Configs backed up to ~/.bashrc.bak, ~/.zshrc.bak and ~/.config.bak"
 description = "Deploy dotfiles using GNU Stow"
 run = """
 echo "Deploying dotfiles with GNU Stow..."
-mkdir -p ~/.config/nvim ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/opencode ~/.claude ~/.gemini ~/.config/tmux ~/.config/k9s/skins ~/.config/lazygit ~/.config/gh-dash
+mkdir -p ~/.config/nvim ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/opencode ~/.claude ~/.gemini ~/.config/tmux ~/.config/k9s/skins ~/.config/lazygit ~/.config/gh-dash ~/.config/atuin
 stow -t ~/.config/gh-dash gh-dash --adopt
 stow -t ~/.config/nvim neovim
 stow -t ~/.config/Code vscode
@@ -40,6 +40,7 @@ stow -t ~ shell
 stow -t ~/.config/tmux tmux --adopt
 stow -t ~/.config/k9s k9s --adopt
 stow -t ~/.config/lazygit lazygit --adopt
+stow -t ~/.config/atuin atuin --adopt
 echo "Setting up Claude Code symlinks to OpenCode configs..."
 ln -sf ~/repos/configs/opencode/AGENTS.md ~/.config/opencode/AGENTS.md
 ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
@@ -64,6 +65,7 @@ stow -t ~ -D shell
 stow -t ~/.config/tmux -D tmux
 stow -t ~/.config/k9s -D k9s
 stow -t ~/.config/gh-dash -D gh-dash
+stow -t ~/.config/atuin -D atuin
 stow -t ~/.config/lazygit -D lazygit
 echo "Removing Claude Code symlinks..."
 rm -f ~/.claude/CLAUDE.md ~/.claude/agents ~/.claude/commands ~/.claude/skills

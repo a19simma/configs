@@ -48,20 +48,6 @@
           }
         }
       }
-    },
-    "mlx": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "MLX (local)",
-      "options": {
-        "baseURL": "http://127.0.0.1:8080/v1"
-      },
-      "models": {
-        "mlx-community/Qwen3.8-27B-8bit": {
-          "name": "Qwen3.8 27B (local, 8bit)",
-          "limit": { "context": 131072, "output": 32768 },
-          "modalities": { "input": ["text", "image"], "output": ["text"] }
-        }
-      }
     }
   },
   "permission": {

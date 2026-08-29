@@ -1,0 +1,12 @@
+# Early-init mise settings. Loaded before config discovery, so this is the only
+# place auto_env can be set — putting it in mise.toml is too late.
+#
+# auto_env makes mise load platform config files automatically:
+#   mise.macos.toml       on macOS
+#   mise.linux.toml       on Linux
+#   mise.windows.toml     on Windows
+#   mise.macos-arm64.toml on Apple Silicon
+#
+# Default becomes true in mise 2027.6.0; setting it explicitly silences the
+# deprecation warning and gets the behaviour now.
+auto_env = true

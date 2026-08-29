@@ -1,0 +1,14 @@
+# DEPRECATED — do not use.
+#
+# GUI apps are declared in mise.macos.toml under [bootstrap.packages] with the
+# `brew-cask:` manager. mise installs casks itself — it downloads the artifact,
+# verifies its sha256, and moves the .app into /Applications without Homebrew
+# being installed at all.
+#
+#     [bootstrap.packages]
+#     "brew-cask:alacritty" = "latest"
+#
+# Apply with `mise bootstrap`. Check with `mise bootstrap status`.
+#
+# Keep this file only if you also support Intel Macs, where mise's brew manager
+# is unavailable and real Homebrew is still required.

@@ -1,0 +1,76 @@
+# Alacritty — macOS
+# Docs: https://alacritty.org/config-alacritty.html
+
+[general]
+live_config_reload = true
+
+[terminal.shell]
+# Launch nushell without making it the login shell.
+# `-l` gives a login nu session; drop it if startup feels slow.
+#
+# This is the mise shim, not a brew binary. The shim path is stable across
+# version bumps (the installs/ path is not — it embeds the version number).
+# Alacritty does no PATH lookup or shell expansion here, so it must stay an
+# absolute path; that's also why this works even when the shell that would
+# normally put mise on PATH is broken.
+program = "/Users/simon/.local/share/mise/shims/nu"
+args = ["-l"]
+
+[env]
+TERM = "xterm-256color"
+# macOS apps don't inherit shell exports, and nu reads XDG_CONFIG_HOME before
+# it reads any config — so setting it here is what makes nu look in
+# ~/.config/nushell instead of ~/Library/Application Support/nushell.
+XDG_CONFIG_HOME = "/Users/simon/.config"
+XDG_DATA_HOME = "/Users/simon/.local/share"
+XDG_CACHE_HOME = "/Users/simon/.cache"
+XDG_STATE_HOME = "/Users/simon/.local/state"
+
+[window]
+# "OnlyRight": right Option is Meta for readline/nvim, left Option stays
+# free so AeroSpace's alt- bindings still fire while Alacritty is focused.
+# Use "Both" if you'd rather have Meta on both and give up alt- in this app.
+option_as_alt = "OnlyRight"
+decorations = "Buttonless"      # no title bar; AeroSpace manages placement
+dynamic_padding = true
+opacity = 0.96
+blur = true
+startup_mode = "Windowed"
+
+[window.padding]
+x = 8
+y = 8
+
+[font]
+size = 13.0
+normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+bold   = { family = "JetBrainsMono Nerd Font", style = "Bold" }
+italic = { family = "JetBrainsMono Nerd Font", style = "Italic" }
+
+[scrolling]
+history = 50000
+multiplier = 3
+
+[selection]
+save_to_clipboard = true
+
+[cursor]
+style = { shape = "Block", blinking = "Off" }
+unfocused_hollow = true
+
+[mouse]
+hide_when_typing = true
+
+[keyboard]
+# macOS defaults are fine; these add the Linux-ish bindings that are missing.
+# All bindings live in this ONE array — do not also add [[keyboard.bindings]]
+# blocks elsewhere in the file, or TOML errors on the duplicate key.
+bindings = [
+  { key = "N",      mods = "Command", action = "CreateNewWindow" },
+  { key = "Return", mods = "Command", action = "ToggleFullscreen" },
+  { key = "K",      mods = "Command", action = "ClearHistory" },
+  { key = "Equals", mods = "Command", action = "IncreaseFontSize" },
+  { key = "Minus",  mods = "Command", action = "DecreaseFontSize" },
+  { key = "0",      mods = "Command", action = "ResetFontSize" },
+  { key = "Return", mods = "Shift",   chars = "\u001B\r" },
+]
