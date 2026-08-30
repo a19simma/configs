@@ -3,8 +3,6 @@
     "DISABLE_AUTOUPDATER": "1"
   },
   "model": "opus",
-  "disableClaudeAiConnectors": true,
-  "disableBundledSkills": true,
   "hooks": {
     "PreToolUse": [
       {
@@ -39,7 +37,7 @@
       "effortLevel": "low"
     }
   },
-  "autoCompactWindow": 140000,
+  "autoCompactWindow": 130000,
   "showClearContextOnPlanAccept": true,
   "tui": "fullscreen",
   "voice": {

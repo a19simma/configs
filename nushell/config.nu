@@ -81,7 +81,10 @@ if $nu.os-info.name == "linux" {
 source ~/.config/nushell/vendor/autoload/wt.nu
 
 # Aliases
-alias claude = claude --dangerously-skip-permissions
+# --tools trims the built-in tool schemas out of the context window.
+# Dropped: Artifact, SendUserFile, ReportFindings, ScheduleWakeup, SendFeedback, AskUserQuestion.
+# No settings.json equivalent exists; --tools is CLI-only.
+alias claude = claude --dangerously-skip-permissions --tools "Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch"
 
 # Custom Commands
 

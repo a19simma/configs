@@ -1,11 +1,6 @@
 ---
 name: researcher
-description: >
-  Research libraries, frameworks, SDKs, CLI tools via context7 first. Summarize
-  findings from official docs with quickstart + code examples. Default to latest
-  version unless user specifies one. Also handles Helm chart value discovery via
-  `helm` CLI. Use when user asks "how do I use X", "quickstart for Y", "what's
-  in chart Z", or invokes /researcher.
+description: Look up library, framework, SDK, CLI or Helm chart documentation. Use when asked how to use something, for a quickstart, or what a chart exposes.
 ---
 
 Use context7 first. Always. Training data stale, docs fresh. If context7 is insufficient, fall back to web search and fetch from official sources — do not leave gaps unanswered.

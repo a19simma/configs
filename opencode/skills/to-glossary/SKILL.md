@@ -1,6 +1,6 @@
 ---
 name: to-glossary
-description: Create or update the domain glossary (CONTEXT.md) from the current conversation. Use when the user wants to capture domain terms, resolve naming conflicts, or document bounded contexts.
+description: Capture domain terms into CONTEXT.md. Use when naming conflicts appear or a bounded context needs recording.
 ---
 
 This skill extracts domain terms from the current conversation and writes them into the project's `CONTEXT.md` (or the relevant bounded-context file if a `CONTEXT-MAP.md` exists). Do NOT interview the user — synthesize what you already know, then ask only if something is genuinely ambiguous.

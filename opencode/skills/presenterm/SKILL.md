@@ -1,6 +1,7 @@
 ---
+disable-model-invocation: true
 name: presenterm
-description: Use when creating or editing terminal presentations with presenterm. Triggers on .md slideshow files, requests to build/structure a presentation, or when the user wants slides in the terminal.
+description: Terminal presentations with presenterm. Use when building or editing slides in a .md slideshow.
 ---
 
 # Using Presenterm

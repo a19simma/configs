@@ -1,6 +1,6 @@
 ---
 name: rust
-description: Rust coding standards: idiomatic style, module and crate architecture, hand-written error types, testing, the crate allowlist, clippy and rustfmt config. Load before writing or editing any .rs file or Cargo.toml, and when asked whether Rust code is idiomatic, which crate to use, or how to test it.
+description: Rust coding standards: idiomatic style, module and crate architecture, hand-written error types, clippy and rustfmt config. Load before writing or editing any .rs file or Cargo.toml, and when asked whether Rust code is idiomatic, which crate to use, or how to test it.
 ---
 
 # Rust Best Practices
@@ -21,7 +21,7 @@ Grounded in [The Rust Book](https://doc.rust-lang.org/book/), [Rust API Guidelin
 
 Read only the file that answers the question. Do not preload them.
 
-**Reviewing a Rust diff:** read `rust-review/SKILL.md` and follow it. **Scaffolding a new Rust project:** read `rust-setup/SKILL.md` and follow it. Both are user-invoked, so they carry no description and cannot be fired as skills; reach them by path.
+**Reviewing a Rust diff:** read `rust-review/SKILL.md` and follow it. **Scaffolding a new Rust project:** read `rust-setup/SKILL.md` and follow it. Both are user-invoked, so they cannot be fired as skills; reach them by path.
 
 ## Non-negotiables
 

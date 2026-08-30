@@ -1,6 +1,7 @@
 ---
+disable-model-invocation: true
 name: domain-driven-design
-description: 'Model software around the business domain using bounded contexts, aggregates, and ubiquitous language. Use when the user mentions "domain modeling", "bounded context", "aggregate root", "ubiquitous language", "anti-corruption layer", "context mapping", "domain events", or "strategic design". Also trigger when splitting a monolith into services, defining microservice boundaries, or aligning code structure with business processes. Covers entities vs value objects, domain events, and context mapping strategies. For architecture layers, see clean-architecture. For complexity, see software-design-philosophy.'
+description: Model software around the business domain. Use when the user says bounded context, aggregate, ubiquitous language or domain event, when splitting a monolith into services, or when defining service boundaries.
 license: MIT
 metadata:
   author: wondelai

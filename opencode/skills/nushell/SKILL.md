@@ -1,6 +1,6 @@
 ---
 name: nushell
-description: Use when writing or running Nushell commands, scripts, or pipelines - via the Nushell MCP server (mcp__nushell__evaluate), via Bash (nu -c), or in .nu script files. Also use when working with structured data (JSON, YAML, TOML, CSV, Parquet, SQLite), doing ad-hoc data analysis or exploration, or when the user's shell is Nushell.
+description: Nushell commands, pipelines and .nu scripts, and structured data (JSON, YAML, TOML, CSV, Parquet, SQLite). Use whenever a shell command runs here, since Nushell is the user's shell.
 ---
 
 # Using Nushell

@@ -1,4 +1,9 @@
-Design Thinking
+---
+name: frontend-design
+description: Commit to one bold aesthetic direction before writing UI code. Use when building a page, component, or interface from scratch, when a design brief is missing, or when a UI looks generic.
+---
+
+# Frontend Design
 
 Before coding, understand the context and commit to a BOLD aesthetic direction:
 

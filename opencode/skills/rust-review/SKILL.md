@@ -43,7 +43,7 @@ Diff `Cargo.toml` / `Cargo.lock`. For each added dependency, check `rust/referen
 
 ### 3. Rule passes
 
-Load one reference file per pass. Do not preload all of them.
+Load one reference file per pass.
 
 | Pass | Reference | Looking for |
 | --- | --- | --- |
@@ -86,6 +86,6 @@ End with a one-line verdict: `PASS`, `PASS WITH MINORS`, or `BLOCKED (n blockers
 
 ## Constraints
 
-- **Read only.** Show suggested changes as minimal snippets with locations. Do not edit files.
+- **Read only.** Suggested changes are minimal snippets with locations.
 - Do not restate what clippy already printed.
 - No praise section. Silence is the pass signal.

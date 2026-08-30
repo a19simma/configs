@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: qmd
 description: Bootstrap QMD search instructions from the installed qmd CLI. Use when users ask to find notes, retrieve documents, inspect a wiki, or answer from indexed local markdown.
 license: MIT
