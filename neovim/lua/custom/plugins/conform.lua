@@ -171,7 +171,6 @@ return {
         'gofumpt', -- Go
         'goimports-reviser', -- Go imports
         'golines', -- Go line length
-        'rustfmt', -- Rust (usually comes with rust toolchain)
         'black', -- Python
         'isort', -- Python imports
         'prettierd', -- JavaScript/TypeScript/Web (faster prettier)

@@ -21,12 +21,14 @@ vim.opt.foldlevel = 99
 vim.opt.autoindent = true
 
 -- Avoid btrfs transaction-commit freezes: keep Neovim's fsync/volatile state off btrfs.
--- swapsync="" stops the per-change swapfile fsync that stalls the whole desktop.
-vim.opt.fsync = false                    -- don't fsync written files
-vim.opt.directory = "/dev/shm/nvim/swap//" -- swapfiles on tmpfs (RAM) -> no btrfs commit on swap writes
-vim.opt.undodir = "/dev/shm/nvim/undo//"   -- persistent undo on tmpfs
-vim.opt.shadafile = "/dev/shm/nvim/main.shada"
+-- Only on Linux, where /dev/shm (tmpfs) exists; macOS has no /dev/shm.
+if vim.fn.isdirectory("/dev/shm") == 1 then
+  vim.opt.fsync = false                      -- don't fsync written files
+  vim.opt.directory = "/dev/shm/nvim/swap//" -- swapfiles on tmpfs (RAM) -> no btrfs commit on swap writes
+  vim.opt.undodir = "/dev/shm/nvim/undo//"   -- persistent undo on tmpfs
+  vim.opt.shadafile = "/dev/shm/nvim/main.shada"
 
--- Ensure the tmpfs dirs exist (tmpfs is wiped on reboot)
-vim.fn.mkdir("/dev/shm/nvim/swap", "p")
-vim.fn.mkdir("/dev/shm/nvim/undo", "p")
+  -- Ensure the tmpfs dirs exist (tmpfs is wiped on reboot)
+  vim.fn.mkdir("/dev/shm/nvim/swap", "p")
+  vim.fn.mkdir("/dev/shm/nvim/undo", "p")
+end

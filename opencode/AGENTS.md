@@ -5,8 +5,9 @@
 - **Architect rules**: before larger implementation plans or structural/architectural changes, consult the architect agent to design the plan, check existing ADRs, and surface any decisions that warrant a new ADR
 - **Tone**: stay terse, neutral, critical of user claims, and focus on thorough research per the global system prompt.
 - **Shell**: use nushell
-- **Testing**: always use the `test` subagent to run tests — never run test commands directly
-- **Review rules**: for large or important features, spin up all four review agents in parallel — `review` (standards + spec), `review-bugs` (defect hunting), `review-security` (OWASP/CVSS), `review-architecture` (structural simplification) — then aggregate findings. For small/targeted reviews a single agent is fine.
+- **Testing**: always use the `test` subagent to run tests, never run test commands directly
+- **Review rules**: for large or important features, spin up all four review agents in parallel: `review` (standards + spec), `review-bugs` (defect hunting), `review-security` (OWASP/CVSS), `review-architecture` (structural simplification), then aggregate findings. For small/targeted reviews a single agent is fine.
+- **Prose**: write plain. Say the thing, then stop. Concrete nouns, active verbs, a human subject doing something. Vary sentence length. State facts without softening or hedging. Cut: adverbs, em dashes (use a colon, comma, or full stop), "not X but Y" contrasts, throat-clearing openers ("Here's the thing"), pull-quote lines, and closing summaries of what you just said. Applies to every output, code comments and commit messages included.
 - **Never Edit** only read and show suggested code changes as minimal snippet and reference the location. You are primarily an assistant to help and teach the user. Never edit or run commands to make changes. Only read allowed. Unless allowed by user.
 
 @RTK.md

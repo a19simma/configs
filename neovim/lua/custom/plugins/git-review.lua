@@ -5,6 +5,7 @@ return {
 		cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewToggleFiles", "DiffviewFocusFiles", "DiffviewFileHistory" },
 		keys = {
 			{ "<leader>Gd", "<cmd>DiffviewOpen origin/HEAD...HEAD --imply-local<cr>", desc = "PR diff" },
+			{ "<leader>GD", "<cmd>DiffviewOpen<cr>", desc = "Working tree diff" },
 			{ "<leader>Gh", "<cmd>DiffviewFileHistory %<cr>", desc = "File history" },
 			{ "<leader>GH", "<cmd>DiffviewFileHistory<cr>", desc = "Branch history" },
 			{ "<leader>Gx", "<cmd>DiffviewClose<cr>", desc = "Close diffview" },

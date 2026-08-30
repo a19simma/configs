@@ -31,3 +31,7 @@ Note: several skills contain "Related skills" pointers to skills NOT vendored he
 lean-ux-canvas, product-strategy-session). These are soft references only — they do
 not block execution. Install the full framework via the plugin marketplace
 (`claude /plugin marketplace add deanpeters/Product-Manager-Skills`) if you want them.
+
+## writing-for-agents
+
+Vendored from [mattpocock/skills](https://github.com/mattpocock/skills), MIT licensed, (c) 2026 Matt Pocock. Path: `skills/productivity/writing-for-agents`. Fetched 2026-08-30.
