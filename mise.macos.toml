@@ -246,8 +246,8 @@ ln -sf ~/repos/configs/opencode/AGENTS.md ~/.config/opencode/AGENTS.md
 ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
 rm -rf ~/.claude/agents && mkdir -p ~/.claude/agents
 for f in ~/repos/configs/opencode/agents/*.md; do ln -sf "$f" ~/.claude/agents/; done
-ln -sf ~/.config/opencode/commands ~/.claude/commands
-ln -sf ~/.config/opencode/skills   ~/.claude/skills
+ln -sfn ~/.config/opencode/commands ~/.claude/commands
+ln -sfn ~/.config/opencode/skills   ~/.claude/skills
 echo "✅ Dotfiles deployed"
 """
 

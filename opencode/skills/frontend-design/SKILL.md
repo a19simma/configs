@@ -1,40 +1,42 @@
 ---
 name: frontend-design
-description: Commit to one bold aesthetic direction before writing UI code. Use when building a page, component, or interface from scratch, when a design brief is missing, or when a UI looks generic.
+description: Lock one aesthetic direction and write it down as the project's design system.
+disable-model-invocation: true
 ---
 
 # Frontend Design
 
-Before coding, understand the context and commit to a BOLD aesthetic direction:
+Two jobs, in order. **Locking** picks one aesthetic direction. **Codifying** writes that direction down as the design system, so every later UI task reads it instead of re-inventing it.
 
-    Purpose: What problem does this interface solve? Who uses it?
-    Tone: Pick an extreme: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian, etc. There are so many flavors to choose from. Use these for inspiration but design one that is true to the aesthetic direction.
-    Constraints: Technical requirements (framework, performance, accessibility).
-    Differentiation: What makes this UNFORGETTABLE? What's the one thing someone will remember?
+Check for the design system first (`DESIGN.md` and a tokens file). If it exists the direction is already **locked**: go straight to Codify and extend what's there.
 
-CRITICAL: Choose a clear conceptual direction and execute it with precision. Bold maximalism and refined minimalism both work - the key is intentionality, not intensity.
+## 1. Lock the direction
 
-Then implement working code (HTML/CSS/TS, Svelte, Vue, etc.) that is:
+Answer four questions before any code:
 
-    Production-grade and functional
-    Visually striking and memorable
-    Cohesive with a clear aesthetic point-of-view
-    Meticulously refined in every detail
+- **Purpose**: what problem does this interface solve, for whom?
+- **Tone**: one extreme, named. Brutally minimal, maximalist chaos, retro-futuristic, organic, luxury, playful, editorial, brutalist, art deco, pastel, industrial.
+- **Constraints**: framework, performance, accessibility.
+- **Differentiation**: the one thing someone remembers.
 
-Frontend Aesthetics Guidelines
+Pick fonts and palettes with a point of view: a distinctive display face paired with a refined body face, a dominant colour with a sharp accent. Name the outside reference you're drawing on (a magazine, an era, a physical object) so the choice is traceable to something the model didn't invent.
 
-Focus on:
+Commit to one direction. Bold maximalism and refined minimalism both work; intentionality is the lever, not intensity. Match implementation complexity to the vision: maximalism earns elaborate effects, minimalism earns restraint and precise spacing.
 
-    Typography: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics; unexpected, characterful font choices. Pair a distinctive display font with a refined body font.
-    Color & Theme: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes. Use theme variables with tailwind.
-    Motion: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion.js when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
-    Spatial Composition: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
-    Backgrounds & Visual Details: Create atmosphere and depth rather than defaulting to solid colors. Add contextual effects and textures that match the overall aesthetic. Apply creative forms like gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays.
+The direction is locked when a second person could name the tone and the memorable thing from the writeup alone.
 
-NEVER use generic AI-generated aesthetics like overused font families (Inter, Roboto, Arial, system fonts), cliched color schemes (particularly purple gradients on white backgrounds), predictable layouts and component patterns, and cookie-cutter design that lacks context-specific character.
+## 2. Codify it as the reference
 
-Interpret creatively and make unexpected choices that feel genuinely designed for the context. No design should be the same. Vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices (Space Grotesk, for example) across generations.
+Write `DESIGN.md` at the project root: the locked direction in prose, plus the decisions below. This file is the single source of truth for every later UI task.
 
-IMPORTANT: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details. Elegance comes from executing the vision well.
+Land the tokens in code so the reference is executable, not aspirational: CSS variables and Tailwind theme vars for colour, type scale, spacing, radii, and shadow. Name them by role (`--surface-raised`), not by value (`--gray-200`).
 
-Remember: You are capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
+Done when a new component can be built from `DESIGN.md` and the tokens alone, with no further aesthetic decisions.
+
+## Aesthetic reference
+
+- **Typography**: beautiful, unique, characterful faces. Pair a distinctive display font with a refined body font.
+- **Colour & theme**: dominant colours with sharp accents outperform timid, evenly-distributed palettes. Drive everything through theme variables.
+- **Motion**: CSS-only where possible, Motion.js when available. One well-orchestrated page load with staggered reveals (`animation-delay`) beats scattered micro-interactions. Scroll triggers and surprising hover states.
+- **Spatial composition**: asymmetry, overlap, diagonal flow, grid-breaking elements. Generous negative space or controlled density.
+- **Backgrounds & detail**: atmosphere and depth over flat fills. Gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, grain overlays.

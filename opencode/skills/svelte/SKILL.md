@@ -20,6 +20,8 @@ Grounded in the [Svelte docs](https://svelte.dev/docs/svelte/overview), [SvelteK
 
 Read only the file that answers the question. Do not preload them.
 
+Read `DESIGN.md` and the theme tokens before writing markup. Aesthetic decisions are already made there; a component that invents its own colours, spacing, or type scale is wrong even when it looks fine.
+
 This skill sits on top of `typescript/SKILL.md`, which owns types, module layout, error handling, and the package allowlist. Read it too when the question is not specifically about Svelte.
 
 ## Non-negotiables
