@@ -1,0 +1,53 @@
+# Toolchain baked into the workmux sandbox image at build time.
+#
+# Deliberately NOT the root mise.toml. That file carries brew:/brew-cask:
+# entries that do not exist on Linux, plus host-only tools (tmux, sesh, atuin,
+# starship, zoxide, lazygit, k9s, kubectl, neovim) that a headless sandboxed
+# agent never uses.
+#
+# gh is excluded on purpose: it is useless without a token, and the sandbox is
+# not given one.
+#
+# Baking beats mounting. The host mise tree is aarch64-apple-darwin, so
+# bind-mounting ~/.local/share/mise into a linux-arm64 container makes mise
+# believe the tools are installed and every exec then fails with
+# `Exec format error`.
+[tools]
+node     = "24.19.0"
+go       = "1.27.0"
+jq       = "1.8.2"
+yq       = "4.53.6"
+ripgrep  = "15.2.0"
+fd       = "10.4.2"
+bat      = "0.26.1"
+just     = "1.58.0"
+
+# --- warm cache, NOT a version policy ---
+#
+# A project's own mise.toml stays authoritative: mise reads it inside the
+# sandbox and installs whatever it pins. These entries only pre-populate the
+# store so a matching pin resolves to `already installed` instead of a
+# download or a source build. A repo pinning a different version installs that
+# version at runtime and ignores what is baked here.
+#
+# They are worth keeping in sync with the repos actually worked on, because
+# the container is ephemeral: a miss means paying the install on every single
+# session. Currently synced with oxidoc-api/mise.toml. Drifting is a slowdown,
+# never a wrong toolchain.
+rust     = "1.93.1"
+buf      = "1.70.0"
+"cargo:protoc-gen-prost" = "0.5.0"
+"cargo:protoc-gen-tonic" = "0.5.0"
+gitleaks = "8.30.1"
+
+# Output compressor the PreToolUse hook rewrites commands through. Must exist
+# in the sandbox or every rewritten command fails.
+"github:rtk-ai/rtk" = "0.45.0"
+
+[settings]
+# The tools baked into this image live at /opt/mise/data, but at runtime
+# MISE_DATA_DIR points at /cache (the shared host mount), so mise would
+# otherwise consider the baked tools absent and reinstall them. This is a
+# read-only search path for already-installed versions: baked pins resolve
+# instantly, anything else installs into the writable /cache store.
+shared_install_dirs = ["/opt/mise/data/installs"]

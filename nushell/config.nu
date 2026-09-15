@@ -84,6 +84,10 @@ source ~/.config/nushell/vendor/autoload/wt.nu
 # --tools trims the built-in tool schemas out of the context window.
 # Dropped: Artifact, SendUserFile, ReportFindings, ScheduleWakeup, SendFeedback, AskUserQuestion.
 # No settings.json equivalent exists; --tools is CLI-only.
+# This is an alias, so it only applies to claude started from an interactive
+# nushell. Agents that workmux launches run under the sandbox container's dash
+# and never see it, so the same list is duplicated in workmux/config.yaml under
+# `agents.cc-sandbox.args`. Change one, change the other.
 alias claude = claude --dangerously-skip-permissions --tools "Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch"
 
 # Custom Commands

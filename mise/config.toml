@@ -1,0 +1,56 @@
+# Global mise config: tools wanted on every machine, plus settings that cannot
+# live in a project file.
+[tools]
+argocd = "2.9.22"
+"cargo:forgejo-cli" = "latest"
+claude = "latest"
+colima = "latest"
+docker-cli = "latest"
+# Not in the mise registry under any short name, hence the explicit backend.
+# Pinned, not "latest", because docker finds CLI plugins only via
+# ~/.docker/cli-plugins/docker-buildx, which is a symlink to the versioned
+# install path. `mise run docker-buildx-plugin` recreates it after a bump.
+"github:docker/buildx" = "0.37.1"
+docker-compose = "latest"
+fnox = "latest"
+"github:netbirdio/netbird" = "latest"
+"github:nushell/nushell" = "latest"
+kubectx = "latest"
+kubens = "latest"
+lima = "latest"
+opencode = "latest"
+rust = "latest"
+tmux = "latest"
+uv = "latest"
+zk = "latest"
+
+# Pinned to match mise.toml's [tools], not "latest". The repo's pins only apply
+# inside ~/repos/configs, so these have to be declared here too or they leave
+# PATH everywhere else — starship, zoxide and atuin are loaded by every shell.
+# Matching the versions means no drift between directories and no GitHub
+# releases lookup on cache expiry. Bump both files together.
+atuin = "18.20.1"
+fzf = "0.74.3"
+gh = "2.98.0"
+"github:joshmedeski/sesh" = "2.30.1"
+"github:raine/workmux" = "0.1.262"
+"github:rtk-ai/rtk" = "0.45.0"
+k9s = "0.51.0"
+kubectl = "1.36.4"
+lazygit = "0.64.1"
+neovim = "0.12.5"
+starship = "1.26.0"
+zoxide = "0.10.0"
+
+# mise reads gh tokens from ~/.config/gh/hosts.yml directly, but gh on macOS
+# keeps the token in the Keychain, so hosts.yml holds no oauth_token and mise
+# falls back to the 60 req/hour anonymous GitHub limit. Shelling out to gh
+# raises it to 5000 and keeps the token in the Keychain, out of the env and
+# out of this repo.
+#
+# credential_command is global-only, which is why it lives here and not in
+# mise.toml. Only one GitHub host is in play, so bare `gh auth token` is
+# enough; add --hostname "$MISE_CREDENTIAL_HOST" if an Enterprise host ever
+# joins.
+[settings.github]
+credential_command = "gh auth token"

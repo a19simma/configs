@@ -1,0 +1,173 @@
+# workmux global config. Stowed to ~/.config/workmux/config.yaml.
+#
+# Most sandbox keys are GLOBAL-ONLY: workmux ignores them in a project
+# .workmux.yaml and prints a warning. That is deliberate, a repo must not be
+# able to weaken its own sandbox. So they live here, not per project.
+
+# One tmux session per worktree, not one window. sesh then enumerates worktrees
+# natively (prefix+t, ^t filters to tmux sessions), so no second picker.
+mode: session
+
+# Keep worktrees out of ~/repos. The default is a sibling '<project>__worktrees'
+# dir, which sesh's `~/repos/*` wildcard would scan, listing every worktree
+# twice: once as a directory, once as a live session.
+worktree_dir: ~/.workmux/{project}
+worktree_naming: basename
+
+# Named agent profile, used by the `<agent>` placeholder below.
+#
+# `type` declares the agent kind explicitly instead of letting workmux sniff the
+# executable name. Under the container sandbox the pane command is
+# `workmux sandbox run ...`, which matches nothing, so sniffing yields no kind.
+#
+# `args` exists because --tools is CLI-only, with no settings.json equivalent.
+# The interactive alias in nushell/config.nu:87 carries the same list, but it is
+# a nushell alias and workmux launches the agent through the container's dash,
+# so the alias never fires and the agent would otherwise get every tool. Keep
+# the two lists in sync; drift means the sandbox quietly has tools the host
+# session does not.
+#
+# --dangerously-skip-permissions is deliberately absent: the sandbox gets
+# permissions.defaultMode: bypassPermissions from its settings.json instead.
+agent: cc-sandbox
+
+agents:
+  cc-sandbox:
+    type: claude
+    command: claude
+    args:
+      - --tools
+      - Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch
+
+windows:
+  # Sandboxed. `<agent>` expands to the configured agent command.
+  - name: agent
+    panes:
+      - command: <agent>
+        focus: true
+  # Host pane. Dev servers bind host ports directly, so localhost in the
+  # browser just works, no container port publishing involved.
+  - name: run
+
+sandbox:
+  enabled: true
+  backend: container
+  # Default. Only the agent pane is sandboxed; the 'run' window stays on the
+  # host. Accepted trade: agent-written code can run as the host user when the
+  # run window builds or tests the worktree.
+  target: agent
+
+  image: workmux-sandbox-mise
+
+  # Empty on purpose. Any proxied command can execute code from project files,
+  # e.g. an agent writes a justfile then runs `just`. Proxied commands run on
+  # the host with network access.
+  host_commands: []
+
+  # Keep the sandbox off the real ~/.claude, which is otherwise mounted
+  # read-write and would let a sandboxed agent rewrite host settings, MCP
+  # servers and hooks.
+  agent_config_dir: ~/.config/workmux/agents/{agent}
+
+  # Warm cache shared by every container sandbox. The containers are
+  # ephemeral, so without this each new worktree pays a fresh download or
+  # source build for anything its mise.toml pins that the image does not
+  # already carry.
+  #
+  # Writable and shared by all sandboxes, which is the point and also the
+  # caveat: it is one mutable directory every sandboxed agent can write to, so
+  # it is a channel between them and the one place where sandbox isolation is
+  # deliberately not per-worktree. Tool binaries only; nothing secret belongs
+  # here.
+  #
+  # Linux artifacts only. Never point this at the host's ~/.local/share/mise:
+  # that tree is aarch64-apple-darwin, and mise would report those tools as
+  # installed while every exec died with `Exec format error`.
+  extra_mounts:
+    - host_path: ~/.workmux/cache
+      guest_path: /cache
+      writable: true
+
+  container:
+    runtime: docker
+    # Shadowed by a read-only /dev/null bind mount. Worktree-relative only;
+    # absolute paths and '..' are rejected, directories cannot be masked.
+    # Not a seal: .git/objects is mounted read-write, so anything ever
+    # committed is still reachable via `git cat-file`. Rotate, do not mask.
+    excluded_files:
+      - .env
+      - .env.local
+      - .env.production
+
+  network:
+    # Default is `allow`, i.e. unrestricted. Opt in to deny.
+    # Enforced by in-container iptables plus a host CONNECT proxy, so ignoring
+    # proxy env vars does not bypass it. HTTPS/443 only; git+ssh is blocked, use
+    # HTTPS remotes. Blocked connections REJECT rather than hang, so failures
+    # surface immediately instead of timing out.
+    policy: deny
+    allowed_domains:
+      # agent
+      # Reconciled against Anthropic's published list:
+      # https://code.claude.com/docs/en/network-config#network-access-requirements
+      # Cross-checked against the host strings in the claude v2.1.245 binary.
+      # Anything not in both was dropped: statsig.anthropic.com is not a real
+      # host (feature flags ride api.anthropic.com), console.anthropic.com is
+      # superseded by platform.claude.com, and www.claude.ai appears in no CLI
+      # URL.
+      #
+      # When something in a sandbox cannot reach the network, read
+      # ~/.local/state/workmux/workmux.log. The proxy logs every decision as
+      # `WARN rejected: domain not in allowlist hostname="..."`, which names the
+      # host outright and beats guessing. Restart the sandbox after editing this
+      # list: a running container keeps the rules it booted with.
+
+      # API traffic, plus the WebFetch domain safety check, feature flags and
+      # telemetry.
+      - api.anthropic.com
+      # OAuth. Load-bearing and the one that was missing: authorize, token
+      # exchange at /v1/oauth/token, refresh and revocation all live here, for
+      # both claude.ai and Console accounts. Without it login dies on
+      # `OAuth error: proxy refused the connection`.
+      - platform.claude.com
+      # claude.ai account auth, and /oauth/claude-code-client-metadata.
+      - claude.ai
+      # Sign-in page the browser opens, and pre-approved WebFetch doc lookups
+      # made from the CLI.
+      - claude.com
+      # Self-updater and update version checks. Login does not need it; without
+      # it in-sandbox `claude update` fails.
+      - downloads.claude.ai
+      # claude.ai MCP connectors, which are on by default. Set
+      # ENABLE_CLAUDEAI_MCP_SERVERS=false to drop this instead.
+      - mcp-proxy.anthropic.com
+      # Docs lookups by the claude-code-guide agent.
+      - code.claude.com
+      # git over https
+      - github.com
+      - codeload.github.com
+      - objects.githubusercontent.com
+      - raw.githubusercontent.com
+      # package registries
+      - registry.npmjs.org
+      - crates.io
+      - static.crates.io
+      - index.crates.io
+      - pypi.org
+      - files.pythonhosted.org
+      - proxy.golang.org
+      - sum.golang.org
+      # rustup's dist server, for a toolchain a project pins but the image does
+      # not bake. Without it `mise install` reports
+      # `error sending request: tunnel error: unsuccessful`.
+      - static.rust-lang.org
+      # mise resolves every `github:` tool through the releases API, so runtime
+      # installs of those need this. Read-only and unauthenticated in here: no
+      # token is passed into the sandbox, which also means the 60 req/hour
+      # anonymous limit applies.
+      - api.github.com
+      # mise's own version registry. It falls back to the GitHub API when this
+      # is refused, so blocking it only costs a `(transient)` warning and a
+      # slower resolve, but there is no reason to pay that.
+      - mise-versions.jdx.dev
+nerdfont: true

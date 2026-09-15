@@ -1,0 +1,35 @@
+#:schema https://github.com/joshmedeski/sesh/raw/main/sesh.schema.json
+
+# Session names come from the git repo root, two path components deep.
+git_dir_length = 2
+
+[default_session]
+preview_command = "eza --all --git --icons --color=always {}"
+
+# Every repo under ~/repos gets the same three windows without being named here.
+# An explicit [[session]] below overrides this for a given path.
+[[wildcard]]
+pattern = "~/repos/*"
+windows = ["edit", "git", "run"]
+
+# Windows are global and referenced by name. Two repos needing different setups
+# want two differently named windows, not an override.
+#
+# startup_script runs under nushell: tmux.conf sets default-command "nu -l".
+# Point at nu scripts as `nu ~/.config/sesh/scripts/<name>.nu` — anything in
+# sesh/scripts/ here lands there after stow.
+[[window]]
+name = "edit"
+startup_script = "nvim"
+
+[[window]]
+name = "git"
+startup_script = "lazygit"
+
+[[window]]
+name = "run"
+
+[[session]]
+name = "configs"
+path = "~/repos/configs"
+alias = "cfg"

@@ -3,7 +3,8 @@
 # Loaded AUTOMATICALLY on macOS — no -f flag, no MISE_ENV. This works because
 # `.miserc.toml` sets auto_env = true, which makes mise treat the platform as a
 # config environment and pick up `mise.{os}.toml`. It merges on top of the root
-# mise.toml, so Linux and Windows never see any of this.
+# mise.toml, so Linux and Windows never see any of this. The shared [tools]
+# and [settings] blocks live in that root file, not here.
 #
 # mise is the package manager here in the full sense: it installs Homebrew
 # formulae AND casks itself, pouring bottles into /opt/homebrew directly.
@@ -13,57 +14,9 @@
 # Intel Macs. On Intel, install Homebrew and use the Brewfile instead.
 
 # ---------------------------------------------------------------------------
-# Settings
-# ---------------------------------------------------------------------------
-[settings]
-# Most of these tools resolve "latest" by asking the GitHub releases API. The
-# 3s default is tight on a cold cache, where mise queries ~20 repos at once —
-# unauthenticated requests are also rate-limited per IP, which shows up as slow
-# responses rather than clean errors.
-fetch_remote_versions_timeout = "30s"
-
-# ---------------------------------------------------------------------------
-# Dev tools — versioned, per-project, mise's native backends
-# ---------------------------------------------------------------------------
-# Versions are PINNED, not "latest". Two reasons:
-#   1. Reproducible — a machine built next year gets this same set.
-#   2. "latest" makes every fresh bootstrap depend on the GitHub releases API
-#      being reachable and un-throttled. Pinned versions skip version
-#      resolution entirely, which is what unblocked this machine.
-#
-# Pinned 2026-08-25 from mise's own version index (mise-versions.jdx.dev).
-# To bump:  mise outdated     then edit here, or  mise upgrade --bump
-[tools]
-gh       = "2.98.0"
-neovim   = "0.12.5"
-node     = "24.19.0"   # current LTS
-go       = "1.27.0"
-usage    = "6.4.0"     # powers mise shell completions
-jq       = "1.8.2"
-yq       = "4.53.6"
-fzf      = "0.74.3"
-ripgrep  = "15.2.0"
-fd       = "10.4.2"
-bat      = "0.26.1"
-eza      = "0.23.5"
-zoxide   = "0.10.0"
-atuin    = "18.20.1"
-starship = "1.26.0"
-lazygit  = "0.64.1"
-just     = "1.58.0"
-k9s      = "0.51.0"
-kubectl  = "1.36.4"
-act      = "0.2.89"
-gitleaks = "8.30.1"
-
-# RTK (Rust Token Killer) — CLI proxy that compresses command output for agents.
-# github backend pulls the release asset; no rust toolchain needed.
-"github:rtk-ai/rtk" = "0.45.0"
-
-# ---------------------------------------------------------------------------
 # System packages — poured by mise, not by brew
 #
-# CLI tools live in [tools] above. These are here because they're system-
+# CLI tools live in the root mise.toml's [tools]. These are here because they're system-
 # integrated (nushell as a login-capable shell, stow's Perl dependency) or are
 # GUI apps, which have no mise backend other than brew-cask.
 # ---------------------------------------------------------------------------
@@ -221,7 +174,7 @@ echo "Deploying dotfiles with GNU Stow..."
 mkdir -p ~/.config/nvim ~/.config/nushell ~/.config/wezterm ~/.config/opencode \\
          ~/.config/alacritty ~/.config/aerospace ~/.config/tmux \\
          ~/.config/k9s/skins ~/.config/lazygit ~/.config/gh-dash \
-         ~/.config/atuin \\
+         ~/.config/atuin ~/.config/sesh ~/.config/mise ~/.config/workmux \\
          ~/.claude ~/.gemini
 # macOS keeps VS Code settings here, NOT in ~/.config/Code
 mkdir -p "$HOME/Library/Application Support/Code/User"
@@ -240,6 +193,9 @@ stow -t ~/.config/tmux      tmux      --adopt
 stow -t ~/.config/k9s       k9s       --adopt
 stow -t ~/.config/lazygit   lazygit   --adopt
 stow -t ~/.config/atuin     atuin     --adopt
+stow -t ~/.config/sesh      sesh      --adopt
+stow -t ~/.config/mise      mise      --adopt
+stow -t ~/.config/workmux   workmux   --adopt
 
 echo "Linking Claude Code configs to OpenCode configs..."
 ln -sf ~/repos/configs/opencode/AGENTS.md ~/.config/opencode/AGENTS.md
@@ -262,7 +218,7 @@ ts=$(date +%Y%m%d-%H%M%S)
 for p in ~/.zshrc ~/.bashrc ~/.tmux.conf \\
          ~/.config/nvim ~/.config/nushell ~/.config/wezterm \\
          ~/.config/alacritty ~/.config/opencode ~/.gemini \
-         ~/.config/atuin \\
+         ~/.config/atuin ~/.config/sesh ~/.config/mise ~/.config/workmux \\
          ~/.claude/settings.json ~/.claude/CLAUDE.md; do
   if [ -e "$p" ] && [ ! -L "$p" ]; then
     mv "$p" "$p.backup-$ts" && echo "backed up $p"

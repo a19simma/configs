@@ -1,18 +1,64 @@
 {
+  "agentPushNotifEnabled": true,
+  "autoCompactWindow": 140000,
+  "autoMemoryEnabled": false,
+  "disableBundledSkills": true,
+  "disableClaudeAiConnectors": true,
+  "effortLevel": "low",
+  "enabledPlugins": {},
   "env": {
     "DISABLE_AUTOUPDATER": "1"
   },
-  "model": "opus",
-  "disableClaudeAiConnectors": true,
-  "disableBundledSkills": true,
   "hooks": {
-    "PreToolUse": [
+    "Notification": [
       {
-        "matcher": "Bash",
         "hooks": [
           {
-            "type": "command",
-            "command": "rtk hook claude"
+            "command": "workmux set-window-status waiting",
+            "type": "command"
+          }
+        ],
+        "matcher": "permission_prompt|elicitation_dialog"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "workmux set-window-status working",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "rtk hook claude",
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "workmux register-agent",
+            "type": "command"
+          }
+        ],
+        "matcher": "startup|resume|clear|fork"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "workmux set-window-status done",
+            "type": "command"
           }
         ]
       }
@@ -21,35 +67,39 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "/Users/simon/.claude/hooks/caveman-refresh.sh"
+            "command": "/Users/simon/.claude/hooks/caveman-refresh.sh",
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "workmux set-window-status working",
+            "type": "command"
           }
         ]
       }
     ]
   },
-  "statusLine": {
-    "type": "command",
-    "command": "/Users/simon/.claude/statusline-command.sh"
-  },
-  "enabledPlugins": {},
-  "effortLevel": "low",
+  "model": "opus",
   "modelSettings": {
     "claude-opus-5": {
       "effortLevel": "low"
     }
   },
-  "autoCompactWindow": 140000,
+  "remoteControlAtStartup": true,
   "showClearContextOnPlanAccept": true,
+  "skipDangerousModePermissionPrompt": true,
+  "statusLine": {
+    "command": "/Users/simon/.claude/statusline-command.sh",
+    "type": "command"
+  },
+  "theme": "dark",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,
     "mode": "tap"
   },
-  "autoMemoryEnabled": false,
-  "skipDangerousModePermissionPrompt": true,
-  "theme": "dark",
-  "remoteControlAtStartup": true,
-  "agentPushNotifEnabled": true,
   "voiceEnabled": true
 }
