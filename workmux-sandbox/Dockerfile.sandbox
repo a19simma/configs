@@ -5,12 +5,32 @@
 # stdin and network-init.sh lands as a zero-byte file. The container then dies
 # with `exec /usr/local/bin/network-init.sh: exec format error`. The mise task
 # sets DOCKER_BUILDKIT=1 for this reason.
-FROM debian:bookworm-slim
+# trixie, not bookworm: bookworm is glibc 2.36 and rtk's only aarch64 asset
+# (rtk-aarch64-unknown-linux-gnu.tar.gz) is linked against 2.39, so every
+# PreToolUse hook died with `version 'GLIBC_2.39' not found`. There is no
+# aarch64 musl asset to fall back on. trixie is glibc 2.41.
+FROM debian:trixie-slim
 
 # util-linux provides `setpriv`, which we use to drop privileges in deny mode.
 # Unlike `gosu`, setpriv lets us explicitly set supplementary groups so that
 # Docker-style --group-add behaviour works for hardware access configured via
 # sandbox.container.group_add.
+#
+# python3-minimal is for the caveman-refresh hook script, which otherwise fails
+# in the sandbox with no interpreter.
+#
+# docker.io is the nested engine, for `mise run db` and Testcontainers. Debian's
+# own package, not docker.com's apt repo, so no third-party source is added. It
+# only runs under the sysbox-runc OCI runtime, see workmux/config.yaml.
+#
+# docker-cli is listed separately on purpose: docker.io only *recommends* it,
+# and the --no-install-recommends above drops it, leaving a daemon with no
+# client to talk to it.
+#
+# tmux: the workmux installer hard-checks for it and logs `Missing required
+# dependencies: tmux` without it. Nothing in `sandbox shell`/`run` needs a
+# multiplexer today, but anything invoking workmux's own mux inside the
+# container does.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
@@ -18,6 +38,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jq \
     iptables \
     util-linux \
+    tmux \
+    docker.io \
+    docker-cli \
+    python3-minimal \
     && rm -rf /var/lib/apt/lists/*
 
 # Embed network init script (sets up iptables firewall, then drops privileges)
@@ -105,9 +129,102 @@ fi
 # HOME=/tmp is preserved because downstream login shells may otherwise reset
 # it to "/" (for UIDs not in /etc/passwd), breaking agents that look up their
 # config dirs relative to HOME.
+# /cache is a host mount, so anything the image writes there is shadowed at
+# runtime. cargo's registry and git dirs are symlinks into it (see CARGO_HOME
+# below) and dangle until these exist. mkdir -p through a dangling symlink
+# fails with EEXIST, which cargo reports as the misleading
+# `failed to create directory ... File exists (os error 17)`, so create the
+# targets here, while still root and before dropping privileges.
+mkdir -p /cache/rust/registry /cache/rust/git
+# `|| true` because this intermittently fails on the virtiofs /cache mount with
+# `chmod: fts_read failed: No such file or directory`, a transient stat miss
+# that succeeds on a retry. Under `set -e` that one failure killed the whole
+# container at startup, with the chmod error as the only clue.
+chmod -R 1777 /cache/rust || true
+
+# nushell config for `workmux sandbox shell -e -- nu`. Source of truth is the
+# read-only /opt/nushell mount; copied here because plain `nu` reads only
+# $XDG_CONFIG_HOME or $HOME/.config/nushell, and HOME is /tmp. Copy rather than
+# symlink: nu writes history into that dir, and the mount is read-only. Done at
+# container start, so a host-side edit lands on the next sandbox with no
+# rebuild.
+if [ -d /opt/nushell ]; then
+    mkdir -p /tmp/.config/nushell
+    cp /opt/nushell/sandbox-env.nu /tmp/.config/nushell/env.nu
+    cp /opt/nushell/sandbox-config.nu /tmp/.config/nushell/config.nu
+    # Pre-create the history file so the chown below covers it. Otherwise nu
+    # creates it on first start, and whichever uid gets there first owns it.
+    touch /tmp/.config/nushell/history.txt
+    chown -R "${WM_TARGET_UID}:${WM_TARGET_GID}" /tmp/.config
+fi
+
+# Start the nested dockerd while still root. This only works under the
+# sysbox-runc OCI runtime; under plain runc it fails for lack of SYS_ADMIN, so
+# keep it non-fatal and let the sandbox come up without docker rather than
+# dying at startup.
+if command -v dockerd >/dev/null 2>&1; then
+    dockerd >/tmp/dockerd.log 2>&1 &
+    for _ in $(seq 1 30); do
+        [ -S /var/run/docker.sock ] && break
+        sleep 1
+    done
+    if [ ! -S /var/run/docker.sock ]; then
+        echo "network-init: dockerd did not start, see /tmp/dockerd.log" >&2
+    fi
+fi
+
+# Claude Code records folder trust in $HOME/.claude.json, keyed by literal
+# absolute path as projects["<path>"].hasTrustDialogAccepted. HOME is /tmp here,
+# and workmux bind-mounts the host's ~/.claude-sandbox.json onto
+# /tmp/.claude.json, so the file itself does persist across sandboxes. What does
+# not persist is a trust entry for a new worktree: worktree_dir gives each
+# worktree a path never seen before, so the agent blocks at startup on "Yes, I
+# trust this folder" until someone presses a key.
+#
+# There is no global opt-out. Anthropic's CLI reference is explicit that
+# --dangerously-skip-permissions "skips prompts but does NOT disable ...
+# Workspace trust checks", and permissions.defaultMode does not cover it
+# either. The documented escape is `claude -p`, which is non-interactive and so
+# no use for an interactive agent pane.
+#
+# Pre-seeding is defensible here precisely because this is the sandbox: the
+# trust gate exists to protect an agent running loose on the host, and this one
+# has no host filesystem access and a deny-by-default network. It writes to
+# workmux's sandbox-only ~/.claude-sandbox.json, never the real ~/.claude.json.
+CLAUDE_JSON=/tmp/.claude.json
+if [ -n "${PWD:-}" ]; then
+    if [ -f "$CLAUDE_JSON" ]; then
+        # Write through the file, never rename over it. /tmp/.claude.json is a
+        # single-file bind mount, so `mv` onto it is EBUSY and took the whole
+        # entrypoint down with `mv: cannot move '/tmp/.claude.json.new' to
+        # '/tmp/.claude.json': Device or resource busy`. `cat >` truncates in
+        # place and keeps the inode, so the mount survives.
+        if jq --arg p "$PWD" '.projects[$p].hasTrustDialogAccepted = true' \
+            "$CLAUDE_JSON" > "${CLAUDE_JSON}.new"; then
+            cat "${CLAUDE_JSON}.new" > "$CLAUDE_JSON"
+        fi
+        rm -f "${CLAUDE_JSON}.new"
+    else
+        jq -n --arg p "$PWD" \
+            '{projects: {($p): {hasTrustDialogAccepted: true}}}' > "$CLAUDE_JSON"
+    fi
+    # Non-fatal: the host side of this mount is a macOS file over virtiofs,
+    # where chown can fail. Losing it only means the agent may not manage to
+    # update its own config, which is not worth killing the sandbox for.
+    chown "${WM_TARGET_UID}:${WM_TARGET_GID}" "$CLAUDE_JSON" || true
+fi
+
 GROUPS_ARG="${WM_TARGET_GID}"
 if [ -n "${WM_EXTRA_GIDS:-}" ]; then
     GROUPS_ARG="${GROUPS_ARG},${WM_EXTRA_GIDS}"
+fi
+# The dockerd socket is root:docker 0660, so the dropped-privilege user needs
+# the docker gid in its supplementary groups or every docker command dies with
+# `connect: permission denied`. Resolved at runtime rather than hardcoded,
+# since the gid is whatever the docker.io postinst picked at build time.
+DOCKER_GID="$(getent group docker | cut -d: -f3 || true)"
+if [ -n "${DOCKER_GID:-}" ]; then
+    GROUPS_ARG="${GROUPS_ARG},${DOCKER_GID}"
 fi
 
 exec setpriv \
@@ -180,10 +297,15 @@ ENV MISE_DATA_DIR=/cache/mise/data \
 # tries to reinstall it on every run. /opt/rust is outside any HOME and is
 # made world-writable below, which `cargo:` backends also need since they
 # build into CARGO_HOME at runtime.
-# Same split: /cache at runtime so the cargo registry and any toolchain a repo
-# pins survive across sessions, /opt during the build.
-ENV RUSTUP_HOME=/cache/rust/rustup \
-    CARGO_HOME=/cache/rust/cargo
+# Both point at /opt/rust, identical to the build, so mise reads its own baked
+# install as authoritative and never re-runs rustup-init. Splitting them across
+# /opt and /cache broke that: mise probes the cargo bin dir, an empty
+# /cache/rust/cargo made it call the installer on the first `cargo` of every
+# container, and with no network that is a hard failure. Persistence is handled
+# instead by symlinking cargo's two cache dirs onto /cache further down, which
+# keeps the download cache on the mount without moving CARGO_HOME off it.
+ENV RUSTUP_HOME=/opt/rust/rustup \
+    CARGO_HOME=/opt/rust/cargo
 ENV PATH=/opt/rust/cargo/bin:$PATH
 
 RUN mkdir -p /cache && chmod 1777 /cache
@@ -210,6 +332,27 @@ COPY mise.sandbox.toml /opt/mise/config/config.toml
 #
 # The mount is optional so a plain `docker build` without --secret still works;
 # it just inherits the anonymous rate limit.
+#
+# The shim link farm is part of this same RUN, not a layer of its own. Every
+# shim goes into /usr/local/bin because workmux passes the container an explicit
+# PATH (/tmp/.workmux-shims/bin:/tmp/.local/bin:/usr/local/bin:...) that
+# overrides the image's, and the agent's commands do not run through a login
+# shell, so neither `ENV PATH` nor profile.d reaches them. /usr/local/bin is the
+# one directory that survives.
+#
+# It shares a layer with `mise install` so the two cannot drift apart. A
+# since-deleted loop over /opt/rust/cargo/bin used to supply cargo and rustc
+# here; it pointed them at rustup proxies bound to the baked toolchain, so a
+# project pinning rust 1.95.0 silently got the image's 1.93.1. mise already
+# shims all 14 rustup binaries; nothing may relink them afterwards.
+#
+# The last two links put cargo's download cache on the /cache mount while
+# CARGO_HOME itself stays at /opt/rust/cargo. Created after the chmod so the
+# recursive mode change cannot walk into /cache. They dangle in the image and
+# cargo's create_dir_all resolves them on first use; /cache is 1777.
+#
+# ENV RUSTUP_HOME/CARGO_HOME above must keep matching the values set here. When
+# they diverged, mise reinstalled rust on every container start.
 RUN --mount=type=secret,id=github_token \
     if [ -s /run/secrets/github_token ]; then \
         GITHUB_TOKEN="$(cat /run/secrets/github_token)"; export GITHUB_TOKEN; \
@@ -220,25 +363,13 @@ RUN --mount=type=secret,id=github_token \
     CARGO_HOME=/opt/rust/cargo \
     mise install && \
     rm -rf /opt/mise/buildcache && \
-    chmod -R a+rwX /opt/mise /opt/rust
-
-# Link every shim into /usr/local/bin, which is already on the PATH workmux
-# injects. Neither `ENV PATH` nor profile.d is enough on its own: workmux
-# passes an explicit PATH to the container (/tmp/.local/bin:/usr/local/bin:...)
-# that overrides the image's, and the agent's commands do not always run
-# through a login shell. /usr/local/bin is the one directory that survives
-# both.
-RUN for shim in /opt/mise/data/shims/*; do \
+    chmod -R a+rwX /opt/mise /opt/rust && \
+    for shim in /opt/mise/data/shims/*; do \
         ln -sf "$shim" "/usr/local/bin/$(basename "$shim")"; \
-    done
-
-# The rust shims resolve through mise into /opt/rust/cargo/bin, but rustup also
-# drops binaries there that mise never shims (rustfmt, clippy-driver, rustup
-# itself). Link them directly so they survive the injected PATH too.
-RUN for bin in /opt/rust/cargo/bin/*; do \
-        [ -e "$bin" ] || continue; \
-        ln -sf "$bin" "/usr/local/bin/$(basename "$bin")"; \
-    done
+    done && \
+    rm -rf /opt/rust/cargo/registry /opt/rust/cargo/git && \
+    ln -s /cache/rust/registry /opt/rust/cargo/registry && \
+    ln -s /cache/rust/git /opt/rust/cargo/git
 
 # Belt and braces for login shells and for tools installed at runtime, which
 # land in the shim dir after this image is built.
@@ -249,7 +380,19 @@ ENV PATH=/opt/mise/data/shims:$PATH
 ARG CACHE_BUST=1
 
 # Install workmux (needed for sandbox RPC)
-RUN curl -fsSL https://raw.githubusercontent.com/raine/workmux/main/scripts/install.sh | bash
+#
+# Same github_token secret as the mise layer above. The installer resolves the
+# latest release through the GitHub API, which is 60 req/hour unauthenticated
+# and shared across every build on this host, so an unauthenticated build dies
+# on `curl: (22) The requested URL returned error: 403` once that runs out.
+# GH_TOKEN as well as GITHUB_TOKEN because it is not documented which the
+# installer reads.
+RUN --mount=type=secret,id=github_token \
+    if [ -s /run/secrets/github_token ]; then \
+        GITHUB_TOKEN="$(cat /run/secrets/github_token)"; export GITHUB_TOKEN; \
+        GH_TOKEN="$GITHUB_TOKEN"; export GH_TOKEN; \
+    fi; \
+    curl -fsSL https://raw.githubusercontent.com/raine/workmux/main/scripts/install.sh | bash
 
 # --- claude agent ---
 ARG CACHE_BUST=1
@@ -265,3 +408,16 @@ RUN curl -fsSL https://claude.ai/install.sh | bash && \
     mkdir -p /tmp/.local/bin && \
     ln -s /usr/local/bin/claude /tmp/.local/bin/claude && \
     chmod 777 /tmp/.local
+
+# Runtime installs go to MISE_DATA_DIR=/cache/mise/data, so their shims land in
+# /cache/mise/data/shims, which is on neither the injected PATH nor any link
+# farm. The agent's bash is non-interactive with no rc file (HOME=/tmp, SHELL
+# unset), so no profile or shell hook can fix it. Point the shim output at
+# /usr/local/bin instead, the one directory already on PATH.
+#
+# Last line of the file, and it must stay last. Set any earlier and the claude
+# installer layer above triggers a mise reshim into /usr/local/bin while
+# MISE_DATA_DIR and RUSTUP_HOME still point at the empty runtime /cache paths.
+# mise then reads rust as uninstalled and prunes all 14 rust shims from the link
+# farm, leaving `cargo: not found` under the PATH workmux injects.
+ENV MISE_SHIMS_DIR=/usr/local/bin

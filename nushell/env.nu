@@ -44,11 +44,17 @@ if not ("~/.zoxide.nu" | path expand | path exists) {
 }
 
 # Atuin — nushell's `source` needs a static path, so the init script is
-# pre-generated here rather than eval'd. Regenerate after upgrading atuin:
-#   atuin init nu | save -f ~/.local/share/atuin/init.nu
+# pre-generated here rather than eval'd. Regenerate after upgrading atuin, and
+# keep the flag:
+#   atuin init nu --disable-up-arrow | save -f ~/.local/share/atuin/init.nu
+#
+# --disable-up-arrow drops the atuin_up_arrow keybinding, so up walks nushell's
+# own line history instead of opening the atuin TUI. Ctrl-R still does. The flag
+# is the only lever: atuin's filter_mode_shell_up_key_binding sets the scope of
+# that binding, never whether it exists.
 if (which atuin | is-not-empty) and not ("~/.local/share/atuin/init.nu" | path expand | path exists) {
     mkdir ~/.local/share/atuin
-    atuin init nu | save -f ~/.local/share/atuin/init.nu
+    atuin init nu --disable-up-arrow | save -f ~/.local/share/atuin/init.nu
 }
 
 # Configuration management commands (work from any directory)
@@ -99,48 +105,19 @@ def git-fix-bare [] {
 }
 
 # Tmux session management
+# sesh's picker instead of fzf over `tmux list-sessions`: it previews, and
+# attaches or switches depending on whether tmux is already the current client.
+# Bare `tmux attach-session` errors when nested.
+#
+# It cannot kill a session. ctrl+x in the TUI removes a zoxide entry and
+# refuses every other row, and -t means there are no zoxide rows here anyway.
+# Killing from a picker is an fzf-only recipe: a ctrl-d binding running
+# `tmux kill-session`.
+# Same command tmux.conf binds to prefix+t.
 def ta [] {
-    let sessions = (tmux list-sessions -F "#{session_name}" | lines)
-
-    if ($sessions | is-empty) {
-        print "No tmux sessions found"
-        return
-    }
-
-    let selected = ($sessions | str join "\n" | fzf --prompt="Select tmux session: ")
-
-    if ($selected | is-not-empty) {
-        tmux attach-session -t $selected
-    }
+    sesh picker -t --icons --preview
 }
 
-def td [session_name?: string] {
-    let name = if ($session_name | is-empty) { "dev" } else { $session_name }
-    let current_dir = $env.PWD
-
-    # Create new session with first window (plain shell)
-    tmux new-session -d -s $name -c $current_dir -n "shell"
-
-    # Window 2: nvim
-    tmux new-window -t $"($name):1" -n "nvim" -c $current_dir
-    tmux send-keys -t $"($name):1" "nvim" Enter
-
-    # Window 3: lazygit
-    tmux new-window -t $"($name):2" -n "lazygit" -c $current_dir
-    tmux send-keys -t $"($name):2" "lazygit" Enter
-
-    # Window 4: claude code
-    tmux new-window -t $"($name):3" -n "claude1" -c $current_dir
-    tmux send-keys -t $"($name):3" "claude" Enter
-
-    # Window 5: claude code
-    tmux new-window -t $"($name):4" -n "claude2" -c $current_dir
-    tmux send-keys -t $"($name):4" "claude" Enter
-
-    # Select first window and attach
-    tmux select-window -t $"($name):0"
-    tmux attach-session -t $name
-}
 
 # Kubectl fzf functions for pod operations
 def kpods [] {

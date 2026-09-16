@@ -12,9 +12,8 @@ docker-cli = "latest"
 # install path. `mise run docker-buildx-plugin` recreates it after a bump.
 "github:docker/buildx" = "0.37.1"
 docker-compose = "latest"
-fnox = "latest"
 "github:netbirdio/netbird" = "latest"
-"github:nushell/nushell" = "latest"
+"github:nushell/nushell" = "0.115.1"
 kubectx = "latest"
 kubens = "latest"
 lima = "latest"
@@ -35,10 +34,16 @@ gh = "2.98.0"
 "github:joshmedeski/sesh" = "2.30.1"
 "github:raine/workmux" = "0.1.262"
 "github:rtk-ai/rtk" = "0.45.0"
+# Pinned for the same reason, plus one of its own: the container sandbox loads
+# this file as a project config, and resolving "latest" there needs a GitHub
+# releases lookup that the sandbox proxy refuses. Every sandbox command printed
+# `Failed to resolve tool version list for fnox`.
+fnox = "1.35.2"
 k9s = "0.51.0"
 kubectl = "1.36.4"
 lazygit = "0.64.1"
 neovim = "0.12.5"
+ripgrep  = "15.2.0"
 starship = "1.26.0"
 zoxide = "0.10.0"
 

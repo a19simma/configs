@@ -2,8 +2,7 @@
 #
 # Deliberately NOT the root mise.toml. That file carries brew:/brew-cask:
 # entries that do not exist on Linux, plus host-only tools (tmux, sesh, atuin,
-# starship, zoxide, lazygit, k9s, kubectl, neovim) that a headless sandboxed
-# agent never uses.
+# lazygit, k9s, kubectl, neovim) that a headless sandboxed agent never uses.
 #
 # gh is excluded on purpose: it is useless without a token, and the sandbox is
 # not given one.
@@ -21,6 +20,15 @@ ripgrep  = "15.2.0"
 fd       = "10.4.2"
 bat      = "0.26.1"
 just     = "1.58.0"
+
+# Interactive shell for `workmux sandbox shell -e -- nu ...`. The agent itself
+# never runs nu: its Bash tool, the network-init.sh entrypoint and every pane
+# command go through the container's dash, so nu is here for humans only.
+# zoxide and starship come along because the sandbox nu config activates them;
+# nothing else in the image uses any of the three.
+"github:nushell/nushell" = "0.115.1"
+zoxide   = "0.10.0"
+starship = "1.26.0"
 
 # --- warm cache, NOT a version policy ---
 #

@@ -5,8 +5,9 @@
 ## Search
 search_mode = "fuzzy"      # prefix | fulltext | fuzzy | daemon-fuzzy
 filter_mode = "global"     # global | host | session | directory | workspace
-# Up-arrow searches the current directory; Ctrl-R stays global.
-filter_mode_shell_up_key_binding = "directory"
+# No filter_mode_shell_up_key_binding here: nushell/env.nu:48 generates the init
+# script with --disable-up-arrow, so there is no up-arrow binding for it to
+# scope. Ctrl-R is the only way in.
 
 ## UI
 style = "compact"          # compact | full | auto

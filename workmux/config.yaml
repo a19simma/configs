@@ -39,21 +39,40 @@ agents:
       - --tools
       - Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch
 
+# Same four windows sesh/sesh.toml:16 gives a plain repo session, so a worktree
+# and a repo read identically. The commands differ though: sesh runs them under
+# nushell via tmux's default-command, workmux runs the agent one through the
+# container's dash, where the nushell claude alias never fires. That is why the
+# agent args live in the `agents:` block above.
 windows:
   # Sandboxed. `<agent>` expands to the configured agent command.
   - name: agent
     panes:
       - command: <agent>
         focus: true
-  # Host pane. Dev servers bind host ports directly, so localhost in the
-  # browser just works, no container port publishing involved.
+  # Host windows. sandbox.target below is 'agent', so only the window above is
+  # containerised; nvim and lazygit run as the host user against the worktree.
+  - name: edit
+    panes:
+      - command: nvim
+  - name: git
+    panes:
+      - command: lazygit
+  # Dev servers bind host ports directly, so localhost in the browser just
+  # works, no container port publishing involved.
   - name: run
+  # Interactive shell inside the same container as the agent window. -e execs
+  # into the running container instead of starting a second one, so it shares
+  # the agent's mounts, network rules and /cache.
+  - name: box
+    panes:
+      - command: workmux sandbox shell -e -- nu
 
 sandbox:
   enabled: true
   backend: container
-  # Default. Only the agent pane is sandboxed; the 'run' window stays on the
-  # host. Accepted trade: agent-written code can run as the host user when the
+  # Default. Only the agent pane is sandboxed; the edit, git and run windows
+  # stay on the host. Accepted trade: agent-written code can run as the host user when the
   # run window builds or tests the worktree.
   target: agent
 
@@ -88,8 +107,30 @@ sandbox:
       guest_path: /cache
       writable: true
 
+    # nushell config for `workmux sandbox shell -e -- nu`, read-only so it
+    # cannot become a second write channel between sandboxes the way /cache is.
+    #
+    # Its own directory, not ~/.config/nushell: the host config sources mise.nu,
+    # ~/.zoxide.nu, starship and atuin unconditionally and branches to
+    # env-macos.nu, none of which exist in the image. network-init.sh copies
+    # these two into /tmp/.config/nushell as env.nu and config.nu, so plain `nu`
+    # picks them up with no flags.
+    - host_path: ~/repos/configs/workmux-sandbox/nushell
+      guest_path: /opt/nushell
+      writable: false
+
   container:
     runtime: docker
+    # Nested dockerd without SYS_ADMIN. workmux rejects cap_add ALL/SYS_ADMIN
+    # unconditionally for the docker and podman runtimes since v0.1.241, so the
+    # documented DinD recipe no longer works. sysbox-runc needs no caps at all:
+    # it gives the container's root a private user namespace plus virtualized
+    # /proc and /sys, which is enough for both iptables and an inner dockerd.
+    #
+    # Requires sysbox-ce in the colima VM, registered as a runtime in
+    # ~/.config/colima/default/colima.yaml. Without it, every sandbox dies at
+    # exec with `unknown or invalid runtime name`.
+    oci_runtime: sysbox-runc
     # Shadowed by a read-only /dev/null bind mount. Worktree-relative only;
     # absolute paths and '..' are rejected, directories cannot be masked.
     # Not a seal: .git/objects is mounted read-write, so anything ever
@@ -166,6 +207,23 @@ sandbox:
       # token is passed into the sandbox, which also means the 60 req/hour
       # anonymous limit applies.
       - api.github.com
+      # Docker Hub, for the nested dockerd (sandbox.container.oci_runtime is
+      # sysbox-runc). registry-1.docker.io is the only one proven necessary so
+      # far: `docker pull postgres:18` died on its first /v2/ probe with
+      # `Forbidden` and the proxy logged
+      # `rejected: domain not in allowlist hostname="registry-1.docker.io"`.
+      # auth.docker.io and production.cloudfront.docker.com are proven too: the
+      # pull walks registry -> auth token -> blobs, and each host only surfaced
+      # once the one before it was allowed. cloudfront, not cloudflare; it is
+      # AWS CloudFront and the wrong spelling fails as
+      # `error pulling image configuration: download failed after attempts=6`.
+      # index.docker.io is unproven, kept because older clients resolve through
+      # it.
+      - registry-1.docker.io
+      - auth.docker.io
+      - production.cloudfront.docker.com
+      - index.docker.io
+
       # mise's own version registry. It falls back to the GitHub API when this
       # is refused, so blocking it only costs a `(transient)` warning and a
       # slower resolve, but there is no reason to pay that.

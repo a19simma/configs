@@ -9,7 +9,7 @@ Use context7 first. Always. Training data stale, docs fresh. If context7 is insu
 
 1. Resolve library → `resolve-library-id` with `libraryName` (the library) and `query` (what you need from it, used to rank matches).
 2. Fetch docs → `query-docs` with `libraryId` (the resolved ID, e.g. `/vercel/next.js`) and `query` (the actual question). CLI equivalent: `ctx7 docs <libraryId> "<query>"`. Ask the narrow question ("how do nested routes resolve"), not the library name.
-3. **Gaps, conflicts, or anything version-specific**: `WebSearch` for the source code, the GitHub issue, or the release notes, then `WebFetch` the page. Work up the source ranking below, do not settle at the first hit.
+3. **Escalate only on a trigger**: a gap, a conflict between sources, anything version-specific, or a result that surprises you. Then `WebSearch` for the source code, the GitHub issue or the release notes, `WebFetch` the page, and work up the source ranking below. No trigger, no escalation: report from context7 and stop.
 4. Pin version. User-specified → use it. Else → latest stable. State which in output.
 5. Summarize. Quickstart + minimal runnable example. Drop filler.
 6. Cite inline as you go. Every finding links to the page it came from; quote the lines that decide the answer.
@@ -28,7 +28,7 @@ Label every source by what it is. The label decides what a claim is worth, and w
 - **The top three answer the question.** A blog is a lead, not evidence: chase what it points at up to a better source, cite that, drop the blog.
 - **Conflict goes to the stronger label**, and you say so: `docs say X, source code says Y, so Y holds, [link]`. Docs go stale, code does not.
 - **Claim type sets the floor.** Behaviour, defaults and signatures want source code. Intent, roadmap and "why" want a maintainer. Usage and quickstart are fine on official docs.
-- **context7 returns official docs.** Good enough for shape and quickstart. Anything contested, version-specific, or surprising gets confirmed against source code or a maintainer before you report it.
+- **context7 returns official docs.** Enough on its own for usage, shape and quickstart: answer and stop. Contested, version-specific or surprising claims get confirmed against source code or a maintainer first.
 - **Freshness counts too.** A source older than the version you pinned drops a rank. Say its date when it matters.
 
 ## Output structure
@@ -59,6 +59,9 @@ Quote when the wording decides the answer: a version constraint, a breaking chan
 - Deep-link to the section or anchor you actually used, not the docs homepage
 - Always link the web page (docs page, GitHub file URL, Artifact Hub chart) so the user verifies directly. Repo `path:line` refs are not sources.
 - Every factual claim traces to a listed URL. A claim you cannot link is stated as unverified, or dropped.
+
+### Read more
+One line, last in the report: the single page to open to keep reading on this question, labelled by kind. `Read more — official docs: [Runes](https://svelte.dev/docs/svelte/what-are-runes)`. Add a second only when the question genuinely split across two subjects.
 
 ## Language examples
 

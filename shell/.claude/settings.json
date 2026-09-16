@@ -1,6 +1,6 @@
 {
   "agentPushNotifEnabled": true,
-  "autoCompactWindow": 140000,
+  "autoCompactWindow": 200000,
   "autoMemoryEnabled": false,
   "disableBundledSkills": true,
   "disableClaudeAiConnectors": true,

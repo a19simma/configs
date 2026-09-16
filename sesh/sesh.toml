@@ -6,18 +6,26 @@ git_dir_length = 2
 [default_session]
 preview_command = "eza --all --git --icons --color=always {}"
 
-# Every repo under ~/repos gets the same three windows without being named here.
+# Every repo under ~/repos gets the same four windows without being named here.
 # An explicit [[session]] below overrides this for a given path.
+#
+# Window names match workmux's (agent, edit, git, run) so a worktree session and
+# a repo session read the same.
 [[wildcard]]
 pattern = "~/repos/*"
-windows = ["edit", "git", "run"]
+windows = ["agent", "edit", "git", "run"]
 
 # Windows are global and referenced by name. Two repos needing different setups
 # want two differently named windows, not an override.
 #
 # startup_script runs under nushell: tmux.conf sets default-command "nu -l".
-# Point at nu scripts as `nu ~/.config/sesh/scripts/<name>.nu` — anything in
-# sesh/scripts/ here lands there after stow.
+# That means the claude alias in nushell/config.nu applies here, so this window
+# gets --dangerously-skip-permissions and the trimmed --tools list. Unsandboxed,
+# unlike workmux's agent window.
+[[window]]
+name = "agent"
+startup_script = "claude"
+
 [[window]]
 name = "edit"
 startup_script = "nvim"

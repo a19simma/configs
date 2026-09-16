@@ -77,9 +77,6 @@ if $nu.os-info.name == "linux" {
     }
 }
 
-# Shell integrations
-source ~/.config/nushell/vendor/autoload/wt.nu
-
 # Aliases
 # --tools trims the built-in tool schemas out of the context window.
 # Dropped: Artifact, SendUserFile, ReportFindings, ScheduleWakeup, SendFeedback, AskUserQuestion.
