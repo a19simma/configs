@@ -1,6 +1,6 @@
 return {
 	{
-		"dlyongemallo/diffview.nvim",
+		"dlyongemallo/diffview-plus.nvim",
 		dependencies = { "nvim-lua/plenary.nvim" },
 		cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewToggleFiles", "DiffviewFocusFiles", "DiffviewFileHistory" },
 		keys = {

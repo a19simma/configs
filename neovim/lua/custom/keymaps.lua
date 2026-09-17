@@ -1,2 +1,16 @@
 -- Custom keymaps
 vim.keymap.set("n", "<leader>r", ":e<CR>", { desc = "Reload buffer" })
+
+-- Gitsigns hunk viewing (lazy-require so it works before the plugin attaches)
+vim.keymap.set("n", "<leader>hp", function()
+	require("gitsigns").preview_hunk()
+end, { desc = "Preview hunk" })
+vim.keymap.set("n", "<leader>hi", function()
+	require("gitsigns").preview_hunk_inline()
+end, { desc = "Preview hunk inline" })
+vim.keymap.set("n", "]c", function()
+	require("gitsigns").nav_hunk("next")
+end, { desc = "Next hunk" })
+vim.keymap.set("n", "[c", function()
+	require("gitsigns").nav_hunk("prev")
+end, { desc = "Prev hunk" })

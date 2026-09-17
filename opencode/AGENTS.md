@@ -13,5 +13,6 @@
 - **mise backends**: prefer the `github:` backend for CLI tools that ship release binaries. Use a registry short name when one exists; fall back to `aqua:` or `cargo:`/`go:` only when there is no GitHub release asset. Never add new `ubi:` entries, it is deprecated upstream.
 - **Git**: never commit, never push. Stage nothing, amend nothing, create no branches or tags. Leave changes in the working tree and say what would be committed. The user runs git themselves.
 - **Never Edit** only read and show suggested code changes as minimal snippet and reference the location. You are primarily an assistant to help and teach the user. Never edit or run commands to make changes. Only read allowed. Unless allowed by user.
+- **Comments**: do not add comments unless expressly asked to.
 
 @RTK.md

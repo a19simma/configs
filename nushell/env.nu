@@ -541,33 +541,36 @@ def ksvc [] {
 
 # Create temporary debug pod or attach debug container to existing pod
 def kdebug [] {
+    let images = [
+        [image shell hint];
+        ["busybox" "sh" ""]
+        ["alpine" "sh" ""]
+        ["ubuntu" "bash" ""]
+        ["nicolaka/netshoot" "bash" ""]
+        ["curlimages/curl" "sh" ""]
+        ["mcr.microsoft.com/mssql-tools" "bash" "/opt/mssql-tools/bin/sqlcmd -S <host>,1433 -U sa -P '<pw>' -Q 'select @@version'"]
+        ["postgres:17-alpine" "sh" "psql -h <host> -U <user> -d <db>   # PGPASSWORD=<pw>"]
+    ]
     let debug_type = (["standalone-pod", "attach-to-pod"] | str join "\n" | fzf --prompt="Select debug type: ")
     if ($debug_type | is-not-empty) {
-        let image = (["busybox", "alpine", "ubuntu", "nicolaka/netshoot", "curlimages/curl"] | str join "\n" | fzf --prompt="Select debug image: ")
+        let image = ($images | get image | str join "\n" | fzf --prompt="Select debug image: ")
         if ($image | is-not-empty) {
+            let selected = ($images | where image == $image | first)
+            let shell = $selected.shell
+            if ($selected.hint | is-not-empty) {
+                print $"Client hint: ($selected.hint)"
+            }
             if $debug_type == "standalone-pod" {
                 let pod_name = $"debug-pod-(date now | format date '%Y%m%d%H%M%S')"
                 print $"Creating standalone debug pod: ($pod_name) with image: ($image)"
-                
-                if $image == "nicolaka/netshoot" {
-                    kubectl run $pod_name $"--image=($image)" --rm -it --restart=Never -- bash
-                } else if $image == "curlimages/curl" {
-                    kubectl run $pod_name $"--image=($image)" --rm -it --restart=Never -- sh
-                } else {
-                    kubectl run $pod_name $"--image=($image)" --rm -it --restart=Never -- sh
-                }
+
+                kubectl run $pod_name $"--image=($image)" --rm -it --restart=Never -- $shell
             } else {
                 let target_pod = (kubectl get pods --no-headers -o custom-columns=":metadata.name" | fzf --prompt="Select pod to debug: ")
                 if ($target_pod | is-not-empty) {
                     print $"Attaching debug container with image: ($image) to pod: ($target_pod)"
-                    
-                    if $image == "nicolaka/netshoot" {
-                        kubectl debug $target_pod -it $"--image=($image)" -- bash
-                    } else if $image == "curlimages/curl" {
-                        kubectl debug $target_pod -it $"--image=($image)" -- sh
-                    } else {
-                        kubectl debug $target_pod -it $"--image=($image)" -- sh
-                    }
+
+                    kubectl debug $target_pod -it $"--image=($image)" -- $shell
                 }
             }
         }
