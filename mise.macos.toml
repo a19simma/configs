@@ -173,13 +173,12 @@ set -e
 echo "Deploying dotfiles with GNU Stow..."
 mkdir -p ~/.config/nvim ~/.config/nushell ~/.config/wezterm ~/.config/opencode \\
          ~/.config/alacritty ~/.config/aerospace ~/.config/tmux \\
-         ~/.config/k9s/skins ~/.config/lazygit ~/.config/gh-dash \
+         ~/.config/k9s/skins ~/.config/lazygit \\
          ~/.config/atuin ~/.config/sesh ~/.config/mise ~/.config/workmux \\
          ~/.claude ~/.gemini
 # macOS keeps VS Code settings here, NOT in ~/.config/Code
 mkdir -p "$HOME/Library/Application Support/Code/User"
 
-stow -t ~/.config/gh-dash   gh-dash   --adopt
 stow -t ~/.config/nvim      neovim
 stow -t ~/.config/nushell   nushell   --adopt
 stow -t ~/.config/wezterm   wezterm

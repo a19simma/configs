@@ -5,9 +5,26 @@
   "disableBundledSkills": true,
   "disableClaudeAiConnectors": true,
   "effortLevel": "low",
-  "enabledPlugins": {},
+  "enabledPlugins": {
+    "document-skills@anthropic-agent-skills": true,
+    "posthog@claude-plugins-official": true
+  },
   "env": {
     "DISABLE_AUTOUPDATER": "1"
+  },
+  "extraKnownMarketplaces": {
+    "anthropic-agent-skills": {
+      "source": {
+        "repo": "anthropics/skills",
+        "source": "github"
+      }
+    },
+    "caveman": {
+      "source": {
+        "repo": "JuliusBrussee/caveman",
+        "source": "github"
+      }
+    }
   },
   "hooks": {
     "Notification": [
@@ -67,14 +84,6 @@
       {
         "hooks": [
           {
-            "command": "/Users/simon/.claude/hooks/caveman-refresh.sh",
-            "type": "command"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
             "command": "workmux set-window-status working",
             "type": "command"
           }
@@ -82,17 +91,23 @@
       }
     ]
   },
-  "model": "opus",
+  "model": "opus[1m]",
   "modelSettings": {
     "claude-opus-5": {
       "effortLevel": "low"
     }
   },
+  "permissions": {
+    "allow": [
+      "WebFetch",
+      "WebSearch"
+    ]
+  },
   "remoteControlAtStartup": true,
   "showClearContextOnPlanAccept": true,
   "skipDangerousModePermissionPrompt": true,
   "statusLine": {
-    "command": "/Users/simon/.claude/statusline-command.sh",
+    "command": "$HOME/.claude/statusline-command.sh",
     "type": "command"
   },
   "theme": "dark",

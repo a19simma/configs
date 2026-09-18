@@ -19,7 +19,6 @@ yq       = "4.53.6"
 ripgrep  = "15.2.0"
 fd       = "10.4.2"
 bat      = "0.26.1"
-just     = "1.58.0"
 
 # Interactive shell for `workmux sandbox shell -e -- nu ...`. The agent itself
 # never runs nu: its Bash tool, the network-init.sh entrypoint and every pane

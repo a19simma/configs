@@ -146,20 +146,20 @@ update-go() {
   echo "Please restart your shell or run: source ~/.zshrc"
 }
 
-# Bootstrap function for fresh systems (installs just first)
+# Bootstrap function for fresh systems (installs mise first)
 bootstrap-configs() {
     echo "🚀 Bootstrapping configuration management..."
     
-    # Install just if not present
-    if ! command -v just >/dev/null 2>&1; then
-        echo "Installing just..."
-        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin
+    # Install mise if not present
+    if ! command -v mise >/dev/null 2>&1; then
+        echo "Installing mise..."
+        curl --proto '=https' --tlsv1.2 -sSf https://mise.run | sh
         export PATH="$HOME/.local/bin:$PATH"
     fi
     
     # Navigate to configs and run bootstrap
     if [ -d ~/repos/configs ]; then
-        cd ~/repos/configs && just bootstrap-unix
+        cd ~/repos/configs && mise run bootstrap-unix
     else
         echo "❌ ~/repos/configs not found. Please clone the repository first:"
         echo "git clone <your-repo-url> ~/repos/configs"
@@ -167,11 +167,11 @@ bootstrap-configs() {
 }
 
 # Configuration management aliases (work from any directory)
-alias install-deps='(cd ~/repos/configs && just install-deps)'
-alias deploy-configs='(cd ~/repos/configs && just stow-deploy)'
-alias remove-configs='(cd ~/repos/configs && just stow-remove)'
-alias fix-symlinks='(cd ~/repos/configs && just fix-symlinks)'
-alias help='(cd ~/repos/configs && just help)'
+alias install-deps='(cd ~/repos/configs && mise run install-deps)'
+alias deploy-configs='(cd ~/repos/configs && mise run stow-deploy)'
+alias remove-configs='(cd ~/repos/configs && mise run stow-remove)'
+alias fix-symlinks='(cd ~/repos/configs && mise run fix-symlinks)'
+alias help='(cd ~/repos/configs && mise run help)'
 
 # User command keybinds - using Meh key (Ctrl+Alt+Shift) as prefix to avoid tmux conflicts
 bindkey -s '^[[1;8m' 'tm\n'

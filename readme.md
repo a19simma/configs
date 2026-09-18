@@ -38,7 +38,7 @@ git clone <your-repo-url> ~/repos/configs
 # 2. Source the shell config to get bootstrap function
 source ~/repos/configs/shell/.bashrc  # or .zshrc
 
-# 3. Run bootstrap (installs just + all dependencies + deploys configs)
+# 3. Run bootstrap (installs mise + all dependencies + deploys configs)
 bootstrap-configs
 ```
 
@@ -50,7 +50,7 @@ git clone <your-repo-url> $env:USERPROFILE\repos\configs
 # 2. Import PowerShell profile to get bootstrap function
 . $env:USERPROFILE\repos\configs\PowerShell\Microsoft.PowerShell_profile.ps1
 
-# 3. Run bootstrap (installs scoop + just + all dependencies + deploys configs)
+# 3. Run bootstrap (installs scoop + mise + all dependencies + deploys configs)
 Bootstrap-Configs
 ```
 
@@ -59,13 +59,13 @@ Bootstrap-Configs
 **Install Dependencies:**
 ```bash
 # Linux/macOS: Install via Homebrew Bundle
-just install-deps
+mise run install-deps
 
 # Windows: Install via Scoop
-just install-deps-windows
+mise run install-deps-windows
 
 # Linux only: Install system-level dependencies
-just install-system-deps
+mise run install-system-deps
 ```
 
 ### Deploy Dotfiles
@@ -73,29 +73,29 @@ just install-system-deps
 **Linux/macOS (GNU Stow):**
 ```bash
 # Deploy all dotfiles using GNU Stow
-just stow-deploy
+mise run stow-deploy
 
 # Remove dotfiles
-just stow-remove
+mise run stow-remove
 ```
 
 **Windows (PowerShell):**
 ```powershell
 # Deploy Windows configurations
-just deploy-windows
+mise run deploy-windows
 
 # Remove Windows configs
-just remove-windows
+mise run remove-windows
 ```
 
 ### Other Commands
 ```bash
 # Backup existing configs
-just backup-configs
+mise run backup-configs
 
 # Sync configs from system to repo
-just sync-from-local
+mise run sync-from-local
 
 # Update from kickstart.nvim
-just sync-kickstart
+mise run sync-kickstart
 ``` 

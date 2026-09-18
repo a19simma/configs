@@ -2,26 +2,29 @@
 # live in a project file.
 [tools]
 argocd = "2.9.22"
-"cargo:forgejo-cli" = "latest"
-claude = "latest"
-colima = "latest"
-docker-cli = "latest"
+"cargo:forgejo-cli" = "0.6.0"
+claude = "2.1.274"
+colima = "0.10.3"
+d2 = "0.7.1"
+docker-cli = "29.8.1"
 # Not in the mise registry under any short name, hence the explicit backend.
 # Pinned, not "latest", because docker finds CLI plugins only via
 # ~/.docker/cli-plugins/docker-buildx, which is a symlink to the versioned
 # install path. `mise run docker-buildx-plugin` recreates it after a bump.
 "github:docker/buildx" = "0.37.1"
-docker-compose = "latest"
-"github:netbirdio/netbird" = "latest"
+docker-compose = "5.5.1"
+"github:grafana/gcx" = "1.1.0"
+"github:kdash-rs/kdash" = "2.1.1"
+"github:netbirdio/netbird" = "0.78.2"
 "github:nushell/nushell" = "0.115.1"
-kubectx = "latest"
-kubens = "latest"
-lima = "latest"
-opencode = "latest"
-rust = "latest"
-tmux = "latest"
-uv = "latest"
-zk = "latest"
+node = "24.19.0"
+kubectx = "0.11.0"
+kubens = "0.11.0"
+lima = "2.2.0"
+opencode = "1.18.31"
+rust = "1.98.1"
+tmux = "3.7c"
+uv = "0.12.0"
 
 # Pinned to match mise.toml's [tools], not "latest". The repo's pins only apply
 # inside ~/repos/configs, so these have to be declared here too or they leave

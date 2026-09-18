@@ -20,8 +20,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        # Install just
-        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin
+        # Install mise
+        curl --proto '=https' --tlsv1.2 -sSf https://mise.run | sh
         echo "$HOME/.local/bin" >> $GITHUB_PATH
         
         # Install other dependencies via brew
@@ -37,9 +37,9 @@ jobs:
           shellcheck "$script" || echo "Warning: shellcheck failed for $script"
         done
         
-        # Lint justfile (basic syntax check)
-        echo "=== Checking justfile syntax ==="
-        just --list > /dev/null || (echo "Error: justfile syntax check failed" && exit 1)
+        # Lint mise tasks (basic syntax check)
+        echo "=== Checking mise task syntax ==="
+        mise tasks ls > /dev/null || (echo "Error: mise task syntax check failed" && exit 1)
 
     - name: Format check shell scripts
       run: |
@@ -53,20 +53,20 @@ jobs:
           fi
         done
 
-    - name: Test just commands (dry-run)
+    - name: Test mise tasks (dry-run)
       run: |
-        echo "=== Testing just commands (dry-run) ==="
+        echo "=== Testing mise tasks (dry-run) ==="
         
         # Test help command
         echo "Testing help command..."
-        just help --list || echo "Help command test failed"
+        mise run help || echo "Help command test failed"
         
         # Test that critical commands can be parsed
         echo "Testing command parsing..."
-        just --dry-run stow-deploy || echo "stow-deploy dry-run failed"
-        just --dry-run stow-remove || echo "stow-remove dry-run failed"
-        just --dry-run backup-configs || echo "backup-configs dry-run failed"
-        just --dry-run fix-symlinks || echo "fix-symlinks dry-run failed"
+        mise run --dry-run stow-deploy || echo "stow-deploy dry-run failed"
+        mise run --dry-run stow-remove || echo "stow-remove dry-run failed"
+        mise run --dry-run backup-configs || echo "backup-configs dry-run failed"
+        mise run --dry-run fix-symlinks || echo "fix-symlinks dry-run failed"
 
     - name: Test stow deployment (simulation)
       run: |
@@ -171,9 +171,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install just
+    - name: Install mise
       run: |
-        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin
+        curl --proto '=https' --tlsv1.2 -sSf https://mise.run | sh
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Test help system
@@ -190,13 +190,13 @@ jobs:
           
           # Test help command without fzf (fallback mode)
           echo "Testing help fallback mode..."
-          just help || echo "Help command failed"
+          mise run help || echo "Help command failed"
           
           # Test specific help topics
           for topic in git tmux kubectl; do
             if [ -f "help/$topic.txt" ]; then
               echo "✅ Help file for $topic exists"
-              just help "$topic" > /dev/null || echo "⚠️  Help for $topic failed"
+              mise run help "$topic" > /dev/null || echo "⚠️  Help for $topic failed"
             else
               echo "⚠️  Help file for $topic missing"
             fi
@@ -222,29 +222,29 @@ jobs:
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
         }
         
-        # Install just
-        scoop install just
+        # Install mise
+        scoop install mise
         
         # Add scoop to PATH for subsequent steps
         echo "$env:USERPROFILE\scoop\shims" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-    - name: Test Windows justfile commands
+    - name: Test Windows mise tasks
       shell: powershell
       run: |
-        echo "=== Testing Windows justfile commands ==="
+        echo "=== Testing Windows mise tasks ==="
         
-        # Test that justfile syntax is valid
-        just --list
+        # Test that mise task syntax is valid
+        mise tasks ls
         
         # Test dry-run of Windows commands
         echo "Testing deploy-windows syntax..."
-        just --dry-run deploy-windows
+        mise run --dry-run deploy-windows
         
         echo "Testing remove-windows syntax..."
-        just --dry-run remove-windows
+        mise run --dry-run remove-windows
         
         echo "Testing install-deps-windows syntax..."
-        just --dry-run install-deps-windows
+        mise run --dry-run install-deps-windows
 
     - name: Test PowerShell profiles
       shell: powershell

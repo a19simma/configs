@@ -43,7 +43,6 @@ zoxide   = "0.10.0"
 atuin    = "18.20.1"
 starship = "1.26.0"
 lazygit  = "0.64.1"
-just     = "1.58.0"
 k9s      = "0.51.0"
 kubectl  = "1.36.4"
 act      = "0.2.89"
@@ -86,8 +85,7 @@ echo "✅ Configs backed up to ~/.bashrc.bak, ~/.zshrc.bak and ~/.config.bak"
 description = "Deploy dotfiles using GNU Stow"
 run = """
 echo "Deploying dotfiles with GNU Stow..."
-mkdir -p ~/.config/nvim ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/opencode ~/.claude ~/.gemini ~/.config/tmux ~/.config/k9s/skins ~/.config/lazygit ~/.config/gh-dash ~/.config/atuin ~/.config/sesh ~/.config/mise ~/.config/workmux ~/.config/colima/default
-stow -t ~/.config/gh-dash gh-dash --adopt
+mkdir -p ~/.config/nvim ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/opencode ~/.claude ~/.gemini ~/.config/tmux ~/.config/k9s/skins ~/.config/lazygit ~/.config/atuin ~/.config/sesh ~/.config/mise ~/.config/workmux ~/.config/colima/default
 stow -t ~/.config/nvim neovim
 stow -t ~/.config/Code vscode
 stow -t ~/.config/nushell nushell --adopt
@@ -101,7 +99,12 @@ stow -t ~/.config/k9s k9s --adopt
 stow -t ~/.config/lazygit lazygit --adopt
 stow -t ~/.config/atuin atuin --adopt
 stow -t ~/.config/sesh sesh --adopt
-stow -t ~/.config/mise mise --adopt
+# Not stowed: mise auto-detects `mise/config.toml` inside the repo as a project
+# config, where global-only settings like github.credential_command are stripped
+# with a warning. The file is named global.toml so that never happens, and is
+# linked to the global path by hand.
+mkdir -p ~/.config/mise
+ln -sfn ../../repos/configs/mise/global.toml ~/.config/mise/config.toml
 stow -t ~/.config/workmux workmux --adopt
 # colima.yaml carries the sysbox-runc runtime registration that
 # workmux/config.yaml's sandbox.container.oci_runtime depends on. Without it
@@ -131,7 +134,6 @@ stow -t ~/.gemini -D gemini
 stow -t ~ -D shell
 stow -t ~/.config/tmux -D tmux
 stow -t ~/.config/k9s -D k9s
-stow -t ~/.config/gh-dash -D gh-dash
 stow -t ~/.config/atuin -D atuin
 stow -t ~/.config/lazygit -D lazygit
 stow -t ~/.config/sesh -D sesh
@@ -496,7 +498,7 @@ description = "Link mise's buildx into ~/.docker/cli-plugins so `docker buildx` 
 run = """
 # docker execs CLI plugins directly by path, so this has to point at the real
 # binary, not a mise shim. The path carries the version, so bumping
-# github:docker/buildx in mise/config.toml means re-running this.
+# github:docker/buildx in mise/global.toml means re-running this.
 BIN=$(mise which buildx 2>/dev/null || true)
 if [ -z "$BIN" ]; then
     BIN=$(ls -1 ~/.local/share/mise/installs/github-docker-buildx/*/buildx-* 2>/dev/null | tail -1)

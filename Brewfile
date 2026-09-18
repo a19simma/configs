@@ -17,7 +17,6 @@ brew "rtk" # Rust Token Killer — CLI proxy compressing command output for AI a
 
 # Configuration management
 brew "stow"
-brew "just"
 
 # CI/CD tools
 brew "act"

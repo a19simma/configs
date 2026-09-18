@@ -15,10 +15,10 @@ sees the whole picture.
 | --- | --- | --- |
 | `mise.toml` | repo-only tools and all the `[tasks.*]` | cwd is this repo |
 | `mise.macos.toml` | macOS-only additions to the above | cwd is this repo, on macOS |
-| `mise/config.toml` | the stowed global config (`~/.config/mise/config.toml`) | always |
+| `mise/global.toml` | the global config, symlinked to `~/.config/mise/config.toml` | always |
 | `workmux-sandbox/mise.sandbox.toml` | baked into the sandbox Docker image | never, it is read by the image build |
 
-`mise/config.toml` deliberately mirrors a subset of `mise.toml`: a pin that
+`mise/global.toml` deliberately mirrors a subset of `mise.toml`: a pin that
 exists only in `mise.toml` leaves PATH the moment you leave this repo. When
 bumping, keep the duplicated entries at the same version in both files.
 `mise.sandbox.toml` duplicates a further subset for Linux.
@@ -31,7 +31,7 @@ mise outdated --bump
 
 `--bump` is required. Without it mise compares inside the range already pinned,
 so a `20` pin never reports 22.x. That covers `mise.toml`,
-`mise.macos.toml` and `mise/config.toml`.
+`mise.macos.toml` and `mise/global.toml`.
 
 For the sandbox file, which mise does not load, resolve each pin by hand:
 

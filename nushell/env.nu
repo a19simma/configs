@@ -52,30 +52,37 @@ if not ("~/.zoxide.nu" | path expand | path exists) {
 # own line history instead of opening the atuin TUI. Ctrl-R still does. The flag
 # is the only lever: atuin's filter_mode_shell_up_key_binding sets the scope of
 # that binding, never whether it exists.
-if (which atuin | is-not-empty) and not ("~/.local/share/atuin/init.nu" | path expand | path exists) {
+#
+# config.nu sources the file unconditionally, so it must exist even when atuin
+# does not: write an empty one in that case.
+if not ("~/.local/share/atuin/init.nu" | path expand | path exists) {
     mkdir ~/.local/share/atuin
-    atuin init nu --disable-up-arrow | save -f ~/.local/share/atuin/init.nu
+    if (which atuin | is-not-empty) {
+        atuin init nu --disable-up-arrow | save -f ~/.local/share/atuin/init.nu
+    } else {
+        "" | save -f ~/.local/share/atuin/init.nu
+    }
 }
 
 # Configuration management commands (work from any directory)
 def --env install-deps [] {
-    cd ~/repos/configs; just install-deps
+    cd ~/repos/configs; mise run install-deps
 }
 
 def --env deploy-configs [] {
-    cd ~/repos/configs; just stow-deploy
+    cd ~/repos/configs; mise run stow-deploy
 }
 
 def --env fix-symlinks [] {
-    cd ~/repos/configs; just fix-symlinks
+    cd ~/repos/configs; mise run fix-symlinks
 }
 
 def --env setup-ssh [] {
-    cd ~/repos/configs; just setup-ssh-server
+    cd ~/repos/configs; mise run setup-ssh-server
 }
 
 def configs-help [] {
-    cd ~/repos/configs; just help
+    cd ~/repos/configs; mise run help
 }
 
 # Git worktree navigation with fzf
@@ -394,7 +401,7 @@ def kclean-evicted [] {
     print $"Found ($evicted_pods | length) evicted pods:"
     $evicted_pods | each { |pod| print $"  ($pod)" }
     let confirm = (input "Delete all evicted pods? (y/N): ")
-    if ($confirm | str lowercase) == "y" {
+    if ($confirm | str trim) in ["y" "Y"] {
         kubectl get pods --field-selector=status.phase=Failed --all-namespaces --no-headers -o custom-columns=":metadata.namespace,:metadata.name" | lines | where $it =~ "Evicted" | each { |line|
             let parts = ($line | split column " ")
             let namespace = ($parts | get 0)
@@ -424,7 +431,7 @@ def kclean-completed [] {
     }
     
     let confirm = (input "Delete all completed jobs and pods? (y/N): ")
-    if ($confirm | str lowercase) == "y" {
+    if ($confirm | str trim) in ["y" "Y"] {
         if ($completed_jobs | is-not-empty) {
             kubectl delete jobs --field-selector=status.successful=1 --all-namespaces
         }
@@ -461,7 +468,7 @@ def kjobs [] {
                 }
                 "delete" => {
                     let confirm = (input $"Delete job ($job)? (y/N): ")
-                    if ($confirm | str lowercase) == "y" {
+                    if ($confirm | str trim) in ["y" "Y"] {
                         kubectl delete job $job
                         print $"✅ Job ($job) deleted"
                     }
@@ -499,7 +506,7 @@ def knodes [] {
                 }
                 "drain" => {
                     let confirm = (input $"Drain node ($node)? This will evict pods (y/N): ")
-                    if ($confirm | str lowercase) == "y" {
+                    if ($confirm | str trim) in ["y" "Y"] {
                         print $"Draining node: ($node)"
                         kubectl drain $node --ignore-daemonsets --delete-emptydir-data
                     }
@@ -591,7 +598,7 @@ def kget-all [] {
     ]
     
     $resource_types | each { |resource|
-        print $"\n=== ($resource | str uppercase) ==="
+        print $"\n=== ($resource) ==="
         if ($namespace | is-not-empty) {
             kubectl get $resource -n $namespace --no-headers 2>/dev/null | lines | length | $in > 0
         } else {
@@ -614,17 +621,17 @@ def kget-all [] {
 def bootstrap-configs [] {
     print "🚀 Bootstrapping configuration management..."
     
-    # Install just if not present
-    if (which just | is-empty) {
-        print "Installing just..."
-        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin
+    # Install mise if not present
+    if (which mise | is-empty) {
+        print "Installing mise..."
+        curl --proto '=https' --tlsv1.2 -sSf https://mise.run | sh
         $env.PATH = ($env.PATH | split row (char esep) | prepend $"($env.HOME)/.local/bin")
     }
     
     # Navigate to configs and run bootstrap
     if (~/repos/configs | path exists) {
         cd ~/repos/configs
-        just bootstrap-unix
+        mise run bootstrap-unix
     } else {
         print "❌ ~/repos/configs not found. Please clone the repository first:"
         print "git clone <your-repo-url> ~/repos/configs"
