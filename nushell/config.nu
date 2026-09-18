@@ -18,7 +18,15 @@ $env.config = {
         osc7: true
         osc8: true
         osc9_9: false
-        osc133: false  # Disable OSC 133 to fix WezTerm scrolling issue on Windows
+        # Semantic prompt marks (133;A/B/C/D). Nushell defaults this to true.
+        # It was off here to dodge a WezTerm buffer-scroll-on-keypress bug, but
+        # that one is Windows/conpty-only (wezterm#5859, nushell#5585) and this
+        # config runs on macOS. Off also disabled click-to-cursor, which
+        # reedline gates on the same flag.
+        #
+        # tmux consumes the marks itself to power copy-mode next-prompt /
+        # previous-prompt; see tmux/tmux.conf.
+        osc133: true
         osc633: true
         reset_application_mode: true
     }
@@ -113,6 +121,52 @@ def gvisor-attach [] {
 def ollama-run [] {
     ollama pull qwen2.5-coder:7b
     ollama run qwen2.5-coder:7b
+}
+
+# Hosts the workmux sandbox proxy refused, for filling in
+# workmux/config.yaml sandbox.network.allowed_domains.
+#
+# Sorted by most recent, and `last` is the column that matters: the log is
+# append-only and never pruned, so a host fixed weeks ago still shows its old
+# rejections forever. High `hits` with an old `last` means already allowlisted.
+# Anything from the last few minutes is a real gap.
+#
+# --hours limits the window, for when you want only what a run you just did
+# produced.
+def wm-rejects [--hours: int] {
+    let log = ("~/.local/state/workmux/workmux.log" | path expand)
+    if not ($log | path exists) {
+        print $"no workmux proxy log at ($log)"
+        return
+    }
+
+    let rows = (
+        open $log
+        | lines
+        | where $it =~ "rejected: domain not in allowlist"
+        | parse -r '(?<time>\S+)\s+WARN rejected.*hostname="(?<host>[^"]+)"'
+        | insert when {|r| $r.time | into datetime }
+    )
+
+    let rows = if $hours == null {
+        $rows
+    } else {
+        $rows | where when > ((date now) - ($hours * 1hr))
+    }
+
+    $rows
+    | group-by host
+    | items {|host, hits|
+        let last = ($hits | get when | math max)
+        # `last` stays a datetime rather than a formatted string so nu renders
+        # it as "4 minutes ago" and sort-by below still orders correctly.
+        {
+            host: $host
+            hits: ($hits | length)
+            last: $last
+        }
+    }
+    | sort-by last -r
 }
 
 

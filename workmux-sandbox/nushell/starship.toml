@@ -1,0 +1,43 @@
+# Starship config for the container sandbox only. Mounted read-only at
+# /opt/nushell/starship.toml and selected by STARSHIP_CONFIG in sandbox-env.nu.
+#
+# Exists because of one specific hang. Starship's default `rust` module shells
+# out to `rustup component list --installed --toolchain <v>` to render the
+# toolchain. Every shell in the container shares RUSTUP_HOME=/opt/rust/rustup,
+# rustup takes a lock over it, and with several panes in one container (agent,
+# agent2, box) the losers block in futex_wait_queue indefinitely. The pane then
+# sits with no prompt and looks frozen.
+#
+# Disabling the module is the fix: the toolchain is baked into the image and
+# pinned per worktree by mise, so the prompt was reporting a constant.
+
+# Backstop for anything else that shells out. Starship's default is 500ms;
+# nothing in this prompt should come close.
+command_timeout = 1000
+
+# The module that hangs. Version comes from mise.toml, not the prompt.
+[rust]
+disabled = true
+
+# Same class of problem, cheaper but pointless here: one container, one
+# toolchain per language, all pinned in the image.
+[nodejs]
+disabled = true
+
+[golang]
+disabled = true
+
+[package]
+disabled = true
+
+# Worth keeping. These read files or env vars rather than spawning a process.
+[directory]
+truncation_length = 4
+truncate_to_repo = true
+
+[git_branch]
+symbol = " "
+
+[character]
+success_symbol = "[⬢](bold green)"
+error_symbol = "[⬢](bold red)"

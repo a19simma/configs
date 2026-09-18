@@ -214,6 +214,19 @@ if [ -n "${PWD:-}" ]; then
     chown "${WM_TARGET_UID}:${WM_TARGET_GID}" "$CLAUDE_JSON" || true
 fi
 
+# Give the target uid a name. WM_TARGET_UID is the host user's uid, which has
+# no entry in the image's /etc/passwd, so every getpwuid() in the sandbox fails
+# with ENOENT. Most things do not care (git reads GIT_CONFIG_*, cargo and npm
+# read HOME), but Testcontainers' reaper calls Node's os.userInfo() on startup
+# and that throws outright:
+#   SystemError: uv_os_get_passwd returned ENOENT (no such file or directory)
+#     at testcontainers/build/reaper/reaper.js:30
+# which fails the whole e2e global-setup before a single container starts.
+# Shell is /bin/bash and home is /tmp, matching the env the setpriv below sets.
+if ! getent passwd "${WM_TARGET_UID}" >/dev/null 2>&1; then
+    echo "sandbox:x:${WM_TARGET_UID}:${WM_TARGET_GID}:sandbox:/tmp:/bin/bash" >> /etc/passwd
+fi
+
 GROUPS_ARG="${WM_TARGET_GID}"
 if [ -n "${WM_EXTRA_GIDS:-}" ]; then
     GROUPS_ARG="${GROUPS_ARG},${WM_EXTRA_GIDS}"
@@ -235,6 +248,52 @@ exec setpriv \
     env HOME=/tmp "$@"
 SCRIPT
 RUN chmod +x /usr/local/bin/network-init.sh
+
+# Privilege drop for exec'd panes, i.e. everything `workmux sandbox shell -e`
+# starts. That is a docker exec, and docker exec inherits the container's
+# configured user, which workmux sets to 0:0 on `docker run` so network-init.sh
+# can write iptables rules in deny mode. The setpriv tail of network-init.sh
+# only ever covers PID 1, and `sandbox shell` has no --user flag, so without
+# this wrapper the box window is root over the worktree mount, /cache, the
+# nested dockerd and the iptables rules that implement the egress policy.
+#
+# Adding `USER 501:20` here would not help: the --user flag on run wins, and
+# exec follows it.
+#
+# The setpriv flags and the GROUPS_ARG derivation are copied from
+# network-init.sh. Keep the two in sync.
+RUN cat <<'SCRIPT' > /usr/local/bin/wm-user
+#!/bin/bash
+set -euo pipefail
+
+# Docker allocates the exec'd PTY as root:tty 0620, so once privileges are
+# dropped the process cannot write to its own terminal and an interactive
+# shell dies on `cannot create /dev/pts/N: Permission denied`. Same ownership
+# transfer network-init.sh does for PID 1, and it has to happen here, while
+# still root.
+if [ -t 0 ]; then
+    chown "${WM_TARGET_UID}:${WM_TARGET_GID}" "$(tty)"
+fi
+
+GROUPS_ARG="${WM_TARGET_GID}"
+if [ -n "${WM_EXTRA_GIDS:-}" ]; then
+    GROUPS_ARG="${GROUPS_ARG},${WM_EXTRA_GIDS}"
+fi
+DOCKER_GID="$(getent group docker | cut -d: -f3 || true)"
+if [ -n "${DOCKER_GID:-}" ]; then
+    GROUPS_ARG="${GROUPS_ARG},${DOCKER_GID}"
+fi
+
+# WM_SANDBOX_USER is the marker sandbox-env.nu checks. The demoted nu re-parses
+# that file, and without the marker it would demote again, forever.
+exec setpriv \
+    --reuid "${WM_TARGET_UID}" \
+    --regid "${WM_TARGET_GID}" \
+    --groups "${GROUPS_ARG}" \
+    --inh-caps=-all \
+    env HOME=/tmp WM_SANDBOX_USER=1 "$@"
+SCRIPT
+RUN chmod +x /usr/local/bin/wm-user
 
 # Ensure host-exec shim directory is on PATH for login shells.
 # Agents like Codex run commands via login shell (bash -lc) which sources
@@ -288,6 +347,26 @@ ENV MISE_DATA_DIR=/cache/mise/data \
     MISE_GLOBAL_CONFIG_FILE=/opt/mise/config/config.toml \
     MISE_INSTALL_PATH=/usr/local/bin/mise \
     MISE_YES=1
+
+# Playwright browsers on the shared cache. Chromium, its headless shell,
+# firefox, webkit and ffmpeg are ~1GB per install; without this they default to
+# $XDG_CACHE_HOME/ms-playwright, and XDG_CACHE_HOME is unset here so that
+# resolves to $HOME/.cache which is /tmp, i.e. inside the container, thrown
+# away on every restart. Browsers are stored in revision-suffixed directories
+# (chromium-1243/ and so on), so several playwright versions coexist in one
+# directory instead of clobbering each other.
+#
+# GC off, and this is the part that is not optional. Every `playwright install`
+# runs a garbage collector that deletes any browser directory not claimed by a
+# file in .links/, where each link is named for the sha1 of the installing
+# package's absolute path and holds that path. Worktrees each have their own
+# node_modules under a different absolute path, so a `playwright install` in
+# one sandbox cannot resolve the links belonging to the others, treats them as
+# broken, deletes them, and then deletes the browsers they claimed. Every
+# sandbox would silently re-download ~1GB after any other sandbox installed.
+# Prune /cache/ms-playwright by hand instead.
+ENV PLAYWRIGHT_BROWSERS_PATH=/cache/ms-playwright \
+    PLAYWRIGHT_SKIP_BROWSER_GC=1
 
 # mise's rust backend delegates to rustup, which installs into $HOME/.rustup
 # and $HOME/.cargo and ignores MISE_DATA_DIR -- mise only symlinks

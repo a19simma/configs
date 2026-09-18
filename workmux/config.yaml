@@ -50,8 +50,39 @@ windows:
     panes:
       - command: <agent>
         focus: true
-  # Host windows. sandbox.target below is 'agent', so only the window above is
-  # containerised; nvim and lazygit run as the host user against the worktree.
+  # Second agent, in the same container as the first rather than a sandbox of
+  # its own, so both see one worktree and one /cache.
+  #
+  # `<agent>` is not usable here: it only expands for the pane workmux itself
+  # sandboxes, which is the `agent` window above. Going through `shell -e`
+  # means the tool list is written out by hand, so this is now the third copy
+  # after nushell/config.nu:87 and the `agents:` block above. All three have to
+  # move together.
+  #
+  # wm-user because a bare exec lands as root; see the box window below.
+  #
+  # Via wm-sandbox-shell.sh, not `workmux sandbox shell -e` directly: workmux
+  # starts every window at once, and `shell -e` fails if the agent window has
+  # not created the container yet. Losing that race drops the pane to a host
+  # shell that looks nearly identical, so it goes unnoticed. The wrapper polls
+  # for wm-<worktree>-* first. Absolute path because tmux runs pane commands
+  # through nushell and the wrapper is POSIX.
+  #
+  # Both agents run with HOME=/tmp and so share one /tmp/.claude.json. Last
+  # writer wins on anything claude persists there, sessions and history
+  # included. They also share WM_RPC_TOKEN, and workmux keys agent status per
+  # worktree, so the dashboard and sidebar are expected to show a single status
+  # for the pair, whichever hook fired last. Unverified which of the two it
+  # reports; treat the status of a two-agent worktree as unreliable.
+  - name: agent2
+    panes:
+      - command: >-
+          /Users/simon/repos/configs/scripts/wm-sandbox-shell.sh wm-user claude --tools
+          Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch
+  # Host windows. sandbox.target below is 'agent', so of the windows above only
+  # `agent` is containerised by workmux itself; `agent2` gets into the same
+  # container by exec'ing into it. nvim and lazygit run as the host user
+  # against the worktree.
   - name: edit
     panes:
       - command: nvim
@@ -64,9 +95,15 @@ windows:
   # Interactive shell inside the same container as the agent window. -e execs
   # into the running container instead of starting a second one, so it shares
   # the agent's mounts, network rules and /cache.
+  #
+  # No wm-user in the command: sandbox-env.nu demotes nu itself, so the wrapper
+  # would be redundant here. Any non-nu command given to `shell -e` still needs
+  # it spelled out, as agent2 above does.
+  #
+  # wm-sandbox-shell.sh for the startup race, same as agent2.
   - name: box
     panes:
-      - command: workmux sandbox shell -e -- nu
+      - command: /Users/simon/repos/configs/scripts/wm-sandbox-shell.sh nu
 
 sandbox:
   enabled: true
@@ -117,6 +154,34 @@ sandbox:
     # picks them up with no flags.
     - host_path: ~/repos/configs/workmux-sandbox/nushell
       guest_path: /opt/nushell
+      writable: false
+
+    # Personal skills. agent_config_dir keeps the sandbox off ~/.claude, which
+    # also cost it every skill in ~/.claude/skills, so /grill-me and friends
+    # were missing inside the container.
+    #
+    # Nested under the agent_config_dir mount at /tmp/.claude; the runtime
+    # orders bind mounts by path depth, so the deeper one wins. It shadows
+    # /tmp/.claude/skills/synced, i.e. the account-managed docx/pdf/pptx/xlsx
+    # and skill-creator skills are not visible in the sandbox. Trade accepted:
+    # the personal set is what actually gets invoked here.
+    #
+    # Read-only on purpose. Skills are instructions the agent executes, so a
+    # writable mount would let a sandboxed agent rewrite what every later
+    # sandbox runs, and these files are shared with the host agent.
+    - host_path: ~/.claude/skills
+      guest_path: /tmp/.claude/skills
+      writable: false
+
+    # Subagent definitions, same reasoning as skills above: agent_config_dir
+    # cut the sandbox off from ~/.claude, so researcher, runner, test, review*
+    # and architect were undefined inside the container. Nothing is shadowed
+    # here, /tmp/.claude/agents did not exist at all.
+    #
+    # Read-only for the same reason: an agent definition is a prompt the model
+    # executes, and these files are shared with the host agent.
+    - host_path: ~/.claude/agents
+      guest_path: /tmp/.claude/agents
       writable: false
 
   container:
@@ -191,6 +256,21 @@ sandbox:
       - raw.githubusercontent.com
       # package registries
       - registry.npmjs.org
+      # Playwright browser binaries. `npm i -D @playwright/test` needs neither
+      # of these (1.63.0 ships no install/postinstall script, so the npm step
+      # only touches registry.npmjs.org); `npx playwright install` needs them.
+      #
+      # Both hosts on purpose. playwright-core's PLAYWRIGHT_CDN_MIRRORS holds
+      # three entries and browserFetcher retries 5 times, cycling through the
+      # list: attempt 1 is cdn.playwright.dev and attempt 2 is the prss.microsoft
+      # ESRP CDN. Allowing only the first works until the CDN hiccups, at which
+      # point the retry that exists to save you is the one that gets refused.
+      #
+      # Chromium is included: 1.63.0 re-hosts the Chrome-for-Testing builds on
+      # cdn.playwright.dev rather than storage.googleapis.com, so there is no
+      # Google host to allow.
+      - cdn.playwright.dev
+      - playwright.download.prss.microsoft.com
       - crates.io
       - static.crates.io
       - index.crates.io
@@ -207,6 +287,12 @@ sandbox:
       # token is passed into the sandbox, which also means the 60 req/hour
       # anonymous limit applies.
       - api.github.com
+      # Where the API then redirects the actual asset bytes. GitHub moved
+      # release downloads off objects.githubusercontent.com onto this host, so
+      # api.github.com alone resolves the version and then dies on the
+      # download. The most-rejected host in the proxy log after telemetry: 22
+      # refusals, the last at 2026-09-16T08:30Z.
+      - release-assets.githubusercontent.com
       # Docker Hub, for the nested dockerd (sandbox.container.oci_runtime is
       # sysbox-runc). registry-1.docker.io is the only one proven necessary so
       # far: `docker pull postgres:18` died on its first /v2/ probe with
@@ -223,9 +309,20 @@ sandbox:
       - auth.docker.io
       - production.cloudfront.docker.com
       - index.docker.io
+      # Google's registry, for `FROM gcr.io/distroless/...` base images. The
+      # nested dockerd logged
+      # `Error getting v2 registry: Get "https://gcr.io/v2/": Forbidden` and the
+      # e2e API image build died there. gcr.io answers the manifest and then
+      # redirects layer blobs to storage.googleapis.com, so the second host is
+      # needed too or the pull fails after the manifest resolves.
+      - gcr.io
+      - storage.googleapis.com
 
       # mise's own version registry. It falls back to the GitHub API when this
       # is refused, so blocking it only costs a `(transient)` warning and a
       # slower resolve, but there is no reason to pay that.
       - mise-versions.jdx.dev
+      # mise's site and download host, used by the install script and by
+      # `mise self-update`. Rejected 4 times on 2026-09-15.
+      - mise.jdx.dev
 nerdfont: true
