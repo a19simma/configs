@@ -179,21 +179,25 @@ mkdir -p ~/.config/nvim ~/.config/nushell ~/.config/wezterm ~/.config/opencode \
 # macOS keeps VS Code settings here, NOT in ~/.config/Code
 mkdir -p "$HOME/Library/Application Support/Code/User"
 
-stow -t ~/.config/nvim      neovim
+stow -t ~/.config/nvim      neovim --adopt
 stow -t ~/.config/nushell   nushell   --adopt
-stow -t ~/.config/wezterm   wezterm
+stow -t ~/.config/wezterm   wezterm --adopt
 stow -t ~/.config/alacritty alacritty --adopt
 stow -t ~/.config/aerospace aerospace --adopt
 rm -f ~/.config/opencode/AGENTS.md
 stow -t ~/.config/opencode  opencode  --adopt
-stow -t ~/.gemini           gemini
-stow -t ~                   shell
+stow -t ~/.gemini           gemini --adopt
+stow -t ~                   shell --adopt
 stow -t ~/.config/tmux      tmux      --adopt
 stow -t ~/.config/k9s       k9s       --adopt
 stow -t ~/.config/lazygit   lazygit   --adopt
 stow -t ~/.config/atuin     atuin     --adopt
 stow -t ~/.config/sesh      sesh      --adopt
-stow -t ~/.config/mise      mise      --adopt
+# Not stowed: mise auto-detects `mise/config.toml` inside the repo as a project
+# config, where global-only settings like github.credential_command are stripped
+# with a warning. The file is named global.toml so that never happens, and is
+# linked to the global path by hand.
+ln -sfn ../../repos/configs/mise/global.toml ~/.config/mise/config.toml
 stow -t ~/.config/workmux   workmux   --adopt
 
 echo "Linking Claude Code configs to OpenCode configs..."
@@ -204,26 +208,6 @@ for f in ~/repos/configs/opencode/agents/*.md; do ln -sf "$f" ~/.claude/agents/;
 ln -sfn ~/.config/opencode/commands ~/.claude/commands
 ln -sfn ~/.config/opencode/skills   ~/.claude/skills
 echo "✅ Dotfiles deployed"
-"""
-
-[tasks.backup-configs-macos]
-description = "Back up configs that stow would clobber"
-run = """
-ts=$(date +%Y%m%d-%H%M%S)
-# Every path the stow packages own. A plain file where stow wants a symlink
-# aborts the WHOLE deploy, so anything the packages cover must be listed here.
-# Deliberately not using `stow --adopt` for these: adopt pulls the local file
-# into the repo, silently overwriting the version you committed.
-for p in ~/.zshrc ~/.bashrc ~/.tmux.conf \\
-         ~/.config/nvim ~/.config/nushell ~/.config/wezterm \\
-         ~/.config/alacritty ~/.config/opencode ~/.gemini \
-         ~/.config/atuin ~/.config/sesh ~/.config/mise ~/.config/workmux \\
-         ~/.claude/settings.json ~/.claude/CLAUDE.md; do
-  if [ -e "$p" ] && [ ! -L "$p" ]; then
-    mv "$p" "$p.backup-$ts" && echo "backed up $p"
-  fi
-done
-echo "✅ Backups tagged $ts"
 """
 
 [tasks.bootstrap-macos]
@@ -244,7 +228,6 @@ echo "🚀 Bootstrapping macOS..."
 step "Tools, brew formulae and casks"  mise bootstrap
 step "AeroSpace"                       mise run install-aerospace
 step "macOS system defaults"           mise bootstrap macos defaults apply --yes
-step "Backing up existing configs"     mise run backup-configs-macos
 step "Deploying dotfiles"              mise run stow-deploy-macos
 step "Registering nushell"             mise run register-nushell
 

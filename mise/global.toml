@@ -3,7 +3,7 @@
 [tools]
 argocd = "2.9.22"
 "cargo:forgejo-cli" = "0.6.0"
-claude = "2.1.274"
+claude = "2.1.278"
 colima = "0.10.3"
 d2 = "0.7.1"
 docker-cli = "29.8.1"
@@ -26,11 +26,11 @@ rust = "1.98.1"
 tmux = "3.7c"
 uv = "0.12.0"
 
-# Pinned to match mise.toml's [tools], not "latest". The repo's pins only apply
-# inside ~/repos/configs, so these have to be declared here too or they leave
-# PATH everywhere else — starship, zoxide and atuin are loaded by every shell.
-# Matching the versions means no drift between directories and no GitHub
-# releases lookup on cache expiry. Bump both files together.
+# Pinned, not "latest". Two reasons:
+#   1. Reproducible — a machine built next year gets this same set.
+#   2. "latest" makes every fresh bootstrap depend on the GitHub releases API
+#      being reachable and un-throttled. Pinned versions skip version
+#      resolution entirely.
 atuin = "18.20.1"
 fzf = "0.74.3"
 gh = "2.98.0"
@@ -49,6 +49,26 @@ neovim = "0.12.5"
 ripgrep  = "15.2.0"
 starship = "1.26.0"
 zoxide = "0.10.0"
+
+# Promoted from the repo config so they are on PATH everywhere, not only inside
+# ~/repos/configs. act and gitleaks are only ever used in a git checkout, but a
+# single list beats two lists that have to be bumped in lockstep.
+go       = "1.27.0"
+usage    = "6.4.0"     # powers mise shell completions
+jq       = "1.8.2"
+yq       = "4.53.6"
+fd       = "10.4.2"
+bat      = "0.26.1"
+eza      = "0.23.5"
+act      = "0.2.89"
+gitleaks = "8.30.1"
+
+[settings]
+# Most of these tools resolve version lists by asking the GitHub releases API.
+# The 3s default is tight on a cold cache, where mise queries ~20 repos at once
+# — unauthenticated requests are also rate-limited per IP, which shows up as
+# slow responses rather than clean errors.
+fetch_remote_versions_timeout = "30s"
 
 # mise reads gh tokens from ~/.config/gh/hosts.yml directly, but gh on macOS
 # keeps the token in the Keychain, so hosts.yml holds no oauth_token and mise
