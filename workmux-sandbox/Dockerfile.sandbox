@@ -16,9 +16,6 @@ FROM debian:trixie-slim
 # Docker-style --group-add behaviour works for hardware access configured via
 # sandbox.container.group_add.
 #
-# python3-minimal is for the caveman-refresh hook script, which otherwise fails
-# in the sandbox with no interpreter.
-#
 # docker.io is the nested engine, for `mise run db` and Testcontainers. Debian's
 # own package, not docker.com's apt repo, so no third-party source is added. It
 # only runs under the sysbox-runc OCI runtime, see workmux/config.yaml.
@@ -41,7 +38,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tmux \
     docker.io \
     docker-cli \
-    python3-minimal \
     && rm -rf /var/lib/apt/lists/*
 
 # Embed network init script (sets up iptables firewall, then drops privileges)
@@ -193,7 +189,17 @@ fi
 # workmux's sandbox-only ~/.claude-sandbox.json, never the real ~/.claude.json.
 CLAUDE_JSON=/tmp/.claude.json
 if [ -n "${PWD:-}" ]; then
-    if [ -f "$CLAUDE_JSON" ]; then
+    if [ -f "$CLAUDE_JSON" ] && [ ! -w "$CLAUDE_JSON" ]; then
+        # The mount is a host file owned by the host user's uid. Under
+        # sysbox-runc the container sits in a private userns where that uid is
+        # unmapped, so the file appears as 65534 and not even container root can
+        # write it; virtiofs ignores the mode bits, so chmod 666 on the host
+        # does not help either. Skipping the pre-seed costs one trust prompt.
+        # Failing here killed the whole entrypoint with
+        # `/usr/local/bin/network-init.sh: line 156: /tmp/.claude.json: Permission denied`
+        # and no container at all, which is much worse.
+        echo "network-init: $CLAUDE_JSON is read-only, skipping trust pre-seed" >&2
+    elif [ -f "$CLAUDE_JSON" ]; then
         # Write through the file, never rename over it. /tmp/.claude.json is a
         # single-file bind mount, so `mv` onto it is EBUSY and took the whole
         # entrypoint down with `mv: cannot move '/tmp/.claude.json.new' to

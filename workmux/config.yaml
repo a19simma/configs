@@ -184,6 +184,19 @@ sandbox:
       guest_path: /tmp/.claude/agents
       writable: false
 
+    # Status line script. Same nested-mount trick, but a single file rather than
+    # a directory. The host's ~/.claude/statusline-command.sh is a stow symlink
+    # into ~/repos/configs, which cannot be mounted as-is: the link target is
+    # not in the container, so it would dangle. Mount the repo file directly.
+    #
+    # Without this, agent_config_dir just holds a copy that was seeded once and
+    # then silently went stale, so the sandbox kept rendering an old status line
+    # after the real one changed. settings.json in that dir already points
+    # statusLine.command at this path.
+    - host_path: ~/repos/configs/shell/.claude/statusline-command.sh
+      guest_path: /tmp/.claude/statusline-command.sh
+      writable: false
+
   container:
     runtime: docker
     # Nested dockerd without SYS_ADMIN. workmux rejects cap_add ALL/SYS_ADMIN
@@ -317,6 +330,12 @@ sandbox:
       # needed too or the pull fails after the manifest resolves.
       - gcr.io
       - storage.googleapis.com
+
+      # shadcn-svelte's component registry. `npx shadcn-svelte@latest add <x>`
+      # fetches the component JSON from https://shadcn-svelte.com/registry/...
+      # and dies without it. Rejected 4 times on 2026-09-18 between 17:54 and
+      # 17:57. registry.npmjs.org above covers fetching the CLI itself.
+      - shadcn-svelte.com
 
       # mise's own version registry. It falls back to the GitHub API when this
       # is refused, so blocking it only costs a `(transient)` warning and a

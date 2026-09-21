@@ -1,0 +1,255 @@
+# Mise tasks for dotfiles management.
+# Run with: mise run <task>
+#
+# Restored from 5e7c810^ (the commit that dropped the old 514-line mise.toml).
+# Stow tasks only: tool pins, bootstrap, secrets, CI and ollama tasks were left
+# out on purpose. Recover any of them the same way:
+#   git show 5e7c810^:mise.toml
+
+[tasks.stow-deploy]
+description = "Deploy dotfiles using GNU Stow"
+run = """
+echo "Deploying dotfiles with GNU Stow..."
+mkdir -p ~/.config/nvim ~/.config/Code ~/.config/nushell ~/.config/wezterm ~/.config/opencode ~/.claude ~/.gemini ~/.config/tmux ~/.config/k9s/skins ~/.config/lazygit ~/.config/atuin ~/.config/sesh ~/.config/mise ~/.config/workmux ~/.config/colima/default
+stow -t ~/.config/nvim neovim
+stow -t ~/.config/Code vscode
+stow -t ~/.config/nushell nushell --adopt
+stow -t ~/.config/wezterm wezterm
+rm -f ~/.config/opencode/AGENTS.md
+stow -t ~/.config/opencode opencode --adopt
+stow -t ~/.gemini gemini
+stow -t ~ shell
+stow -t ~/.config/tmux tmux --adopt
+stow -t ~/.config/k9s k9s --adopt
+stow -t ~/.config/lazygit lazygit --adopt
+stow -t ~/.config/atuin atuin --adopt
+stow -t ~/.config/sesh sesh --adopt
+# Not stowed: mise auto-detects `mise/config.toml` inside the repo as a project
+# config, where global-only settings like github.credential_command are stripped
+# with a warning. The file is named global.toml so that never happens, and is
+# linked to the global path by hand.
+mkdir -p ~/.config/mise
+ln -sfn ../../repos/configs/mise/global.toml ~/.config/mise/config.toml
+stow -t ~/.config/workmux workmux --adopt
+# colima.yaml carries the sysbox-runc runtime registration that
+# workmux/config.yaml's sandbox.container.oci_runtime depends on. Without it
+# every sandbox dies at exec with `unknown or invalid runtime name`, so the two
+# files have to travel together.
+stow -t ~/.config/colima/default colima --adopt
+echo "Setting up Claude Code symlinks to OpenCode configs..."
+ln -sf ~/repos/configs/opencode/AGENTS.md ~/.config/opencode/AGENTS.md
+ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
+rm -rf ~/.claude/agents && mkdir -p ~/.claude/agents
+for f in ~/repos/configs/opencode/agents/*.md; do ln -sf "$f" ~/.claude/agents/; done
+ln -sfn ~/.config/opencode/commands ~/.claude/commands
+ln -sfn ~/.config/opencode/skills ~/.claude/skills
+echo "✅ Dotfiles deployed successfully"
+"""
+
+[tasks.stow-remove]
+description = "Remove dotfiles using GNU Stow"
+run = """
+echo "Removing dotfiles with GNU Stow..."
+stow -t ~/.config/nvim -D neovim
+stow -t ~/.config/Code -D vscode
+stow -t ~/.config/nushell -D nushell
+stow -t ~/.config/wezterm -D wezterm
+stow -t ~/.config/opencode -D opencode
+stow -t ~/.gemini -D gemini
+stow -t ~ -D shell
+stow -t ~/.config/tmux -D tmux
+stow -t ~/.config/k9s -D k9s
+stow -t ~/.config/atuin -D atuin
+stow -t ~/.config/lazygit -D lazygit
+stow -t ~/.config/sesh -D sesh
+stow -t ~/.config/mise -D mise
+stow -t ~/.config/workmux -D workmux
+stow -t ~/.config/colima/default -D colima
+echo "Removing Claude Code symlinks..."
+rm -f ~/.claude/CLAUDE.md ~/.claude/agents ~/.claude/commands ~/.claude/skills
+echo "✅ Dotfiles removed successfully"
+"""
+
+[tasks.fix-symlinks]
+description = "Fix existing symlinks and files that block stow"
+run = """
+echo "Fixing existing symlinks and backing up conflicting files..."
+# Remove existing symlinks
+if [ -L ~/.config/nvim ]; then rm ~/.config/nvim; fi
+if [ -L ~/.config/nushell ]; then rm ~/.config/nushell; fi
+if [ -L ~/.config/Code ]; then rm ~/.config/Code; fi
+if [ -L ~/.config/wezterm ]; then rm ~/.config/wezterm; fi
+if [ -L ~/.config/opencode ]; then rm ~/.config/opencode; fi
+if [ -L ~/.claude/CLAUDE.md ]; then rm ~/.claude/CLAUDE.md; fi
+if [ -L ~/.claude/agents ]; then rm ~/.claude/agents; fi
+if [ -L ~/.claude/commands ]; then rm ~/.claude/commands; fi
+if [ -L ~/.gemini ]; then rm -rf ~/.gemini; fi
+if [ -L ~/.zshrc ]; then rm ~/.zshrc; fi
+if [ -L ~/.bashrc ]; then rm ~/.bashrc; fi
+if [ -L ~/.tmux.conf ]; then rm ~/.tmux.conf; fi
+# Backup existing files/dirs that would conflict with stow
+if [ -f ~/.bashrc ] && [ ! -L ~/.bashrc ]; then mv ~/.bashrc ~/.bashrc.backup; fi
+if [ -f ~/.zshrc ] && [ ! -L ~/.zshrc ]; then mv ~/.zshrc ~/.zshrc.backup; fi
+if [ -f ~/.tmux.conf ] && [ ! -L ~/.tmux.conf ]; then mv ~/.tmux.conf ~/.tmux.conf.backup; fi
+if [ -d ~/.config/nvim ] && [ ! -L ~/.config/nvim ]; then mv ~/.config/nvim ~/.config/nvim.backup; fi
+if [ -d ~/.config/nushell ] && [ ! -L ~/.config/nushell ]; then mv ~/.config/nushell ~/.config/nushell.backup; fi
+if [ -d ~/.config/Code ] && [ ! -L ~/.config/Code ]; then mv ~/.config/Code ~/.config/Code.backup; fi
+if [ -d ~/.config/wezterm ] && [ ! -L ~/.config/wezterm ]; then mv ~/.config/wezterm ~/.config/wezterm.backup; fi
+if [ -d ~/.config/opencode ] && [ ! -L ~/.config/opencode ]; then mv ~/.config/opencode ~/.config/opencode.backup; fi
+if [ -f ~/.claude/CLAUDE.md ] && [ ! -L ~/.claude/CLAUDE.md ]; then mv ~/.claude/CLAUDE.md ~/.claude/CLAUDE.md.backup; fi
+if [ -d ~/.claude/agents ] && [ ! -L ~/.claude/agents ]; then mv ~/.claude/agents ~/.claude/agents.backup; fi
+if [ -d ~/.claude/commands ] && [ ! -L ~/.claude/commands ]; then mv ~/.claude/commands ~/.claude/commands.backup; fi
+if [ -d ~/.gemini ] && [ ! -L ~/.gemini ]; then mv ~/.gemini ~/.gemini.backup; fi
+# Deploy with stow
+echo "Deploying with stow..."
+stow -t ~/.config/nvim neovim
+stow -t ~/.config/Code vscode
+stow -t ~/.config/nushell nushell
+stow -t ~/.config/wezterm wezterm
+stow -t ~/.config/opencode opencode
+stow -t ~/.gemini gemini
+stow -t ~ shell
+stow -t ~ tmux
+stow -t ~/.config/k9s k9s --adopt
+echo "Setting up Claude Code symlinks to OpenCode configs..."
+ln -sf ~/.config/opencode/AGENTS.md ~/.claude/CLAUDE.md
+rm -rf ~/.claude/agents && mkdir -p ~/.claude/agents
+for f in ~/repos/configs/opencode/agents/*.md; do ln -sf "$f" ~/.claude/agents/; done
+ln -sfn ~/.config/opencode/commands ~/.claude/commands
+ln -sfn ~/.config/opencode/skills ~/.claude/skills
+echo "✅ Symlinks fixed and dotfiles deployed"
+"""
+
+
+# ---------------------------------------------------------------------------
+# Windows
+# ---------------------------------------------------------------------------
+[tasks.deploy-windows]
+description = "Deploy configs on Windows (PowerShell/cmd)"
+run = "pwsh -File ./scripts/deploy-windows.ps1"
+
+[tasks.remove-windows]
+description = "Remove Windows configs"
+run = "pwsh -File ./scripts/remove-windows.ps1"
+
+[tasks.install-deps-windows]
+description = "Install dependencies on Windows using Scoop"
+run = "pwsh -File ./scripts/install-deps-windows.ps1"
+
+
+[tasks.bootstrap-windows]
+description = "Bootstrap fresh Windows system"
+run = """
+echo "🚀 Bootstrapping fresh Windows system..."
+mise run install-deps-windows
+mise run deploy-windows
+echo "✅ Bootstrap complete!"
+"""
+depends = ["install-deps-windows", "deploy-windows"]
+
+# ---------------------------------------------------------------------------
+# Unix bootstrap
+# ---------------------------------------------------------------------------
+[tasks.install-deps]
+description = "Install all dependencies using Homebrew Bundle"
+run = """
+echo "Installing dependencies with Homebrew Bundle..."
+brew bundle
+echo "✅ All dependencies installed"
+"""
+
+[tasks.install-system-deps]
+description = "Install system-level dependencies (Linux)"
+run = """
+echo "Installing system-level dependencies..."
+if command -v apt >/dev/null 2>&1; then
+    sudo apt update && sudo apt install -y nfs-common ca-certificates curl gnupg lsb-release apt-transport-https
+elif command -v yum >/dev/null 2>&1; then
+    sudo yum install -y nfs-utils ca-certificates curl gnupg2
+else
+    echo "⚠️  Please install system dependencies manually for your distribution"
+fi
+echo "✅ System dependencies installed"
+"""
+
+[tasks.setup-ssh-server]
+description = "Setup SSH server for WSL (improves WezTerm performance)"
+run = """
+echo "🔧 Setting up SSH server..."
+if command -v apt >/dev/null 2>&1; then
+    echo "Installing OpenSSH via apt..."
+    sudo apt update && sudo apt install -y openssh-server
+else
+    echo "❌ apt not found. This command is designed for Debian/Ubuntu systems."
+    exit 1
+fi
+echo "Configuring SSH to start automatically..."
+if command -v systemctl >/dev/null 2>&1; then
+    sudo systemctl enable ssh
+    sudo systemctl start ssh
+else
+    sudo service ssh start
+fi
+echo "✅ SSH server installed, started, and configured to auto-start"
+echo ""
+echo "Test connection with: ssh localhost"
+"""
+
+
+[tasks.bootstrap-unix]
+description = "Bootstrap fresh Unix/Linux/macOS system"
+run = """
+echo "🚀 Bootstrapping fresh Unix system..."
+echo "Installing Homebrew..."
+if ! command -v brew >/dev/null 2>&1; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+echo "Installing dependencies..."
+mise run install-deps
+mise run install-system-deps
+echo "Setting up SSH server for WezTerm..."
+mise run setup-ssh-server
+echo "Deploying configurations..."
+mise run fix-symlinks
+echo "Setting default shell to nushell..."
+if command -v nu >/dev/null 2>&1; then
+    sudo chsh -s "$(which nu)" "$(whoami)"
+    echo "✅ Default shell set to nushell"
+else
+    echo "⚠️  nushell not found in PATH, skipping shell change"
+fi
+echo "✅ Bootstrap complete!"
+"""
+depends = ["install-deps", "install-system-deps", "setup-ssh-server", "fix-symlinks"]
+
+
+# ---------------------------------------------------------------------------
+# workmux sandbox image
+# ---------------------------------------------------------------------------
+[tasks.workmux-sandbox-image]
+description = "Build the workmux sandbox image with the mise toolchain baked in"
+dir = "{{config_root}}/workmux-sandbox"
+run = """
+echo "Building workmux-sandbox-mise..."
+
+# mise resolves every `github:` tool through the GitHub releases API. Anonymous
+# builds get 60 req/hour and die on `403 Forbidden ... API rate limit
+# exceeded`, so pass the token the host already has in the Keychain.
+#
+# --secret, never --build-arg: build args are baked into image history where
+# `docker history` can read them back. The secret is a tmpfs file scoped to one
+# RUN. The token is read straight from gh and never echoed or written to disk.
+SECRET_ARG=""
+if GITHUB_TOKEN="$(gh auth token 2>/dev/null)" && [ -n "$GITHUB_TOKEN" ]; then
+    export GITHUB_TOKEN
+    SECRET_ARG="--secret id=github_token,env=GITHUB_TOKEN"
+else
+    echo "⚠️  no gh token; building against the anonymous GitHub rate limit" >&2
+fi
+
+# No CACHE_BUST: it would also invalidate the mise layers and reinstall
+# the whole toolchain. Pass --build-arg CACHE_BUST=$(date +%s) by hand to
+# force a fresh agent install.
+DOCKER_BUILDKIT=1 docker build $SECRET_ARG -f Dockerfile.sandbox -t workmux-sandbox-mise .
+echo "✅ Built workmux-sandbox-mise (referenced by workmux/config.yaml sandbox.image)"
+"""
