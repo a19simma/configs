@@ -17,6 +17,7 @@ Grounded in the [TypeScript Handbook](https://www.typescriptlang.org/docs/handbo
 | How do I signal and handle failure? | `references/errors.md` |
 | How do I test this? | `references/testing.md` |
 | Which package for X? Is this one allowed? | `references/packages.md` |
+| Which package manager, and how do I harden installs against a compromised dependency? | `references/supply-chain.md` |
 | What compiler options and lints do I turn on? | `references/linting.md` |
 
 Read only the file that answers the question. Do not preload them.

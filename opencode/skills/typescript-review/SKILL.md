@@ -20,7 +20,7 @@ Determine the diff: `git diff <base>...HEAD`, a named branch/PR, or specified fi
 tsc --noEmit
 eslint .
 prettier --check .
-npx depcheck            # unused and undeclared dependencies
+pnpm dlx depcheck            # unused and undeclared dependencies
 ```
 Run tests via the `test` subagent, not directly. Anything a tool found is not a human finding — report the tool output and move on. Human attention goes only to what tools cannot see.
 

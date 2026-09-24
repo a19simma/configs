@@ -51,21 +51,21 @@ From `typescript/references/linting.md`. Prettier owns formatting; ESLint owns c
 - The `exports` field if publishing; no `main`, no deep imports into the package.
 - Scripts: `typecheck`, `lint`, `format`, `format:check`, `test`.
 - Dependencies: only what the chosen profile allows, each pinned to a real version. Nothing "for later".
-- Commit the lockfile. CI installs with `npm ci`, never `npm install`.
+- Commit the lockfile. CI installs with `pnpm install --frozen-lockfile`, never a plain `pnpm install`.
 
 ### `.github/workflows/ci.yml`
 
 The five-command gate from `typescript/references/linting.md`:
 
 ```yaml
-- run: npm ci
-- run: npx tsc --noEmit
-- run: npx eslint .
-- run: npx prettier --check .
-- run: npx vitest run
+- run: pnpm install --frozen-lockfile
+- run: pnpm exec tsc --noEmit
+- run: pnpm exec eslint .
+- run: pnpm exec prettier --check .
+- run: pnpm exec vitest run
 ```
 
-Add `npx svelte-check --fail-on-warnings` for a SvelteKit app, `npm audit --audit-level=high`, and a dependency-diff step that fails when `package.json` gains a dependency the allowlist does not cover. The allowlist is only a rule until something checks it on every PR.
+Add `pnpm exec svelte-check --fail-on-warnings` for a SvelteKit app, `pnpm audit --audit-level=high`, and a dependency-diff step that fails when `package.json` gains a dependency the allowlist does not cover. The allowlist is only a rule until something checks it on every PR.
 
 ### Dependency notes
 

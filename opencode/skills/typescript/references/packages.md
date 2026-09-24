@@ -12,7 +12,17 @@ Adding an allowed package still requires:
 - Exact-version or caret pin consistent with the rest of the workspace, and a committed lockfile.
 - Placement in `devDependencies` unless it is genuinely imported by shipped runtime code.
 - Declared once at the workspace root where multiple packages use it, so versions cannot drift between members.
-- No new transitive `postinstall` scripts without reading what they do.
+- No new `allowBuilds` entry without reading the script it unblocks.
+
+---
+
+## Package manager
+
+### `pnpm`
+
+**Rule:** the only package manager. npm, Yarn, and Bun are banned as the project manager. Pin it in `packageManager`, commit `pnpm-lock.yaml`, and configure installs per `supply-chain.md`, which carries the reasoning and the hardening settings.
+
+**Why:** its install-time defaults — dependency lifecycle scripts off, a release cooldown on — are the two controls that would have blunted every npm supply-chain incident of 2025, and they arrive with the tool rather than needing an opt-in.
 
 ---
 
@@ -132,8 +142,8 @@ When a genuine gap appears, do not install first and justify later. Produce this
 1. **The gap.** What does the platform, or what we already have, fail to do? Name the code you would otherwise write and roughly how long it is. If the answer is under ~50 lines, write it.
 2. **Alternatives considered.** Two or three real candidates, and why this one. The monoculture rule means adding a package also bans its rivals from every future project — say which ones you are foreclosing.
 3. **Maintenance signal.** Last release date, release cadence over the past year, open-issue trend, number of maintainers, whether it has a named funding or corporate backer. A single-maintainer package with a two-year gap is a fork you have not budgeted for.
-4. **Weight.** Transitive dependency count and install size (`npm ls --all`, `npm pack --dry-run`), plus bundle impact for anything shipped to the browser. Transitive count matters more than size: each one is another publish key that can compromise you.
-5. **Install scripts.** Does it or any transitive dependency run `postinstall`? If yes, read the script and say what it does.
+4. **Weight.** Transitive dependency count and install size (`pnpm why <pkg>`, `pnpm pack --dry-run`), plus bundle impact for anything shipped to the browser. Transitive count matters more than size: each one is another publish key that can compromise you.
+5. **Install scripts.** Does it or any transitive dependency want a build? An `allowBuilds` entry is a security decision; see `supply-chain.md`. Read the script and say what it does.
 6. **Types.** Ships its own types, or needs `@types/*`? A `@types` package maintained separately from the library will drift.
 7. **Exit cost.** How much code touches it, and what replacing it looks like. A package behind one internal module is cheap to remove; one imported in ninety files is permanent.
 8. **Licence.** Anything not MIT, Apache-2.0, BSD, or ISC needs explicit sign-off.
@@ -144,7 +154,10 @@ Approval is per-package and per-project. An approval in one repository does not 
 
 The allowlist is enforced by a check in CI, not by a reviewer's memory:
 
-- A committed lockfile, and CI installs with `npm ci` (or the frozen-lockfile equivalent) so no resolution happens at build time.
+- A committed lockfile, and CI installs with `pnpm install --frozen-lockfile` so no resolution happens at build time.
 - A dependency-diff gate on every pull request: any change to `dependencies` or `devDependencies` fails unless a maintainer has approved it.
-- `npm audit --audit-level=high` (or equivalent) in CI.
+- `pnpm audit --audit-level=high` in CI. The floor, not the check: it answers "known CVE in a published version" and is blind to a malicious publish on the day it lands.
+- `pnpm dedupe --check`, which exits non-zero when duplicates remain.
 - An unused-dependency sweep, so removals actually leave the manifest.
+
+The install-side gates — lockfile-diff, cooldown, `allowBuilds` — live in `supply-chain.md`.

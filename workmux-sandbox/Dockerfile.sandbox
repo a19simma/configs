@@ -332,6 +332,33 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc libc6-dev make pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
+# Chromium's shared libraries, for Playwright. The browser binaries themselves
+# come from `playwright install` at runtime onto /cache; these are the native
+# deps that binary dynamically links, and without them every browser launch
+# dies with `error while loading shared libraries: libnss3.so`. Specs using
+# only the `request` fixture pass without this; anything driving a page does
+# not.
+#
+# Baked at build time rather than installed at runtime on purpose. The sandbox
+# runs under a deny-by-default proxy and no Debian mirror is in
+# sandbox.network.allowed_domains, so `apt-get install` inside a live container
+# cannot reach deb.debian.org at all -- sudo would not help, and the agent is
+# demoted away from root anyway.
+#
+# `t64` suffixes are not typos: trixie's 64-bit time_t transition renamed
+# libatk1.0-0, libatk-bridge2.0-0, libcups2 and libasound2. The pre-transition
+# names do not exist here and fail as `Unable to locate package`.
+#
+# Not `npx playwright install-deps`: it maps distros by name and has no entry
+# for Debian trixie, so it reports the platform as unsupported.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnss3 libnspr4 \
+    libatk1.0-0t64 libatk-bridge2.0-0t64 \
+    libcups2t64 libdrm2 libgbm1 \
+    libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+    libpango-1.0-0 libcairo2 libasound2t64 \
+    && rm -rf /var/lib/apt/lists/*
+
 # At RUNTIME the store lives on /cache, the writable host mount declared as
 # sandbox.extra_mounts in workmux/config.yaml. Containers are ephemeral, so an
 # in-image store means every new worktree re-installs whatever its mise.toml

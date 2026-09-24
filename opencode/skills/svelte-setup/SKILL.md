@@ -65,7 +65,7 @@ Written at setup. A project that adds its error boundary after the first product
 Add to the workflow `typescript-setup` wrote:
 
 ```yaml
-- run: npx svelte-check --fail-on-warnings
+- run: pnpm exec svelte-check --fail-on-warnings
 ```
 
 `--fail-on-warnings` is the point: the a11y warnings are merge blockers, and without the flag they scroll past.
