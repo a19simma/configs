@@ -1,0 +1,19 @@
+#!/bin/sh
+set -u
+
+v=$(sed -n 's/^claude[[:space:]]*=[[:space:]]*"\([0-9][0-9.]*\)".*/\1/p' /opt/host-mise/global.toml 2>/dev/null | head -n 1)
+if [ -x /usr/local/bin/network-init.sh ]; then root=/cache/claude/home; else root=$HOME; fi
+real=$(command -v claude || echo "$HOME/.local/bin/claude")
+bin="$root/.local/share/claude/versions/$v"
+
+if [ -n "$v" ] && ! "$bin" --version >/dev/null 2>&1; then
+    mkdir -p "$root"
+    HOME="$root" "$real" install "$v" >&2 || echo "claude-pinned: install $v failed" >&2
+fi
+
+if [ -n "$v" ] && "$bin" --version >/dev/null 2>&1; then
+    exec "$bin" "$@"
+fi
+
+echo "claude-pinned: pin unusable, falling back to $real" >&2
+exec "$real" "$@"

@@ -150,20 +150,13 @@ forwardAgent: false
 # Colima default behaviour: buildkit enabled
 # Default: {}
 docker:
-  # sysbox-runc, registered so `docker run --runtime=sysbox-runc` works. This
-  # has to live here rather than in the VM's /etc/docker/daemon.json: colima
-  # rewrites that file wholesale on every start, so an edit made in the VM (or
-  # by the sysbox installer's postinst) is lost on the next `colima restart`.
-  runtimes:
-    sysbox-runc:
-      path: /usr/bin/sysbox-runc
-  # Pre-seed the bridge subnets the sysbox installer would otherwise set itself.
-  # When these are already present it skips its own dockerd restart, which at
-  # provision time would race colima's own docker startup.
   bip: 172.24.0.1/16
   default-address-pools:
     - base: 172.31.0.0/16
       size: 24
+  runtimes:
+    sysbox-runc:
+      path: /usr/bin/sysbox-runc
 
 # Virtual Machine type (krunkit, qemu, vz)
 # NOTE: this is macOS 13 only. For Linux and macOS <13.0, qemu is always used.
@@ -246,17 +239,6 @@ cpuType: ""
 #
 # Default: []
 provision:
-  # Install sysbox-ce so workmux sandboxes can run a nested dockerd without
-  # SYS_ADMIN. after-boot runs once the VM is up but before dockerd starts, so
-  # sysbox-mgr and sysbox-fs are listening by the time docker reads the
-  # runtimes entry above.
-  #
-  # Runs on every boot, so it guards on the binary and exits early.
-  #
-  # 0.7.1 specifically, not 0.7.0: 0.7.0 fails on this exact combination
-  # (Ubuntu 24.04 + kernel 6.8 + Docker >= 29.5.0) with
-  # `namespace {"time" ""} does not exist`, because Docker 29.5.0 turned on
-  # private time namespaces.
   - mode: after-boot
     script: |
       # dash, not bash: colima runs provision scripts through /bin/sh and
@@ -272,9 +254,6 @@ provision:
         https://github.com/nestybox/sysbox/releases/download/v0.7.1/sysbox-ce_0.7.1.linux_arm64.deb
       apt-get install -y -qq "$deb"
       rm -f "$deb"
-  # insmod is blocked inside a sysbox container, so any module the nested
-  # dockerd needs has to be loaded out here first. br_netfilter is the one
-  # docker's bridge networking wants.
   - mode: after-boot
     script: |
       # dash, not bash: colima runs provision scripts through /bin/sh and

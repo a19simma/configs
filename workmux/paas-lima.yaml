@@ -50,7 +50,7 @@ windows:
   - name: agent2
     panes:
       - command: >-
-          /Users/simon/repos/configs/scripts/wm-lima-shell.sh claude --tools
+          /Users/simon/repos/configs/scripts/wm-lima-shell.sh /opt/wm-bin/claude-pinned --tools
           Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch
   - name: edit
     panes:
@@ -86,7 +86,7 @@ sandbox:
   # them. `modprobe rbd` is the whole reason this VM exists, so the ~270MB
   # saved by genericcloud buys a VM that cannot run the suite. generic ships
   # the full linux-image-arm64 with the complete module tree.
-  image: https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-arm64.qcow2
+  image: https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-arm64.qcow2
 
   lima:
     # One VM per repo. `shared` would put every project in a single VM, and
