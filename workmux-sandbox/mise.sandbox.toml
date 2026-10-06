@@ -2,7 +2,7 @@
 #
 # Deliberately NOT the root mise.toml. That file carries brew:/brew-cask:
 # entries that do not exist on Linux, plus host-only tools (tmux, sesh, atuin,
-# lazygit, k9s, kubectl, neovim) that a headless sandboxed agent never uses.
+# lazygit, k9s, neovim) that a headless sandboxed agent never uses.
 #
 # gh is excluded on purpose: it is useless without a token, and the sandbox is
 # not given one.
@@ -14,11 +14,22 @@
 [tools]
 node     = "24.19.0"
 go       = "1.27.0"
+python   = "3.14.7"
+uv       = "0.12.19"
 jq       = "1.8.2"
 yq       = "4.53.6"
 ripgrep  = "15.2.0"
 fd       = "10.4.2"
 bat      = "0.26.1"
+
+# Kubernetes CLIs. Baked rather than left to a runtime install because both
+# vendor scripts fetch from hosts the sandbox proxy refuses: on 2026-09-29 a
+# paas worktree logged 13 rejections for dl.k8s.io and 5 for get.helm.sh.
+# mise resolves them through its own backend, so nothing new has to be
+# allowlisted. kubectl matches the host pin in mise/global.toml; drift between
+# the two means the sandbox talks to a cluster with a different client.
+kubectl  = "1.36.4"
+helm     = "3.21.4"
 
 # Interactive shell for `workmux sandbox shell -e -- nu ...`. The agent itself
 # never runs nu: its Bash tool, the network-init.sh entrypoint and every pane
@@ -41,6 +52,11 @@ starship = "1.26.0"
 # the container is ephemeral: a miss means paying the install on every single
 # session. Currently synced with oxidoc-api/mise.toml. Drifting is a slowdown,
 # never a wrong toolchain.
+# The exception to the warm-cache rule. rust is built here so the two `cargo:`
+# tools below have something to compile against, then the toolchain is deleted
+# from the image and only rustup's proxies survive as a seed. So this pin is a
+# build dependency, not a cache entry: at runtime the first container downloads
+# whatever version is pinned into /cache, and later ones reuse it.
 rust     = "1.93.1"
 buf      = "1.70.0"
 "cargo:protoc-gen-prost" = "0.5.0"

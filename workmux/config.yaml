@@ -180,21 +180,38 @@ sandbox:
     #
     # Read-only for the same reason: an agent definition is a prompt the model
     # executes, and these files are shared with the host agent.
-    - host_path: ~/.claude/agents
+    #
+    # Points at the repo, not ~/.claude/agents, because every entry in that
+    # directory is a stow symlink to an absolute /Users/simon/repos/configs
+    # path that is not mounted here. The links resolved on the host and dangled
+    # in the container, so `ls` showed nine agents and every read failed with
+    # ENOENT -- the agent reported only the built-in types and no researcher,
+    # runner or architect. Same failure the statusline script hit below.
+    - host_path: ~/repos/configs/opencode/agents
       guest_path: /tmp/.claude/agents
       writable: false
 
-    # Status line script. Same nested-mount trick, but a single file rather than
-    # a directory. The host's ~/.claude/statusline-command.sh is a stow symlink
+    # Status line script, mounted via its parent DIRECTORY rather than as a
+    # single file. The host's ~/.claude/statusline-command.sh is a stow symlink
     # into ~/repos/configs, which cannot be mounted as-is: the link target is
-    # not in the container, so it would dangle. Mount the repo file directly.
+    # not in the container, so it would dangle. Mount the repo instead.
     #
     # Without this, agent_config_dir just holds a copy that was seeded once and
     # then silently went stale, so the sandbox kept rendering an old status line
-    # after the real one changed. settings.json in that dir already points
-    # statusLine.command at this path.
-    - host_path: ~/repos/configs/shell/.claude/statusline-command.sh
-      guest_path: /tmp/.claude/statusline-command.sh
+    # after the real one changed.
+    #
+    # Was a direct file mount at /tmp/.claude/statusline-command.sh, which
+    # Docker accepts and Lima does not. `workmux add --config <lima overlay>`
+    # died before VM creation with
+    #   field `mounts[9].location` refers to a non-directory path
+    # Lima mounts directories only. A directory mount satisfies both backends,
+    # so this is not conditional on the backend in use.
+    #
+    # Its own guest path, not nested under /tmp/.claude: the directory also
+    # holds the host's settings.json, which must not shadow the sandbox's own.
+    # settings.json in agent_config_dir points statusLine.command here.
+    - host_path: ~/repos/configs/shell/.claude
+      guest_path: /opt/claude-host
       writable: false
 
   container:
@@ -295,6 +312,12 @@ sandbox:
       # not bake. Without it `mise install` reports
       # `error sending request: tunnel error: unsuccessful`.
       - static.rust-lang.org
+      # rustup-init, fetched only when mise decides rustup is not set up:
+      # settings.toml missing, or no cargo binary in $CARGO_HOME/bin. Both come
+      # from /cache now, seeded by network-init.sh, so reaching this host means
+      # the seed did not happen. Allowed as a backstop, turning a dead container
+      # into a slow first start.
+      - sh.rustup.rs
       # mise resolves every `github:` tool through the releases API, so runtime
       # installs of those need this. Read-only and unauthenticated in here: no
       # token is passed into the sandbox, which also means the 60 req/hour
@@ -330,12 +353,71 @@ sandbox:
       # needed too or the pull fails after the manifest resolves.
       - gcr.io
       - storage.googleapis.com
+      # GitHub's container registry, for images a chart or compose file pulls
+      # from ghcr.io. Same manifest-then-blob split as gcr.io above: ghcr.io
+      # serves the manifest and redirects layer bytes to
+      # pkg-containers.githubusercontent.com, so allowing only the first
+      # resolves the tag and then dies on the download.
+      - ghcr.io
+      - pkg-containers.githubusercontent.com
+
+      # Helm chart repos for the paas platform bootstrap. `helm repo add` and
+      # `fetch-charts` hit these directly; without them the chart pull fails
+      # before any image is ever requested.
+      #
+      # argoproj.github.io and charts.loft.sh are GitHub Pages / vendor CDNs
+      # that serve index.yaml plus the .tgz from the same host, so one entry
+      # each is enough. Unlike the registries above there is no second blob
+      # host to chase.
+      #
+      # Rook/Ceph is not here: its chart is pulled from a different host than
+      # the three below. Add it when a rejection actually shows up rather than
+      # guessing the name now.
+      - helm.cilium.io
+      - argoproj.github.io
+      - charts.loft.sh
+
+      # kubectl and helm vendor download hosts. Both are also pinned in
+      # workmux-sandbox/mise.sandbox.toml, which is the faster path and needs
+      # no network at all. These stay allowed so a project's own mise.toml or
+      # an install script works unchanged instead of depending on the image
+      # having baked the right version. Rejected 13 and 5 times respectively
+      # by a paas worktree on 2026-09-29.
+      - dl.k8s.io
+      - get.helm.sh
 
       # shadcn-svelte's component registry. `npx shadcn-svelte@latest add <x>`
       # fetches the component JSON from https://shadcn-svelte.com/registry/...
       # and dies without it. Rejected 4 times on 2026-09-18 between 17:54 and
       # 17:57. registry.npmjs.org above covers fetching the CLI itself.
       - shadcn-svelte.com
+
+      # The Buf Schema Registry. `buf generate`, `buf dep update` and any
+      # buf.lock referencing a BSR module resolve over https://buf.build, so
+      # without it the generate step fails offline and the .proto build stops.
+      # Rejected 3 times on 2026-09-24 between 21:00 and 21:01. The buf CLI
+      # itself arrives via mise/GitHub releases, already covered above.
+      #
+      # Remote plugins may need a further host; add it when a rejection for one
+      # actually shows up in the log rather than guessing at it now.
+      - buf.build
+
+      # Sigstore's TUF root, fetched by mise before it verifies a GitHub
+      # artifact attestation. mise checks attestations by default on the aqua
+      # backend, so with this host blocked the verification cannot complete and
+      # the install fails:
+      #
+      #   Sigstore error: TUF error: GET
+      #   https://tuf-repo-cdn.sigstore.dev/16.root.json failed
+      #
+      # Allowing it strengthens the sandbox rather than loosening it. Blocked,
+      # the signature check fails closed by accident, and the only way to get
+      # the tool installed is to turn verification off. Allowed, the check runs.
+      #
+      # Rejected while installing aqua:pnpm/pnpm@12.6.0 on 2026-09-25. Sigstore
+      # also runs Fulcio and Rekor hosts; they are not listed because no
+      # rejection for them has appeared yet. Add them when one does.
+      - tuf-repo-cdn.sigstore.dev
 
       # mise's own version registry. It falls back to the GitHub API when this
       # is refused, so blocking it only costs a `(transient)` warning and a

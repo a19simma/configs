@@ -83,6 +83,37 @@ if [ -n "${WM_PROXY_HOST:-}" ] && [ -n "${WM_PROXY_PORT:-}" ]; then
         done
     fi
 
+    # Reach the containers our own nested dockerd starts. docker0 is the
+    # default bridge, br-+ matches the per-network bridges Docker names
+    # br-<netid> for anything user-defined, which is what Testcontainers and
+    # compose create.
+    #
+    # Without these, every OUTPUT to a container is rejected and the symptoms
+    # do not look like a firewall. A published port fails one hop in:
+    # docker-proxy accepts on 127.0.0.1, its own connection to the container IP
+    # is rejected, and the client sees `Connection reset by peer`. Postgres
+    # store tests got as far as applying every migration first, because
+    # `docker exec` never touches the network. Playwright timed out waiting for
+    # the UI container's HTTP port with no spec ever running.
+    #
+    # Not a hole in the egress policy. These bridges exist only inside this
+    # sandbox's network namespace; anything leaving for the internet goes out
+    # eth0 and still has to pass the rules above.
+    #
+    # What these rules do not cover, deliberately: traffic originating inside
+    # the nested containers. That is routed, so it lands in FORWARD, and this
+    # chain only governs OUTPUT. dockerd itself is a sandbox process and stays
+    # proxied, so image pulls obey the allowlist, but a Postgres container or a
+    # `docker build` RUN step reaches the internet unfiltered.
+    #
+    # Closing it means rejecting in DOCKER-USER, which dockerd consults first on
+    # FORWARD, and it would break every image build that installs a package.
+    # Judged not worth it: the exposure is a container inside this netns with no
+    # host filesystem, and a real fix for that threat belongs at the host's own
+    # network boundary rather than re-implemented in each sandbox.
+    iptables -A OUTPUT -o docker0 -j ACCEPT
+    iptables -A OUTPUT -o br-+ -j ACCEPT
+
     # Reject (not drop) everything else to fail fast instead of hanging
     iptables -A OUTPUT -j REJECT
 
@@ -205,14 +236,30 @@ if [ -n "${PWD:-}" ]; then
         # entrypoint down with `mv: cannot move '/tmp/.claude.json.new' to
         # '/tmp/.claude.json': Device or resource busy`. `cat >` truncates in
         # place and keeps the inode, so the mount survives.
+        #
+        # The `! -w` guard above cannot be trusted to have caught the read-only
+        # case. As root, `-w` reports writable whenever the mode bits say so,
+        # while the actual write still fails under the userns and virtiofs
+        # layers, and sysbox hands each container a different subuid range, so
+        # the same mount is writable on one boot and not the next. That made the
+        # entrypoint die on roughly every other first start with
+        # `network-init.sh: line 166: /tmp/.claude.json: Permission denied`,
+        # cleared by simply running it again. Only attempting the write tells
+        # the truth, so let it fail soft here rather than gate on the test.
         if jq --arg p "$PWD" '.projects[$p].hasTrustDialogAccepted = true' \
             "$CLAUDE_JSON" > "${CLAUDE_JSON}.new"; then
-            cat "${CLAUDE_JSON}.new" > "$CLAUDE_JSON"
+            # Redirections are processed left to right, so the group is what
+            # silences this: `> "$CLAUDE_JSON" 2>/dev/null` would fail on the
+            # first redirect and print before stderr was ever reassigned.
+            { cat "${CLAUDE_JSON}.new" > "$CLAUDE_JSON"; } 2>/dev/null \
+                || echo "network-init: $CLAUDE_JSON not writable, skipping trust pre-seed" >&2
         fi
         rm -f "${CLAUDE_JSON}.new"
     else
-        jq -n --arg p "$PWD" \
-            '{projects: {($p): {hasTrustDialogAccepted: true}}}' > "$CLAUDE_JSON"
+        { jq -n --arg p "$PWD" \
+            '{projects: {($p): {hasTrustDialogAccepted: true}}}' > "$CLAUDE_JSON"; } \
+            2>/dev/null \
+            || echo "network-init: could not create $CLAUDE_JSON, skipping trust pre-seed" >&2
     fi
     # Non-fatal: the host side of this mount is a macOS file over virtiofs,
     # where chown can fail. Losing it only means the agent may not manage to
@@ -246,12 +293,75 @@ if [ -n "${DOCKER_GID:-}" ]; then
     GROUPS_ARG="${GROUPS_ARG},${DOCKER_GID}"
 fi
 
+# Seed rust's homes onto /cache. The image ships rustup's settings.toml and the
+# cargo/bin proxies but no toolchain; mise downloads the pinned version into
+# /cache on first use and every later container reuses it.
+#
+# Gated on bin/cargo, matching what mise itself tests. Miss that and mise
+# decides rustup is uninitialised and re-runs rustup-init against sh.rustup.rs,
+# which the proxy refuses.
+#
+# Runs here because it needs root: /cache belongs to the host user, and the
+# copy has to be readable by whatever uid workmux hands us. 0777 and not the
+# 1777 that /cache itself carries -- the sticky bit stops one uid replacing
+# another's files, and rustup's component transactions rename over existing
+# entries. That exact bit already cost us a broken shim dir.
+#
+# cp -a keeps the registry and git symlinks, which point back into /cache and
+# so stay valid under the new CARGO_HOME.
+if [ -d /opt/rust ] && [ ! -x /cache/rust/cargo/bin/cargo ]; then
+    echo "network-init: seeding rust homes onto /cache" >&2
+    mkdir -p /cache/rust
+    for d in cargo rustup; do
+        [ -e "/cache/rust/$d" ] && continue
+        # Copy to a temp name and rename, so a container killed mid-copy cannot
+        # leave a half-populated cargo/bin that passes the gate above.
+        rm -rf "/cache/rust/.$d.tmp"
+        if cp -a "/opt/rust/$d" "/cache/rust/.$d.tmp"; then
+            mv "/cache/rust/.$d.tmp" "/cache/rust/$d"
+        else
+            rm -rf "/cache/rust/.$d.tmp"
+            echo "network-init: failed to seed /cache/rust/$d" >&2
+        fi
+    done
+    chmod -R a+rwX /cache/rust/cargo /cache/rust/rustup 2>/dev/null || true
+fi
+# Only on the seeding path, deliberately. Toolchains that mise installs later
+# are created by the sandbox uid and owned by it, so they need no fixup, and a
+# recursive chmod over a warm /cache/rust is most of a gigabyte across virtiofs
+# on every single container start. The gap: if workmux ever hands out a uid
+# other than the host user's, that container cannot write toolchains an earlier
+# uid installed. It has always handed out 501 so far.
+
+# Docker's own subnets have to bypass the CONNECT proxy. workmux sets
+# no_proxy=localhost,127.0.0.1,host.docker.internal, which covers a published
+# port on loopback but not a container address, so anything talking straight to
+# a container IP is sent to the proxy, which has no route to it and answers 400.
+# Testcontainers does exactly that. The firewall rules above are what make the
+# route exist; this is what stops the request being diverted before it gets
+# there.
+#
+# 172.16.0.0/12 is Docker's default pool: 172.17 for the default bridge, 172.18
+# upward for user-defined networks. 10.0.0.0/8 covers a daemon configured with a
+# different pool, and swarm overlays.
+#
+# Appended, never replaced: the three entries workmux sets are still needed, and
+# it may add more.
+DOCKER_NETS="172.16.0.0/12,10.0.0.0/8"
+if [ -n "${no_proxy:-}" ]; then
+    no_proxy="${no_proxy},${DOCKER_NETS}"
+else
+    no_proxy="${DOCKER_NETS}"
+fi
+NO_PROXY="$no_proxy"
+export no_proxy NO_PROXY
+
 exec setpriv \
     --reuid "${WM_TARGET_UID}" \
     --regid "${WM_TARGET_GID}" \
     --groups "${GROUPS_ARG}" \
     --inh-caps=-all \
-    env HOME=/tmp "$@"
+    env HOME=/tmp no_proxy="$no_proxy" NO_PROXY="$NO_PROXY" "$@"
 SCRIPT
 RUN chmod +x /usr/local/bin/network-init.sh
 
@@ -290,6 +400,19 @@ if [ -n "${DOCKER_GID:-}" ]; then
     GROUPS_ARG="${GROUPS_ARG},${DOCKER_GID}"
 fi
 
+# Docker's subnets bypass the proxy here too. A docker exec inherits the
+# container's env, which is workmux's original no_proxy, not the widened one
+# network-init.sh built for PID 1. Without this an exec'd pane and the agent
+# pane disagree about whether a container IP is reachable.
+DOCKER_NETS="172.16.0.0/12,10.0.0.0/8"
+if [ -n "${no_proxy:-}" ]; then
+    no_proxy="${no_proxy},${DOCKER_NETS}"
+else
+    no_proxy="${DOCKER_NETS}"
+fi
+NO_PROXY="$no_proxy"
+export no_proxy NO_PROXY
+
 # WM_SANDBOX_USER is the marker sandbox-env.nu checks. The demoted nu re-parses
 # that file, and without the marker it would demote again, forever.
 exec setpriv \
@@ -297,7 +420,8 @@ exec setpriv \
     --regid "${WM_TARGET_GID}" \
     --groups "${GROUPS_ARG}" \
     --inh-caps=-all \
-    env HOME=/tmp WM_SANDBOX_USER=1 "$@"
+    env HOME=/tmp WM_SANDBOX_USER=1 \
+        no_proxy="$no_proxy" NO_PROXY="$NO_PROXY" "$@"
 SCRIPT
 RUN chmod +x /usr/local/bin/wm-user
 
@@ -375,8 +499,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 #
 # /cache is pre-created 1777 so the image still works with no mount attached:
 # mise then just writes to the container's own layer and loses it on exit.
+#
+# MISE_STATE_DIR for a different reason than the other two. It defaults to
+# $HOME/.local/state/mise, HOME is /tmp, and container init creates that tree as
+# root:root 755 before the agent drops to uid 501. mise records a trusted config
+# by symlinking into state/trusted-configs on every run, so it aborted at startup
+# with
+#
+#   failed to ln -sf /tmp /tmp/.local/state/mise/trusted-configs/tmp-<hash>
+#   Permission denied (os error 13)
+#
+# and every pinned tool read as `(missing)`. Easy to miss: `docker exec` runs as
+# root and works fine, so the failure only shows in the agent's own shell.
 ENV MISE_DATA_DIR=/cache/mise/data \
     MISE_CACHE_DIR=/cache/mise/cache \
+    MISE_STATE_DIR=/cache/mise/state \
     MISE_GLOBAL_CONFIG_FILE=/opt/mise/config/config.toml \
     MISE_INSTALL_PATH=/usr/local/bin/mise \
     MISE_YES=1
@@ -401,6 +538,18 @@ ENV MISE_DATA_DIR=/cache/mise/data \
 ENV PLAYWRIGHT_BROWSERS_PATH=/cache/ms-playwright \
     PLAYWRIGHT_SKIP_BROWSER_GC=1
 
+# Buf's module cache on the shared mount, for the same reason as the browsers
+# above: it defaults to $XDG_CACHE_HOME/buf, XDG_CACHE_HOME is unset, so it
+# resolves under $HOME which is /tmp and dies with the container. oxidoc-api
+# declares `buf.build/googleapis/googleapis` in buf.yaml, so a cold cache makes
+# every `buf generate` re-resolve that module from the BSR, and the googleapis
+# well-known types fail to resolve whenever the network is unavailable.
+#
+# buf.build is allowlisted in workmux/config.yaml, which fixes the online case.
+# This fixes the offline one: once the module is in /cache it survives restarts
+# and is shared by every sandbox, so generate stops depending on egress at all.
+ENV BUF_CACHE_DIR=/cache/buf
+
 # mise's rust backend delegates to rustup, which installs into $HOME/.rustup
 # and $HOME/.cargo and ignores MISE_DATA_DIR -- mise only symlinks
 # installs/rust/<version> at the cargo bin dir. HOME is /root during the build
@@ -409,13 +558,11 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/cache/ms-playwright \
 # tries to reinstall it on every run. /opt/rust is outside any HOME and is
 # made world-writable below, which `cargo:` backends also need since they
 # build into CARGO_HOME at runtime.
-# Both point at /opt/rust, identical to the build, so mise reads its own baked
-# install as authoritative and never re-runs rustup-init. Splitting them across
-# /opt and /cache broke that: mise probes the cargo bin dir, an empty
-# /cache/rust/cargo made it call the installer on the first `cargo` of every
-# container, and with no network that is a hard failure. Persistence is handled
-# instead by symlinking cargo's two cache dirs onto /cache further down, which
-# keeps the download cache on the mount without moving CARGO_HOME off it.
+#
+# Build time only. /cache is not mounted during the build, so the toolchain has
+# to land somewhere in the image for the two `cargo:` tools to compile against.
+# The toolchain itself is deleted at the end of that layer and the runtime homes
+# point at /cache instead; see the seed block in network-init.sh.
 ENV RUSTUP_HOME=/opt/rust/rustup \
     CARGO_HOME=/opt/rust/cargo
 ENV PATH=/opt/rust/cargo/bin:$PATH
@@ -458,13 +605,27 @@ COPY mise.sandbox.toml /opt/mise/config/config.toml
 # project pinning rust 1.95.0 silently got the image's 1.93.1. mise already
 # shims all 14 rustup binaries; nothing may relink them afterwards.
 #
-# The last two links put cargo's download cache on the /cache mount while
-# CARGO_HOME itself stays at /opt/rust/cargo. Created after the chmod so the
-# recursive mode change cannot walk into /cache. They dangle in the image and
-# cargo's create_dir_all resolves them on first use; /cache is 1777.
+# The registry/git links put cargo's download cache on the /cache mount.
+# Created after the chmod so the recursive mode change cannot walk into /cache.
+# They dangle in the image and cargo's create_dir_all resolves them on first
+# use; /cache is 1777.
 #
-# ENV RUSTUP_HOME/CARGO_HOME above must keep matching the values set here. When
-# they diverged, mise reinstalled rust on every container start.
+# The final uninstall is what makes rust a /cache tool. It deletes the toolchain
+# and leaves behind only rustup's settings.toml plus the proxy binaries in
+# cargo/bin, which is exactly the seed network-init.sh copies onto /cache. Worth
+# 1.3G of image. The toolchain has to exist up to this point because the two
+# `cargo:` tools above compile from source against it.
+#
+# `rustup toolchain uninstall` rather than `rm -rf toolchains`, so rustup
+# unregisters the toolchain rather than having it vanish underneath. It does
+# NOT clear default_toolchain, though, which is what `rustup default none` is
+# for: left naming a version the image no longer has, any bare `cargo` before
+# the first `mise install` on a cold /cache reports the default as not
+# installed. The grep is there because that was assumed rather than checked the
+# first time; it fails the build if a future rustup changes the key's spelling.
+#
+# ENV RUSTUP_HOME/CARGO_HOME above must keep matching the values set here, or
+# the build installs into one tree and strips another.
 RUN --mount=type=secret,id=github_token \
     if [ -s /run/secrets/github_token ]; then \
         GITHUB_TOKEN="$(cat /run/secrets/github_token)"; export GITHUB_TOKEN; \
@@ -481,7 +642,39 @@ RUN --mount=type=secret,id=github_token \
     done && \
     rm -rf /opt/rust/cargo/registry /opt/rust/cargo/git && \
     ln -s /cache/rust/registry /opt/rust/cargo/registry && \
-    ln -s /cache/rust/git /opt/rust/cargo/git
+    ln -s /cache/rust/git /opt/rust/cargo/git && \
+    rustup toolchain uninstall $(rustup toolchain list | awk '{print $1}') && \
+    rustup default none && \
+    rm -rf /opt/rust/rustup/downloads /opt/rust/rustup/tmp \
+           /opt/rust/rustup/update-hashes && \
+    grep -q '^default_toolchain' /opt/rust/rustup/settings.toml \
+        && { echo "settings.toml still names a default toolchain" >&2; exit 1; } \
+        || true
+
+# Runtime rust homes, overriding the build-time pair above. Set after the mise
+# layer so the build still installs into /opt/rust and still finds the toolchain
+# it compiles the `cargo:` tools against.
+#
+# Both must move together. mise decides whether to re-run rustup-init with
+#
+#   homes.rustup.join("settings.toml").exists() && homes.cargo_bin().exists()
+#
+# and cargo_bin() is $CARGO_HOME/bin/cargo, not bin/rustup. An earlier attempt
+# split them, RUSTUP_HOME=/opt and CARGO_HOME=/cache, so the second half was
+# false forever: mise called the installer on the first `cargo` of every
+# container and died on `GET https://sh.rustup.rs/`, which is not allowlisted.
+#
+# MISE_* as well as the bare pair. The bare pair is what rustup and cargo read
+# directly; the MISE_* settings are what mise's rust plugin reads, and mise
+# ranks them above ambient env. Setting only the bare pair works today but
+# relies on a lower-precedence fallback.
+#
+# Nothing is in /cache at this point: it is a host bind mount, empty on a new
+# machine. network-init.sh seeds it from /opt/rust on first start.
+ENV RUSTUP_HOME=/cache/rust/rustup \
+    CARGO_HOME=/cache/rust/cargo \
+    MISE_RUSTUP_HOME=/cache/rust/rustup \
+    MISE_CARGO_HOME=/cache/rust/cargo
 
 # Belt and braces for login shells and for tools installed at runtime, which
 # land in the shim dir after this image is built.
@@ -521,11 +714,38 @@ RUN curl -fsSL https://claude.ai/install.sh | bash && \
     ln -s /usr/local/bin/claude /tmp/.local/bin/claude && \
     chmod 777 /tmp/.local
 
+# 0777 rather than a chown: the agent runs as a non-root uid workmux picks, so
+# there is no single owner to hand this to. Without it every runtime
+# `mise install` wrote its binary into /cache and then failed to place the shim,
+# leaving a tool that mise reported as installed and the shell reported as not
+# found.
+#
+# Not 1777. The sticky bit only lets you replace entries you own, and a reshim
+# renames a fresh copy of *every* shim over the existing one -- all of which
+# root created at build time. mise then died on the first of them:
+#
+#   failed to publish shim /usr/local/bin/.mise-shims-stage-XXXX/yq
+#   to /usr/local/bin/yq: Operation not permitted (os error 1)
+#
+# and never reached the tool being installed. The isolation the sticky bit buys
+# is worth little here anyway: one container, one agent, and the directory is
+# reachable only from inside it.
+RUN chmod 0777 /usr/local/bin
+
 # Runtime installs go to MISE_DATA_DIR=/cache/mise/data, so their shims land in
 # /cache/mise/data/shims, which is on neither the injected PATH nor any link
 # farm. The agent's bash is non-interactive with no rc file (HOME=/tmp, SHELL
 # unset), so no profile or shell hook can fix it. Point the shim output at
-# /usr/local/bin instead, the one directory already on PATH.
+# /usr/local/bin instead, the one writable directory already on PATH.
+#
+# It has to be a directory on the PATH *workmux injects*, not the image's. The
+# runtime replaces ENV PATH wholesale with
+#
+#   /tmp/.workmux-shims/bin:/tmp/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+#
+# so an `ENV PATH=...` here reaches `docker exec` and nothing else. Of those
+# entries /tmp/.workmux-shims/bin is a read-only mount and the rest are root
+# owned, which leaves /usr/local/bin once it is made writable below.
 #
 # Last line of the file, and it must stay last. Set any earlier and the claude
 # installer layer above triggers a mise reshim into /usr/local/bin while

@@ -1,0 +1,218 @@
+# Lima-backed sandbox overlay, for worktrees that must run privileged
+# workloads: Cilium (mounts bpffs), Rook/Ceph (modprobe rbd, loop devices).
+#
+# Used per invocation, not stowed:
+#   workmux open next  --config ~/repos/configs/workmux/paas-lima.yaml
+#   workmux add  <wt>  --config ~/repos/configs/workmux/paas-lima.yaml
+#
+# `--config` MERGES with the global config rather than replacing it, so this
+# file only carries what differs from workmux/config.yaml. The agent profile
+# and extra_mounts come from there. The window list does NOT -- see below.
+#
+# Why a VM at all: the default sandbox runs under sysbox-runc, which puts the
+# container in a private user namespace (/proc/self/uid_map reads
+# `0 100000 65536`). Two kernel rules make that fatal for this workload:
+# bpffs is not FS_USERNS_MOUNT so it cannot be mounted from a non-initial
+# userns at any capability level, and most bpf() operations check capable()
+# against the INITIAL userns, so even a bind-mounted host /sys/fs/bpf fails at
+# program load. `modprobe rbd` fails for the same reason. A Lima guest boots
+# its own kernel and its root is real root on it.
+
+# Restated in full, because the global list points agent2 and box at
+# wm-sandbox-shell.sh, which ends in `workmux sandbox shell -e`. That command
+# is wrong here twice over:
+#
+#   1. It takes no --config. Its handler calls `Config::load(None)`
+#      (src/command/sandbox.rs), so it always reads the GLOBAL config and sees
+#      `backend: container`. Both panes then start a CONTAINER sandbox next to
+#      the VM the agent window is using -- two sandboxes for one worktree, with
+#      separate filesystems and toolchains. That is the stray wm-next-* that
+#      showed up in `docker ps` beside a running Lima VM.
+#   2. Even with the right config it would fail: run_shell_lima() opens with
+#      `if exec { bail!("The --exec flag is only supported with the container
+#      backend.") }`.
+#
+# So those panes bypass workmux and talk to limactl through wm-lima-shell.sh.
+# The `agent` window still uses `<agent>`: workmux sandboxes that pane itself,
+# and it is the one pane that honours --config.
+windows:
+  - name: agent
+    panes:
+      - command: <agent>
+        focus: true
+  # Second agent in the SAME VM as the first. The tool list is written out by
+  # hand here for the same reason as in the global config: `<agent>` only
+  # expands for the pane workmux sandboxes itself. This is now the fourth copy
+  # of that list -- nushell/config.nu:87, the global `agents:` block, the
+  # global agent2 window, and here. All four move together.
+  # No wm-user wrapper, unlike the container config: `limactl shell` already
+  # lands as the guest user, and there is no root-by-default problem to undo.
+  - name: agent2
+    panes:
+      - command: >-
+          /Users/simon/repos/configs/scripts/wm-lima-shell.sh claude --tools
+          Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch
+  - name: edit
+    panes:
+      - command: nvim
+  - name: git
+    panes:
+      - command: lazygit
+  - name: run
+  - name: box
+    panes:
+      - command: /Users/simon/repos/configs/scripts/wm-lima-shell.sh nu
+
+sandbox:
+  enabled: true
+  backend: lima
+
+  # Restated, not inherited. `image` lives at sandbox level and is shared by
+  # both backends, so merging with the global config drags in
+  # `image: workmux-sandbox-mise` -- a Docker image name. The Lima backend
+  # passes `image` through verbatim as the qcow2 `location`, so VM creation
+  # died on:
+  #   failed to download `workmux-sandbox-mise`: clonefile failed
+  #
+  # There is no way to unset a merged key, so this spells out an image
+  # explicitly. arm64 because the host is Apple Silicon; a custom image gets
+  # no `arch` field, so this file is not portable to an x86_64 host as
+  # written -- swap the URL for the amd64 one there.
+  #
+  # `generic`, NOT the `genericcloud` that workmux defaults to
+  # (src/sandbox/lima/config.rs picks genericcloud for its smaller size).
+  # genericcloud ships Debian's cloud kernel, which is deliberately stripped
+  # of drivers that a cloud VM never needs -- rbd and the Ceph modules among
+  # them. `modprobe rbd` is the whole reason this VM exists, so the ~270MB
+  # saved by genericcloud buys a VM that cannot run the suite. generic ships
+  # the full linux-image-arm64 with the complete module tree.
+  image: https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-arm64.qcow2
+
+  lima:
+    # One VM per repo. `shared` would put every project in a single VM, and
+    # only the first project to create it gets its provision script run.
+    isolation: project
+
+    # The bootstrap pulls k3s, Cilium, Rook/Ceph, the Grafana stack and
+    # NetBird. 100GiB is the workmux default and is stated explicitly here
+    # because the container sandbox died at 3.8GiB free and that is the whole
+    # reason this file exists.
+    disk: 100GiB
+    cpus: 6
+    memory: 12GiB
+
+    # Lima mounts the project writable into a VM whose guest user can become
+    # root, and cannot make Git control files read-only while leaving refs,
+    # objects and the index writable. Guest root can therefore rewrite git
+    # config, hooks and worktree pointers that HOST git may later consume --
+    # filters, merge drivers and credential helpers would then execute as the
+    # host user. Docker/Podman/Apple Container do enforce that boundary; this
+    # backend does not.
+    #
+    # Set to true only because workmux otherwise blocks non-interactive
+    # startup on a one-time prompt, which would hang the agent pane. Accepting
+    # it here is a deliberate downgrade for this worktree, not a default: keep
+    # privileged worktrees on branches you would re-clone rather than trust.
+    accept_reduced_git_metadata_isolation: true
+
+    # Runs once, at VM creation, after workmux's own steps (which install the
+    # agent CLI and workmux itself). Changing this file later does NOT
+    # re-provision an existing VM -- `workmux sandbox prune` first.
+    #
+    # apt-get update has already run by this point.
+    provision: |
+      set -eux
+
+      # Base packages the cloud image does not ship. tmux is required by the
+      # workmux binary that the built-in provision step installs; it warned
+      # `Missing required dependencies: tmux` on the first attempt.
+      sudo apt-get update
+      sudo apt-get install -y ca-certificates curl tmux
+
+      # Docker, for k3d. The distro packages are old enough to matter for
+      # cgroup v2 handling, so use Docker's own repo.
+      #
+      # The armoured .asc key is used directly rather than piping through
+      # `gpg --dearmor`. The cloud image ships no gpg, so the dearmor form
+      # failed at the very first provision step with `sudo: gpg: command not
+      # found`, and `set -e` took the rest of the script with it. apt reads
+      # an armoured key from signed-by fine, so this drops the dependency
+      # rather than adding gnupg to install it.
+      sudo install -m 0755 -d /etc/apt/keyrings
+      sudo curl -fsSL https://download.docker.com/linux/debian/gpg \
+        -o /etc/apt/keyrings/docker.asc
+      sudo chmod a+r /etc/apt/keyrings/docker.asc
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+        | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      sudo apt-get update
+      sudo apt-get install -y \
+        docker-ce docker-ce-cli containerd.io docker-buildx-plugin \
+        docker-compose-plugin
+      sudo usermod -aG docker "$USER"
+
+      # Ceph needs these on the node itself, not just in a container.
+      sudo apt-get install -y ceph-common lvm2 xfsprogs
+
+      # bpffs. Cilium mounts it itself when missing, but doing it here means a
+      # failure shows up at provision time with a readable error instead of
+      # midway through a chart install.
+      sudo mkdir -p /sys/fs/bpf
+      mountpoint -q /sys/fs/bpf || sudo mount -t bpf bpf /sys/fs/bpf
+      grep -q '^bpffs' /etc/fstab \
+        || echo 'bpffs /sys/fs/bpf bpf defaults 0 0' | sudo tee -a /etc/fstab
+
+      for d in skills agents; do
+        grep -q "^/tmp/.claude/$d " /etc/fstab \
+          || echo "/tmp/.claude/$d $HOME/.claude/$d none bind,ro,nofail,x-systemd.requires-mounts-for=/tmp/.claude/$d,x-systemd.requires-mounts-for=$HOME/.claude 0 0" \
+          | sudo tee -a /etc/fstab
+      done
+      sudo systemctl daemon-reload
+      sudo mount -a
+
+      # rbd, for the Rook/Ceph suite. Load now and persist, so verify.nu's
+      # storage check does not hit a cold module.
+      #
+      # Deliberately not fatal. Provisioning runs exactly once at VM creation,
+      # so an abort here would discard the mise toolchain below and force a
+      # full delete-and-recreate. A missing module is worth knowing about
+      # immediately, but it is not worth losing the rest of the VM over:
+      # `journalctl -k | grep rbd` after boot, or just re-run the modprobe.
+      if sudo modprobe rbd; then
+        echo rbd | sudo tee /etc/modules-load.d/rbd.conf > /dev/null
+      else
+        echo "WARNING: modprobe rbd failed -- the Ceph suite will not pass." >&2
+        echo "WARNING: check the image ships a full kernel, not the cloud one." >&2
+      fi
+
+      # mise, then the pinned toolchain. The Docker sandbox bakes this into
+      # its image (workmux-sandbox/mise.sandbox.toml); that image does not
+      # apply to this backend, so the same pins are installed here instead.
+      # Keep the two in sync by hand -- nothing enforces it.
+      curl -fsSL https://mise.run | sh
+      export PATH="$HOME/.local/bin:$PATH"
+      echo 'eval "$(~/.local/bin/mise activate bash)"' >> "$HOME/.bashrc"
+      echo 'export PATH="$HOME/.local/share/mise/shims:$PATH"' >> "$HOME/.profile"
+
+      mise use -g -y \
+        node@24.19.0 \
+        go@1.27.0 \
+        python@3.14.7 \
+        uv@0.12.19 \
+        rust@1.93.1 \
+        kubectl@1.36.4 \
+        helm@3.21.4 \
+        k3d@5.8.3 \
+        jq@1.8.2 \
+        yq@4.53.6 \
+        ripgrep@15.2.0 \
+        fd@10.4.2 \
+        bat@0.26.1 \
+        buf@1.70.0 \
+        gitleaks@8.30.1
+
+      # Output compressor the PreToolUse hook rewrites every Bash command
+      # through. Missing it makes every rewritten command fail.
+      mise use -g -y "github:rtk-ai/rtk@0.45.0"
+
+      # Interactive shell for `workmux sandbox shell`.
+      mise use -g -y "github:nushell/nushell@0.115.1" starship@1.26.0 zoxide@0.10.0

@@ -1,0 +1,7 @@
+{
+  "name": "io-meter",
+  "version": "0.1.0",
+  "description": "Context window fill plus where session time goes: API requests (main and subagents) and per-tool totals",
+  "author": { "name": "Simon Malm" },
+  "types": "./types/index.d.ts"
+}

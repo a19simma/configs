@@ -1,81 +1,69 @@
 {
-  "agentPushNotifEnabled": true,
-  "autoCompactWindow": 200000,
-  "autoMemoryEnabled": false,
-  "disableBundledSkills": true,
-  "disableClaudeAiConnectors": true,
-  "effortLevel": "low",
-  "enabledPlugins": {
-    "document-skills@anthropic-agent-skills": true,
-    "posthog@claude-plugins-official": true
-  },
   "env": {
-    "DISABLE_AUTOUPDATER": "1"
+    "DISABLE_AUTOUPDATER": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/repos/configs/shell/.claude/mods/io-meter"
   },
-  "extraKnownMarketplaces": {
-    "anthropic-agent-skills": {
-      "source": {
-        "repo": "anthropics/skills",
-        "source": "github"
-      }
-    },
-    "caveman": {
-      "source": {
-        "repo": "JuliusBrussee/caveman",
-        "source": "github"
-      }
-    }
+  "permissions": {
+    "allow": [
+      "WebFetch",
+      "WebSearch"
+    ]
   },
+  "model": "opus[1m]",
+  "disableClaudeAiConnectors": true,
+  "disableBundledSkills": true,
   "hooks": {
     "Notification": [
       {
+        "matcher": "permission_prompt|elicitation_dialog",
         "hooks": [
           {
-            "command": "workmux set-window-status waiting",
-            "type": "command"
+            "type": "command",
+            "command": "workmux set-window-status waiting"
           }
-        ],
-        "matcher": "permission_prompt|elicitation_dialog"
+        ]
       }
     ],
     "PostToolUse": [
       {
         "hooks": [
           {
-            "command": "workmux set-window-status working",
-            "type": "command"
+            "type": "command",
+            "command": "workmux set-window-status working"
           }
         ]
       }
     ],
     "PreToolUse": [
       {
+        "matcher": "Bash",
         "hooks": [
           {
-            "command": "rtk hook claude",
-            "type": "command"
+            "type": "command",
+            "command": "rtk hook claude"
           }
-        ],
-        "matcher": "Bash"
+        ]
       }
     ],
     "SessionStart": [
       {
+        "matcher": "startup|resume|clear|fork",
         "hooks": [
           {
-            "command": "workmux register-agent",
-            "type": "command"
+            "type": "command",
+            "command": "workmux register-agent"
           }
-        ],
-        "matcher": "startup|resume|clear|fork"
+        ]
       }
     ],
     "Stop": [
       {
         "hooks": [
           {
-            "command": "workmux set-window-status done",
-            "type": "command"
+            "type": "command",
+            "command": "workmux set-window-status done"
           }
         ]
       }
@@ -84,37 +72,48 @@
       {
         "hooks": [
           {
-            "command": "workmux set-window-status working",
-            "type": "command"
+            "type": "command",
+            "command": "workmux set-window-status working"
           }
         ]
       }
     ]
   },
-  "model": "opus[1m]",
+  "enabledPlugins": {
+    "document-skills@anthropic-agent-skills": true,
+    "posthog@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    }
+  },
+  "effortLevel": "low",
   "modelSettings": {
     "claude-opus-5": {
       "effortLevel": "low"
     }
   },
-  "permissions": {
-    "allow": [
-      "WebFetch",
-      "WebSearch"
-    ]
-  },
-  "remoteControlAtStartup": true,
+  "autoCompactWindow": 200000,
   "showClearContextOnPlanAccept": true,
-  "skipDangerousModePermissionPrompt": true,
-  "statusLine": {
-    "command": "$HOME/.claude/statusline-command.sh",
-    "type": "command"
-  },
-  "theme": "dark",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,
     "mode": "tap"
   },
+  "autoMemoryEnabled": false,
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true,
   "voiceEnabled": true
 }

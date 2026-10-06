@@ -36,10 +36,20 @@ container_name() {
     docker ps --format '{{.Names}}' 2>/dev/null | grep "^${prefix}" | head -1
 }
 
+lima_vm() {
+    project=$(basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)")")
+    limactl list --format '{{.Name}} {{.Status}}' 2>/dev/null \
+        | awk -v p="^wm-${project}-" '$2 == "Running" && $1 ~ p { print $1; exit }'
+}
+
 # Two iterations per second, hence the doubling.
 attempts=$(awk "BEGIN { print int(${TIMEOUT_SECONDS} / ${POLL_INTERVAL}) }")
 i=0
 while [ -z "$(container_name)" ]; do
+    if [ -n "$(lima_vm)" ]; then
+        [ "${1:-}" = "wm-user" ] && shift
+        exec /Users/simon/repos/configs/scripts/wm-lima-shell.sh "$@"
+    fi
     i=$((i + 1))
     if [ "$i" -ge "$attempts" ]; then
         echo "wm-sandbox-shell: no container matching '${prefix}*' after ${TIMEOUT_SECONDS}s" >&2
