@@ -5,7 +5,7 @@ Sources: [What are runes?](https://svelte.dev/docs/svelte/what-are-runes), [`$st
 ## What they are
 
 > "Runes are symbols that you use in `.svelte` and `.svelte.js` / `.svelte.ts` files to control the Svelte compiler."
-> — [svelte.dev](https://svelte.dev/docs/svelte/what-are-runes)
+> Source: [svelte.dev](https://svelte.dev/docs/svelte/what-are-runes)
 
 They differ from functions in three ways the docs spell out:
 
@@ -15,13 +15,21 @@ They differ from functions in three ways the docs spell out:
 
 Consequence that catches people: you cannot pass reactive state as an argument and keep it reactive. Pass a getter, or a whole object whose properties are read at use time.
 
-```ts
-// smell: count is read once, at call time. The value is dead on arrival.
-track(count);
+**Smell:**
 
-// idiomatic: the reader is deferred
+```ts
+track(count);
+```
+
+`count` is read once, at call time, so later changes never reach `track`.
+
+**Idiomatic:**
+
+```ts
 track(() => count);
 ```
+
+The reader is deferred.
 
 ## The decision table
 
@@ -29,6 +37,7 @@ track(() => count);
 | --- | --- |
 | A value that changes | `$state` |
 | A value computed from other values | `$derived` / `$derived.by` |
+| A computed value the user can also set | `$derived`, reassigned (Svelte 5.25+) |
 | A component's inputs | `$props` |
 | A prop the child may write back | `$bindable` |
 | To reach outside Svelte (canvas, third-party lib, subscription, analytics) | `$effect` |
@@ -49,10 +58,10 @@ If the answer looks like `$effect`, read the next two sections before writing it
 Deeply reactive: `items.push(x)` and `user.name = "x"` both work, because `$state` proxies objects and arrays. That proxying costs something on large structures and changes identity, which matters when passing to a non-Svelte library.
 
 - `$state.raw` for large immutable data (a parsed dataset, a big config): no proxy, so reassignment is the only way to update it. Cheaper, and honest about how it is used.
-- `$state.snapshot(x)` before handing state to anything outside Svelte — `structuredClone`, `JSON.stringify`, a canvas library, an RPC call. Passing a proxy across that line produces confusing failures.
+- `$state.snapshot(x)` before handing state to anything outside Svelte: `structuredClone`, `JSON.stringify`, a canvas library, an RPC call. Passing a proxy across that line produces confusing failures.
 - Class fields work: `class Cart { items = $state<Item[]>([]); }`. This is the sanctioned way to bundle state with its operations.
 
-## `$derived` — the default for anything computed
+## `$derived`: the default for anything computed
 
 ```svelte
 <script lang="ts">
@@ -69,10 +78,10 @@ Deeply reactive: `items.push(x)` and `user.name = "x"` both work, because `$stat
 
 Derived values are lazy and cached: not recomputed until read, not re-run when the inputs settle back to the same value. That is strictly better than an effect writing to state, which runs on every change whether or not anyone is looking.
 
-## `$effect` — the escape hatch, not the tool
+## `$effect`: the escape hatch
 
 > "Effects are functions that run when state updates, and can be used for things like calling third-party libraries, drawing on `<canvas>` elements, or making network requests."
-> — [svelte.dev](https://svelte.dev/docs/svelte/$effect)
+> Source: [svelte.dev](https://svelte.dev/docs/svelte/$effect)
 
 Mechanics worth knowing:
 
@@ -80,20 +89,24 @@ Mechanics worth knowing:
 - Tracks "which pieces of state (and derived state) are accessed (unless accessed inside `untrack`)".
 - **Only synchronous reads are tracked.** Anything read after an `await`, or inside a `setTimeout`, is not a dependency. This is the single most common source of "my effect doesn't re-run".
 - Return a cleanup function; it runs before each re-run and on destroy. An effect that subscribes without returning an unsubscribe is a leak.
-- `$effect.pre` "runs code _before_ the DOM updates" — for measuring or preserving scroll position.
+- `$effect.pre` runs "code _before_ the DOM updates", for measuring or preserving scroll position.
 
 ### The rule
 
-**Rule:** an `$effect` that assigns to `$state` is a defect until proven otherwise. Every one needs a comment explaining why `$derived` cannot express it.
+**Rule:** an `$effect` that assigns to `$state` is a defect until proven otherwise. Its body is a named function whose name states why `$derived` cannot express it, e.g. `storeMeasuredHeight()`.
+
+**Smell:**
 
 ```svelte
-<!-- smell -->
 <script lang="ts">
   let doubled = $state(0);
   $effect(() => { doubled = count * 2; });
 </script>
+```
 
-<!-- idiomatic -->
+**Idiomatic:**
+
+```svelte
 <script lang="ts">
   let doubled = $derived(count * 2);
 </script>
@@ -109,9 +122,9 @@ Not an effect. Use function bindings, so each side has one owner:
 <input bind:value={() => spend, (v) => { spend = Math.min(v, MAX); }} />
 ```
 
-### When you genuinely must write state in an effect
+### When you must write state in an effect
 
-Wrap the read that would cause a cycle in `untrack`, and say why in a comment. An effect that re-triggers itself is an infinite loop that Svelte will report at runtime, not compile time.
+Wrap the read that would cause a cycle in `untrack`, inside that named function. An effect that re-triggers itself is an infinite loop that Svelte will report at runtime, not compile time.
 
 ## `$props` and `$bindable`
 
@@ -131,7 +144,7 @@ Wrap the read that would cause a cycle in `untrack`, and say why in a comment. A
 - Props are read-only. Assigning to one is a compile error in runes mode, and correctly so.
 - Callback props (`onselect`) replace `createEventDispatcher`, which is gone. Name them `onthing`, lowercase, matching the DOM convention.
 - `$props.id()` for a unique id to wire `<label for>` to an input across SSR and hydration.
-- `$bindable` only where two-way flow is genuinely the simplest model — form field wrappers, a controlled input. Everywhere else, data down and callbacks up. See `components.md`.
+- `$bindable` only where two-way flow is the simplest model: form field wrappers, a controlled input. Everywhere else, data down and callbacks up. See `components.md`.
 
 ## `.svelte.ts` modules
 
@@ -143,7 +156,7 @@ Runes work in `.svelte.ts` files, which is how state escapes a single component 
 | --- | --- |
 | `export let x` | `let { x } = $props()` |
 | `$: y = x * 2` | `let y = $derived(x * 2)` |
-| `$: sideEffect(x)` | `$effect(() => sideEffect(x))` — and check it should not be `$derived` |
+| `$: sideEffect(x)` | `$effect(() => sideEffect(x))`, and check it should not be `$derived` |
 | `on:click={fn}` | `onclick={fn}` |
 | `createEventDispatcher` | Callback props |
 | `writable`/`readable` store | `$state` in a `.svelte.ts` module, or context |

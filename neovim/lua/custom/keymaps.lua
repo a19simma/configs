@@ -14,3 +14,20 @@ end, { desc = "Next hunk" })
 vim.keymap.set("n", "[c", function()
 	require("gitsigns").nav_hunk("prev")
 end, { desc = "Prev hunk" })
+
+-- Gitsigns blame
+vim.keymap.set("n", "<leader>tb", function()
+	require("gitsigns").toggle_current_line_blame()
+end, { desc = "Toggle line blame" })
+vim.keymap.set("n", "<leader>hb", function()
+	require("gitsigns").blame_line({ full = true })
+end, { desc = "Blame line popup" })
+vim.keymap.set("n", "<leader>hB", function()
+	for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+		if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == "gitsigns-blame" then
+			vim.api.nvim_win_close(win, true)
+			return
+		end
+	end
+	require("gitsigns").blame()
+end, { desc = "Toggle file blame" })

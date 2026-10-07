@@ -28,7 +28,7 @@
 # environment.
 if ($env.WM_SANDBOX_USER? | is-empty) and ($env.WM_TARGET_UID? | is-not-empty) {
     if (^id -u | str trim) == "0" {
-        exec wm-user nu
+        exec /usr/local/bin/wm-user nu
     }
 }
 

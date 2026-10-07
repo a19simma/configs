@@ -4,7 +4,7 @@ Sources: [typescript-eslint rules](https://typescript-eslint.io/rules/), [TypeSc
 
 ## Naming
 
-`PascalCase` types, interfaces, enums, classes, components. `camelCase` functions, variables, properties, methods. `SCREAMING_SNAKE_CASE` module-level constants that are genuinely constant configuration. `kebab-case.ts` filenames.
+`PascalCase` types, interfaces, enums, classes, components. `camelCase` functions, variables, properties, methods. `SCREAMING_SNAKE_CASE` module-level constants that are constant configuration. `kebab-case.ts` filenames.
 
 - No `I` prefix on interfaces, no `T` prefix on types. The compiler knows what they are.
 - Booleans read as assertions: `isLoading`, `hasAccess`, `canEdit`, `shouldRetry`.
@@ -13,29 +13,33 @@ Sources: [typescript-eslint rules](https://typescript-eslint.io/rules/), [TypeSc
 
 ## Signatures
 
+**Smell:**
 ```ts
-// smell
 function load(path: string, opts: any, cb: Function): any
+```
 
-// idiomatic
+**Idiomatic:**
+```ts
 function load(path: string, opts: LoadOptions): Promise<Config>
 ```
 
 - Return concrete types, never `any`. `void` is a real return type; use it.
 - Two or more parameters of the same primitive type: take an options object. `resize(true, false, 10)` is unreadable at the call site and unsafe at every refactor.
 - Never take a `boolean` flag that selects behaviour. Two functions, or a string-literal union.
-- Optional parameters go last and mean *absent*, not *default* — if there is a default, give it one.
-- Overloads only where the return type genuinely depends on the argument type. Otherwise a union parameter is clearer.
+- Optional parameters go last and mean *absent*, not *default*. If there is a default, give it one.
+- Overloads only where the return type depends on the argument type. Otherwise a union parameter is clearer.
 
 ## Nullability
 
 Pick one absence value per codebase and hold the line. **Rule:** `undefined` for "not present" throughout; `null` only where an external API or database column forces it, converted at the boundary.
 
+**Smell:** three ways to be missing.
 ```ts
-// smell: three ways to be missing
 if (user && user.name && user.name !== "") { ... }
+```
 
-// idiomatic
+**Idiomatic:**
+```ts
 const name = user?.name ?? "anonymous";
 ```
 
@@ -65,20 +69,22 @@ const name = user?.name ?? "anonymous";
 
 ## Async
 
+**Smell:** sequential awaits with no dependency between them.
 ```ts
-// smell: sequential awaits with no dependency between them
 const user = await getUser(id);
 const orders = await getOrders(id);
+```
 
-// idiomatic
+**Idiomatic:**
+```ts
 const [user, orders] = await Promise.all([getUser(id), getOrders(id)]);
 ```
 
 - `async`/`await` throughout. `.then()` chains only inside a function that must not be async.
 - `Promise.all` for independent work; `Promise.allSettled` where one failure must not cancel the rest.
-- Never `async` on a function with no `await` in it — it changes the error semantics for no reason.
-- Floating promises are errors (`@typescript-eslint/no-floating-promises`). Fire-and-forget is written `void doThing()` with a comment, so the reader knows it was deliberate.
-- Every `await` in a loop is a question: did you mean to serialise this? Sometimes yes — rate limits, ordering. Say so in a comment.
+- Never `async` on a function with no `await` in it; it changes the error semantics for no reason.
+- Floating promises are errors (`@typescript-eslint/no-floating-promises`). Fire-and-forget is written `void doThing()`; the operator marks intent.
+- Serial `await` in a loop goes through a helper named for the reason, such as `withinRateLimit` or `inCommitOrder`.
 
 ## Modules
 
@@ -86,7 +92,7 @@ const [user, orders] = await Promise.all([getUser(id), getOrders(id)]);
 - `import type { Foo }` for type-only imports. `verbatimModuleSyntax` is on:
 
 > "any imports or exports without a `type` modifier are left around. Anything that uses the `type` modifier is dropped entirely."
-> — [TypeScript 5.0 release notes](https://www.typescriptlang.org/tsconfig/#verbatimModuleSyntax)
+> Source: [TypeScript 5.0 release notes](https://www.typescriptlang.org/tsconfig/#verbatimModuleSyntax)
 
 Meaning a value import you only used as a type stays in the emitted JavaScript and drags the module in at runtime. Mark it.
 
@@ -95,16 +101,16 @@ Meaning a value import you only used as a type stays in the emitted JavaScript a
 
 ## Comments
 
-Explain *why*. The code already says what.
+No inline comments. The name carries the why.
 
+**Smell:** a vague name that needs a comment about the per-connection retry budget to make sense.
 ```ts
-// smell
-// increment the counter
-count += 1;
-
-// useful
-// Retry budget is per-connection, not per-request: the upstream resets it on reconnect.
 count += 1;
 ```
 
-TSDoc (`/** ... */`) on every exported symbol: one summary line, `@param` only where the name is not self-explanatory, `@throws` wherever the function can throw.
+**Idiomatic:**
+```ts
+retriesThisConnection += 1;
+```
+
+Doc comment conventions are in `docs.md`.

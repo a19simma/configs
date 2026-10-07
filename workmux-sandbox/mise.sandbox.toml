@@ -7,12 +7,15 @@
 # gh is excluded on purpose: it is useless without a token, and the sandbox is
 # not given one.
 #
+# node is excluded too: every repo pins its own version, and a baked global one
+# only hid a missing pin behind the wrong version. Pins install from
+# nodejs.org at runtime into /cache.
+#
 # Baking beats mounting. The host mise tree is aarch64-apple-darwin, so
 # bind-mounting ~/.local/share/mise into a linux-arm64 container makes mise
 # believe the tools are installed and every exec then fails with
 # `Exec format error`.
 [tools]
-node     = "24.19.0"
 go       = "1.27.0"
 python   = "3.14.7"
 uv       = "0.12.19"

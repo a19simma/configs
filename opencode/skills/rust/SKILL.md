@@ -18,6 +18,7 @@ Grounded in [The Rust Book](https://doc.rust-lang.org/book/), [Rust API Guidelin
 | Which crate for X? Is this one allowed? | `references/crates.md` |
 | Why is that crate banned? Who else uses it? | `references/adoption.md` |
 | What lints do I turn on? | `references/linting.md` |
+| How do I document this? What comments are allowed? | `references/docs.md` |
 
 Read only the file that answers the question. Do not preload them.
 
@@ -25,14 +26,14 @@ Read only the file that answers the question. Do not preload them.
 
 ## Non-negotiables
 
-1. **`unwrap`/`expect` never in library code.** `expect` allowed in `main`, tests, and where an invariant is proven — with the message stating *why* it cannot fail (Book ch.9).
+1. **`unwrap`/`expect` never in library code.** `expect` allowed in `main`, tests, and where an invariant is proven, with the message stating *why* it cannot fail (Book ch.9).
 2. **Make illegal states unrepresentable.** Enum + newtype over `bool` flags and stringly-typed fields.
 3. **Borrow in arguments, own in returns.** Take `&str`/`&[T]`/`impl AsRef<Path>`, not `String`/`Vec<T>`/`&String`.
 4. **Errors are hand-written typed enums.** `anyhow` and `thiserror` are both banned. One `#[non_exhaustive]` enum per crate by default, split into scoped enums only when a function family has a distinct recoverable set. Erasure (`Box<dyn Error>`) only where the set is structurally open. Never `Result<_, String>`.
-5. **`cargo clippy --all-targets -- -D warnings` + `cargo fmt --check` gate CI.** No exceptions merged without an `#[allow]` carrying a reason comment.
-6. **Public item without a doc comment is a bug.** `#![warn(missing_docs)]` on every lib crate.
+5. **`cargo clippy --all-targets -- -D warnings` + `cargo fmt --check` gate CI.** Obey the lint or disable it in `[lints]`. `#[allow]` is denied by `clippy::allow_attributes` and crate-level `#![allow]` by review; the extraordinary case is `#[expect(lint, reason = "…")]`.
+6. **Public item without a doc comment is a bug.** `missing_docs = "warn"` in `[workspace.lints.rust]`, inherited by every member.
 7. **No new dependency without approval.** Only crates listed in `references/crates.md`, or expressly permitted by the user. Everything else: use `std` or ask. Every project scaffolds a `deny.toml` in its first commit so the ban list is enforced by `cargo deny check` in CI, not by a reviewer's memory.
-8. **Unsafe needs a `// SAFETY:` comment** naming the invariant upheld. Enforced by `clippy::undocumented_unsafe_blocks`.
+8. **Unsafe needs a `// SAFETY:` comment** naming the invariant upheld. Enforced by `clippy::undocumented_unsafe_blocks`. It is the only sanctioned inline comment.
 
 ## Reviewing
 

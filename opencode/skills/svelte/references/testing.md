@@ -1,12 +1,12 @@
 # Testing Svelte
 
-Sources: [Svelte — testing](https://svelte.dev/docs/svelte/testing), [Vitest browser mode](https://vitest.dev/guide/browser/), [Playwright](https://playwright.dev/docs/intro), [Testing Library principles](https://testing-library.com/docs/guiding-principles/).
+Sources: [Svelte: testing](https://svelte.dev/docs/svelte/testing), [Vitest browser mode](https://vitest.dev/guide/browser/), [Playwright](https://playwright.dev/docs/intro), [Testing Library principles](https://testing-library.com/docs/guiding-principles/).
 
 Read `typescript/references/testing.md` first. This file covers only what is specific to components.
 
 ## Push logic out of components
 
-The cheapest component test is the one you did not write. Business rules belong in `.ts` or `.svelte.ts` modules and are tested with no DOM at all — faster, clearer failures, no rendering to debug.
+The cheapest component test is the one you did not write. Business rules belong in `.ts` or `.svelte.ts` modules and are tested with no DOM at all: faster, clearer failures, no rendering to debug.
 
 **Rule:** a component test asserts on what a user can see and do. If a test needs to reach inside for internal state, the logic is in the wrong place.
 
@@ -14,8 +14,9 @@ The cheapest component test is the one you did not write. Business rules belong 
 
 Rune-based logic in `.svelte.ts` is testable directly, but effects and deriveds need a reactive context. Name the test file `*.svelte.test.ts` so the Svelte plugin processes it, and wrap in `$effect.root` when the code under test uses effects:
 
+**`cart.svelte.test.ts`:**
+
 ```ts
-// cart.svelte.test.ts
 import { flushSync } from "svelte";
 import { describe, expect, it } from "vitest";
 import { createCartState } from "./cart.svelte";
@@ -51,8 +52,8 @@ it("emits the selected id", async () => {
 });
 ```
 
-- Query by role, label, and text. `data-testid` only for genuinely unnamed elements; never CSS classes.
-- `userEvent` over raw `fireEvent` — it produces the full event sequence a real interaction does, including focus changes.
+- Query by role, label, and text. `data-testid` only for unnamed elements; never CSS classes.
+- `userEvent` over raw `fireEvent`: it produces the full event sequence a real interaction does, including focus changes.
 - Assert on rendered output and on callback props. Never on internal state.
 - Real browser mode (Vitest browser mode or Playwright component tests) for anything involving layout, focus management, or scroll. jsdom will happily lie about all three.
 
@@ -67,7 +68,7 @@ it("emits the selected id", async () => {
 
 These are all ordinary functions. Testing them does not need a running server, and a test that boots one to check a `load` is testing SvelteKit rather than your code.
 
-Mock at your own boundary — the `locals` interface — not at `fetch`. An in-memory `OrderStore` passed through `locals` is type-checked; a mocked `fetch` is a string comparison.
+Mock at your own boundary (the `locals` interface), not at `fetch`. An in-memory `OrderStore` passed through `locals` is type-checked; a mocked `fetch` is a string comparison.
 
 ## End-to-end
 

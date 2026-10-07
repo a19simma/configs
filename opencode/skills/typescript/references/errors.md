@@ -1,6 +1,6 @@
 # Errors
 
-Sources: [TypeScript Handbook — Narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing.html), [MDN Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error), [typescript-eslint `use-unknown-in-catch-callback-variable`](https://typescript-eslint.io/rules/use-unknown-in-catch-callback-variable/).
+Sources: [TypeScript Handbook: Narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing.html), [MDN Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error), [typescript-eslint `use-unknown-in-catch-callback-variable`](https://typescript-eslint.io/rules/use-unknown-in-catch-callback-variable/).
 
 ## The axis: handled or reported
 
@@ -25,7 +25,7 @@ export const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
 export const err = <E>(error: E): Result<never, E> => ({ ok: false, error });
 ```
 
-That is the whole implementation. **Rule:** hand-write it in one internal module. Do not add `neverthrow`, `fp-ts`, `effect`, or `purify-ts` to get it — see `packages.md`. A result type is twelve lines; a functional-effect framework is a second language in your codebase.
+That is the whole implementation. **Rule:** hand-write it in one internal module. Do not add `neverthrow`, `fp-ts`, `effect`, or `purify-ts` to get it. See `packages.md`. A result type is twelve lines; a functional-effect framework is a second language in your codebase.
 
 The error side is a discriminated union per domain, not a string:
 
@@ -38,7 +38,7 @@ export type CheckoutError =
 async function checkout(cart: Cart): Promise<Result<Order, CheckoutError>>;
 ```
 
-At the call site, `switch` on `kind` and close with `assertNever`. Adding a failure mode becomes a compile error at every site that must react to it — which is the entire point, and what a bare `Error` subclass cannot give you.
+At the call site, `switch` on `kind` and close with `assertNever`. Adding a failure mode becomes a compile error at every site that must react to it. That is the entire point, and what a bare `Error` subclass cannot give you.
 
 **Never `Result<T, string>`.** A string is not a case analysis; it is a log line that escaped.
 
@@ -60,18 +60,22 @@ export class ConfigError extends Error {
 
 ## `catch` gives you `unknown`
 
+**Smell:** `e` is not an `Error`, and TypeScript will not stop you here without the flag.
 ```ts
-// smell: e is not an Error, and TypeScript will not stop you here without the flag
 try { ... } catch (e) { logger.error(e.message); }
+```
 
-// idiomatic
+**Idiomatic:**
+```ts
 try {
   ...
 } catch (e: unknown) {
   if (e instanceof ConfigError) return err({ kind: "bad_config", detail: e.message });
-  throw e;                       // not ours — let it go up
+  throw e;
 }
 ```
+
+Anything that is not a `ConfigError` is not ours, so it goes back up.
 
 **Rule:** `useUnknownInCatchVariables` is on (it is part of `strict`). Every `catch` either narrows and handles, or re-throws. A `catch` that swallows is a defect; a `catch` that logs and continues with corrupt state is a worse one.
 

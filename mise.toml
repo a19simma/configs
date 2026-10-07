@@ -62,7 +62,7 @@ stow -t ~/.config/k9s -D k9s
 stow -t ~/.config/atuin -D atuin
 stow -t ~/.config/lazygit -D lazygit
 stow -t ~/.config/sesh -D sesh
-stow -t ~/.config/mise -D mise
+if [ -L ~/.config/mise/config.toml ]; then rm ~/.config/mise/config.toml; fi
 stow -t ~/.config/workmux -D workmux
 stow -t ~/.config/colima/default -D colima
 echo "Removing Claude Code symlinks..."

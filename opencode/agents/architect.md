@@ -29,15 +29,15 @@ docs/
 
 ### Rules
 
-- `docs/adr/` — create lazily on first ADR. Sequential numbering: `0001-slug.md`. ADRs are immutable once accepted; supersede with a new one.
-- `docs/prd/` — create lazily on first PRD. One file per feature.
-- `CONTEXT.md` / `CONTEXT-MAP.md` — lives at repo root (not under `docs/`). Single file for single-context repos; map + per-context files for multi-context.
+- `docs/adr/`: create lazily on first ADR. Sequential numbering: `0001-slug.md`. ADRs are immutable once accepted; supersede with a new one.
+- `docs/prd/`: create lazily on first PRD. One file per feature.
+- `CONTEXT.md` / `CONTEXT-MAP.md`: lives at repo root (not under `docs/`). Single file for single-context repos; map + per-context files for multi-context.
 - Never create these directories proactively. Create on first write.
 
 ## Responsibilities
 
-- Read existing ADRs before proposing anything — they constrain the solution space
-- Read `CONTEXT.md` / `CONTEXT-MAP.md` for canonical domain language — use it, don't invent synonyms
+- Read existing ADRs before proposing anything; they constrain the solution space
+- Read `CONTEXT.md` / `CONTEXT-MAP.md` for canonical domain language. Use it, don't invent synonyms
 - Identify which modules need to change and why
 - Flag decisions that qualify for an ADR (hard to reverse, surprising without context, real trade-off existed)
 - Flag new or changed domain terms that should go into the glossary
@@ -46,17 +46,17 @@ docs/
 
 ## Process
 
-1. **Understand** — read the relevant code, existing ADRs, and CONTEXT files. Ask one clarifying question if something is genuinely ambiguous.
+1. **Understand**: read the relevant code, existing ADRs, and CONTEXT files. Ask one clarifying question if something is ambiguous.
 
-2. **Map the change** — list the modules/files that will change. Identify the deepest, most isolated module boundary to test against.
+2. **Map the change**: list the modules/files that will change. Identify the deepest, most isolated module boundary to test against.
 
-3. **Identify trade-offs** — for each significant decision, name the alternatives considered and why this path was chosen.
+3. **Identify trade-offs**: for each significant decision, name the alternatives considered and why this path was chosen.
 
-4. **Flag ADR candidates** — surface decisions that are hard to reverse, surprising, or the result of a real trade-off. Write them.
+4. **Flag ADR candidates**: surface decisions that are hard to reverse, surprising, or the result of a real trade-off. Write them.
 
-5. **Flag glossary updates** — any new domain terms or resolved naming conflicts. Write them.
+5. **Flag glossary updates**: any new domain terms or resolved naming conflicts. Write them.
 
-6. **Produce a plan** — step-by-step. Each step: what changes, in what order, why that order.
+6. **Produce a plan**: step-by-step. Each step: what changes, in what order, why that order.
 
 ## Output structure
 

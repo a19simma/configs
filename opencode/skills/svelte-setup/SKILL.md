@@ -12,7 +12,7 @@ Interview, then write the configuration. Rules come from the `svelte` skill. Rea
 
 ## 1. Interview
 
-Ask only what changes the output. Skip a question whose answer is already visible in the repo or was given in the request. Prefer `AskUserQuestion` — one call, all open questions at once.
+Ask only what changes the output. Skip a question whose answer is already visible in the repo or was given in the request. Prefer `AskUserQuestion`: one call, all open questions at once.
 
 | Question | Changes |
 | --- | --- |
@@ -30,7 +30,7 @@ State the file list before writing, then write them.
 
 ### `svelte.config.js`
 
-`vitePreprocess`, the chosen adapter, and nothing speculative. No preprocessor for CSS — Tailwind plus scoped `<style>` is the whole styling story, per `svelte/references/styling.md`.
+`vitePreprocess`, the chosen adapter, and nothing speculative. No preprocessor for CSS. Tailwind plus scoped `<style>` is the whole styling story, per `svelte/references/styling.md`.
 
 ### `vite.config.ts`
 
@@ -38,7 +38,7 @@ State the file list before writing, then write them.
 
 ### `src/app.d.ts`
 
-The `App.Locals` interface, typed with the request-scoped capabilities `hooks.server.ts` will attach. Write it at setup even if it starts nearly empty — it is the contract every `load` and action reads through, and the alternative people reach for when it is missing is a module singleton.
+The `App.Locals` interface, typed with the request-scoped capabilities `hooks.server.ts` will attach. Write it at setup even if it starts nearly empty. It is the contract every `load` and action reads through, and the alternative people reach for when it is missing is a module singleton.
 
 ### `src/hooks.server.ts`
 
@@ -46,15 +46,15 @@ The `App.Locals` interface, typed with the request-scoped capabilities `hooks.se
 
 ### `src/lib/server/`
 
-Create the directory with a `.gitkeep` or the first real module, and say what it is for: every credentialed client, database handle, and secret-reading module lives here, and SvelteKit fails the build if client code imports it. This is the one boundary the compiler enforces for you — use it from the first commit rather than moving things in later.
+Create the directory with a `.gitkeep` or the first real module, and state its purpose in the setup report: every credentialed client, database handle, and secret-reading module lives here, and SvelteKit fails the build if client code imports it. This is the one boundary the compiler enforces for you, so put server-only modules there from the first commit.
 
 ### `src/app.css`
 
-Tailwind v4: `@import "tailwindcss"` and an `@theme` block for the design tokens. No `tailwind.config.js` — v4 configures in CSS.
+Tailwind v4: `@import "tailwindcss"` and an `@theme` block for the design tokens. No `tailwind.config.js`; v4 configures in CSS.
 
 ### `src/routes/+layout.svelte`
 
-The shell. `{@render children()}` — a snippet, not a slot.
+The shell. `{@render children()}`: a snippet, not a slot.
 
 ### `src/routes/+error.svelte`
 
@@ -82,4 +82,4 @@ List what was written, then state explicitly:
 
 Same files, but do not overwrite silently. Read what is there, show a diff of the intended change, and get approval before touching a config the project already has.
 
-A Svelte 4 project is a migration, not a setup. Report what is on the old API — stores, slots, `on:` directives, `createEventDispatcher`, `use:` actions — with counts, and propose the migration as its own change. Do not start rewriting components inside a setup task.
+A Svelte 4 project is a migration. Report what is on the old API (stores, slots, `on:` directives, `createEventDispatcher`, `use:` actions) with counts, and propose the migration as its own change. Do not start rewriting components inside a setup task.

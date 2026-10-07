@@ -8,11 +8,11 @@ description: Scaffold a new TypeScript project from the typescript skill: short 
 
 Interview, then write the configuration. Rules come from the `typescript` skill. Read `typescript/references/packages.md` and `typescript/references/linting.md` before writing anything, and copy their current content rather than the examples in this file, which may lag.
 
-For a SvelteKit app, run this first and `svelte-setup` after — this one owns the compiler, the linter, and the dependency gate; that one owns everything Svelte.
+For a SvelteKit app, run this first and `svelte-setup` after. This one owns the compiler, the linter, and the dependency gate; that one owns everything Svelte.
 
 ## 1. Interview
 
-Ask only what changes the output. Skip a question whose answer is already visible in the repo or was given in the request. Prefer `AskUserQuestion` — one call, all open questions at once.
+Ask only what changes the output. Skip a question whose answer is already visible in the repo or was given in the request. Prefer `AskUserQuestion`: one call, all open questions at once.
 
 | Question | Changes |
 | --- | --- |
@@ -20,7 +20,7 @@ Ask only what changes the output. Skip a question whose answer is already visibl
 | Single package or workspace? | root `tsconfig` with project references and a `packages/*` layout, or one flat config |
 | Runtime: Node version, or browser too? | `lib`, `target`, `types`, whether `dom` is in scope |
 | Published to npm, or internal? | the `exports` field, `declaration`, `"private": true`, whether API surface gets a doc gate |
-| Does anything cross a trust boundary — env, forms, third-party HTTP? | whether `valibot` goes in at setup or waits |
+| Does anything cross a trust boundary: env, forms, third-party HTTP? | whether `valibot` goes in at setup or waits |
 | CI: GitHub Actions, or none? | whether to write `.github/workflows/ci.yml` |
 
 Defaults when the user says "just pick": single package, latest LTS Node, internal, GitHub Actions, `valibot` included.
@@ -31,15 +31,15 @@ State the file list before writing, then write them.
 
 ### `tsconfig.json`
 
-Copy the block from `typescript/references/linting.md` whole. `strict` plus the four required flags — `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `verbatimModuleSyntax` — are not negotiable and not a starting point to be relaxed later. In a workspace, a base config at the root and one `tsconfig.json` per package extending it, with `references` between them.
+Copy the block from `typescript/references/linting.md` whole. `strict` plus the four required flags (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `verbatimModuleSyntax`) are not negotiable and not a starting point to be relaxed later. In a workspace, a base config at the root and one `tsconfig.json` per package extending it, with `references` between them.
 
 Never add `skipLibCheck` to silence an error in your own code, and never weaken a flag to make an existing file compile. If a dependency's types do not check, that is a finding about the dependency.
 
 ### `eslint.config.js`
 
-Flat config, `tseslint.configs.strictTypeChecked` plus `stylisticTypeChecked`, with `projectService: true` so the type-aware rules actually run. From `typescript/references/linting.md`. Add the escape-hatch rules from that file's table: `@ts-ignore` banned, `@ts-expect-error` allowed with a description.
+Flat config, `tseslint.configs.strictTypeChecked` plus `stylisticTypeChecked`, with `projectService: true` so the type-aware rules actually run. From `typescript/references/linting.md`. Include its `linterOptions` block: `noInlineConfig: true` makes `eslint-disable*` inert. `@ts-*` directives are banned; `ban-ts-comment` enforces it.
 
-The layer rule from `typescript/references/architecture.md` is enforced here, as an import restriction — domain may not import adapters. Write it at setup, while there is nothing to fix.
+The layer rule from `typescript/references/architecture.md` is enforced here, as an import restriction: domain may not import adapters. Write it at setup, while there is nothing to fix.
 
 ### `.prettierrc` and `.prettierignore`
 
@@ -60,7 +60,7 @@ The five-command gate from `typescript/references/linting.md`:
 ```yaml
 - run: pnpm install --frozen-lockfile
 - run: pnpm exec tsc --noEmit
-- run: pnpm exec eslint .
+- run: pnpm exec eslint . --max-warnings 0
 - run: pnpm exec prettier --check .
 - run: pnpm exec vitest run
 ```
@@ -82,4 +82,4 @@ List what was written, then state explicitly:
 
 Same files, but do not overwrite silently. Read what is there, show a diff of the intended change, and get approval before touching a config the project already has.
 
-Turning on `strict` in a project that never had it will produce hundreds of errors. Do not do it in the setup change. Write the config with the flags on, report the error count, and propose fixing it per-directory in its own change. Banned packages already in `package.json` are reported as findings, not removed — ripping out `axios` is a refactor, not a setup step.
+Turning on `strict` in a project that never had it will produce hundreds of errors. Do not do it in the setup change. Write the config with the flags on, report the error count, and propose fixing it per-directory in its own change. Banned packages already in `package.json` are reported as findings, not removed. Ripping out `axios` is a refactor, not a setup step.

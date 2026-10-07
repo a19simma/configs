@@ -4,6 +4,9 @@
 let mise_shims = ($env.HOME | path join ".local" "share" "mise" "shims")
 if ($mise_shims | path exists) {
     $env.PATH = ($env.PATH | split row (char esep) | prepend $mise_shims | uniq)
+    # tmux sets $SHELL from default-shell, which is bash (see tmux.conf), so
+    # tools that spawn $SHELL would otherwise get bash instead of nu.
+    $env.SHELL = ($mise_shims | path join "nu")
 }
 # -----------------------------------------------------------------------------
 

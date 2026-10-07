@@ -16,10 +16,10 @@ Sources: [Routing](https://svelte.dev/docs/kit/routing), [Loading data](https://
 
 ## The boundary is the whole design
 
-> A server `load` function "must return data that can be serialized" — JSON-compatible values plus `BigInt`, `Date`, `Map`, `Set`, `RegExp`, and promises. A universal `load` function "can return an object containing any values, including things like custom classes and component constructors."
-> — [SvelteKit docs](https://svelte.dev/docs/kit/load)
+> A server `load` function "must return data that can be serialized": JSON-compatible values plus `BigInt`, `Date`, `Map`, `Set`, `RegExp`, and promises. A universal `load` function "can return an object containing any values, including things like custom classes and component constructors."
+> Source: [SvelteKit docs](https://svelte.dev/docs/kit/load)
 
-**Rule:** default to `+page.server.ts`. Reach for `+page.ts` only when you need the return value to carry something unserialisable, or the data genuinely must be fetched from the browser.
+**Rule:** default to `+page.server.ts`. Reach for `+page.ts` only when you need the return value to carry something unserialisable, or the data must be fetched from the browser.
 
 | Put it in server load | Put it in universal load |
 | --- | --- |
@@ -27,12 +27,13 @@ Sources: [Routing](https://svelte.dev/docs/kit/routing), [Loading data](https://
 | Anything reading a secret or `$env/static/private` | A component constructor chosen at runtime |
 | Anything a user must not see the mechanics of | A call to a public API where the round trip through our server is waste |
 
-`$lib/server/*` and `$env/*/private` cannot be imported into client code — SvelteKit fails the build. That is a guardrail, not a suggestion: put every credentialed client behind `$lib/server/` and the compiler enforces the boundary for you.
+`$lib/server/*` and `$env/*/private` cannot be imported into client code; SvelteKit fails the build, so put every credentialed client behind `$lib/server/` and the compiler enforces the boundary for you.
 
 ## Load functions
 
+**`+page.server.ts`:**
+
 ```ts
-// +page.server.ts
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, locals, depends }) => {
@@ -40,25 +41,25 @@ export const load: PageServerLoad = async ({ params, locals, depends }) => {
   if (!order) error(404, "Order not found");
   return {
     order,
-    // streamed: the page renders before this settles
     recommendations: getRecommendations(order.id),
   };
 };
 ```
 
 - Always type with the generated `./$types`. Never hand-write the argument type.
-- Pure. No writes to stores or globals — see `state.md`.
+- Pure. No writes to stores or globals. See `state.md`.
 - Use the `fetch` from the event, not the global one. It forwards cookies, resolves relative URLs, and lets SSR-fetched responses be inlined into the page instead of re-fetched on hydration.
-- Return a promise, unawaited, to stream slow non-critical data. Await only what the page cannot render without.
+- Return a promise, unawaited, to stream slow non-critical data. `recommendations` above streams: the page renders before it settles. Await only what the page cannot render without.
 - Declare dependencies with `depends()` and refresh with `invalidate()`. `invalidateAll()` is a blunt instrument; use it when you mean it.
-- Parent data comes from `await parent()`, and it serialises the loads — do not call it before the work that could run in parallel.
+- Parent data comes from `await parent()`, and it serialises the loads. Do not call it before the work that could run in parallel.
 
 ## Mutations: form actions
 
 **Rule:** every mutation is a form action or a remote function. Not `fetch` inside `onclick`.
 
+**`+page.server.ts`:**
+
 ```ts
-// +page.server.ts
 export const actions = {
   cancel: async ({ request, locals }) => {
     const data = await request.formData();
@@ -80,15 +81,15 @@ export const actions = {
 </form>
 ```
 
-- The form works with JavaScript disabled, and `use:enhance` upgrades it in place. This is why the pattern exists — you get the resilient version for free instead of building it twice.
-- `fail(status, data)` for validation failures; it returns the data to the page. `error()` for genuinely exceptional conditions; it renders `+error.svelte`.
+- The form works with JavaScript disabled, and `use:enhance` upgrades it in place. This is why the pattern exists: you get the resilient version for free instead of building it twice.
+- `fail(status, data)` for validation failures; it returns the data to the page. `error()` for exceptional conditions; it renders `+error.svelte`.
 - Never return sensitive data from an action; it is serialised into the page.
 - `redirect(303, ...)` after a successful mutation. 303 specifically, so the browser follows with GET.
 - Validate on the server, always, even where the client already did. The client check is a courtesy; the server check is the rule.
 
 ## Endpoints
 
-`+server.ts` is for non-page consumers: webhooks, a public JSON API, file downloads. Do not build a `+server.ts` to feed your own page — that is what `load` is for, and going through HTTP adds a round trip and loses type safety.
+`+server.ts` is for non-page consumers: webhooks, a public JSON API, file downloads. Do not build a `+server.ts` to feed your own page. That is what `load` is for, and going through HTTP adds a round trip and loses type safety.
 
 ```ts
 export const POST: RequestHandler = async ({ request }) => {
@@ -106,13 +107,13 @@ export const POST: RequestHandler = async ({ request }) => {
 
 ## Errors
 
-- `error(404, "message")` for expected HTTP failures — it is a control-flow throw SvelteKit understands.
+- `error(404, "message")` for expected HTTP failures. It is a control-flow throw SvelteKit understands.
 - Unexpected throws reach `handleError` in `hooks.server.ts`. Log with the cause chain there; return a message safe to render.
 - `+error.svelte` at the right level of the tree, so a failed panel does not blank the whole app.
 
 ## Performance
 
 - `export const prerender = true` on anything static. It is the cheapest possible page.
-- `export const ssr = false` only for a genuinely client-only route; it costs you first paint and indexability.
+- `export const ssr = false` only for a client-only route; it costs you first paint and indexability.
 - `data-sveltekit-preload-data` on navigation-heavy areas.
 - Stream slow, non-essential data rather than blocking the shell on it.

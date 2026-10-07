@@ -64,7 +64,7 @@ exit: <code>
 output:
 <trimmed stdout/stderr, key lines only>
 
-result: <one line — what end state now holds>
+result: <one line: what end state now holds>
 ```
 
 On bail-out, replace the whole block with:
@@ -73,11 +73,11 @@ On bail-out, replace the whole block with:
 attempted: <the goal>
 
 tried:
-- <command> — exit <code> — <exact error message>
-- <command> — exit <code> — <exact error message>
+- <command> (exit <code>): <exact error message>
+- <command> (exit <code>): <exact error message>
 (attempts: N/5)
 
-blocked by: <the wall — what the errors converge on>
+blocked by: <the wall: what the errors converge on>
 
 working so far: <the commands and setup that DID succeed, verbatim, ready to rerun>
 state left: <what exists on disk / what changed>

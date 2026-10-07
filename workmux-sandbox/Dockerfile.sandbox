@@ -24,12 +24,20 @@ FROM debian:trixie-slim
 # and the --no-install-recommends above drops it, leaving a daemon with no
 # client to talk to it.
 #
+# docker-buildx: docker-cli only recommends it too, so it is named here. It
+# installs to /usr/libexec/docker/cli-plugins, which docker-cli searches.
+#
 # tmux: the workmux installer hard-checks for it and logs `Missing required
 # dependencies: tmux` without it. Nothing in `sandbox shell`/`run` needs a
 # multiplexer today, but anything invoking workmux's own mux inside the
 # container does.
+#
+# libicu76: .NET aborts at startup without it, on `Couldn't find a valid ICU
+# package installed on the system`.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    libicu76 \
+    tinyproxy \
     ca-certificates \
     git \
     jq \
@@ -38,6 +46,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tmux \
     docker.io \
     docker-cli \
+    docker-buildx \
     && rm -rf /var/lib/apt/lists/*
 
 # Embed network init script (sets up iptables firewall, then drops privileges)
@@ -168,6 +177,14 @@ mkdir -p /cache/rust/registry /cache/rust/git
 # that succeeds on a retry. Under `set -e` that one failure killed the whole
 # container at startup, with the chmod error as the only clue.
 chmod -R 1777 /cache/rust || true
+# Runtime mise installs land in /cache/mise and run as the target uid. Older
+# images ran a mise shim as root at startup and left the tree root-owned on the
+# host, so hand it back once. The stat guard keeps the recursive chown off the
+# common path.
+mkdir -p /cache/mise/data /cache/mise/cache
+if [ "$(stat -c %u /cache/mise/data)" != "${WM_TARGET_UID}" ]; then
+    chown -R "${WM_TARGET_UID}:${WM_TARGET_GID}" /cache/mise || true
+fi
 
 # nushell config for `workmux sandbox shell -e -- nu`. Source of truth is the
 # read-only /opt/nushell mount; copied here because plain `nu` reads only
@@ -220,15 +237,23 @@ fi
 # workmux's sandbox-only ~/.claude-sandbox.json, never the real ~/.claude.json.
 CLAUDE_JSON=/tmp/.claude.json
 if [ -n "${PWD:-}" ]; then
-    if [ -f "$CLAUDE_JSON" ] && [ ! -w "$CLAUDE_JSON" ]; then
-        # The mount is a host file owned by the host user's uid. Under
-        # sysbox-runc the container sits in a private userns where that uid is
-        # unmapped, so the file appears as 65534 and not even container root can
-        # write it; virtiofs ignores the mode bits, so chmod 666 on the host
-        # does not help either. Skipping the pre-seed costs one trust prompt.
-        # Failing here killed the whole entrypoint with
-        # `/usr/local/bin/network-init.sh: line 156: /tmp/.claude.json: Permission denied`
-        # and no container at all, which is much worse.
+    # The mount is a host file owned by the host user's uid, and container root
+    # cannot write it under sysbox-runc. On macOS virtiofs it appears as 65534
+    # and nobody can. On Linux sysbox idmaps it to WM_TARGET_UID, which can,
+    # but root still gets `/usr/local/bin/network-init.sh: line 166:
+    # /tmp/.claude.json: Permission denied`. `[ -w ]` is no guard: dash answers
+    # true for root regardless. So probe and write as the target uid, and skip
+    # the pre-seed (one trust prompt) rather than kill the entrypoint.
+    #
+    # jq by absolute path: /usr/local/bin/jq is a mise shim, and running it as
+    # root here made mise create /tmp/.local/state/mise and /cache/mise as
+    # root, so every later `mise install` by the agent died on
+    # `failed create_dir_all: ~/.local/state/mise/trusted-configs`.
+    as_target() {
+        setpriv --reuid "${WM_TARGET_UID}" --regid "${WM_TARGET_GID}" \
+            --clear-groups "$@"
+    }
+    if [ -f "$CLAUDE_JSON" ] && ! as_target sh -c ': >> "$1"' _ "$CLAUDE_JSON" 2>/dev/null; then
         echo "network-init: $CLAUDE_JSON is read-only, skipping trust pre-seed" >&2
     elif [ -f "$CLAUDE_JSON" ]; then
         # Write through the file, never rename over it. /tmp/.claude.json is a
@@ -236,27 +261,14 @@ if [ -n "${PWD:-}" ]; then
         # entrypoint down with `mv: cannot move '/tmp/.claude.json.new' to
         # '/tmp/.claude.json': Device or resource busy`. `cat >` truncates in
         # place and keeps the inode, so the mount survives.
-        #
-        # The `! -w` guard above cannot be trusted to have caught the read-only
-        # case. As root, `-w` reports writable whenever the mode bits say so,
-        # while the actual write still fails under the userns and virtiofs
-        # layers, and sysbox hands each container a different subuid range, so
-        # the same mount is writable on one boot and not the next. That made the
-        # entrypoint die on roughly every other first start with
-        # `network-init.sh: line 166: /tmp/.claude.json: Permission denied`,
-        # cleared by simply running it again. Only attempting the write tells
-        # the truth, so let it fail soft here rather than gate on the test.
-        if jq --arg p "$PWD" '.projects[$p].hasTrustDialogAccepted = true' \
+        if /usr/bin/jq --arg p "$PWD" '.projects[$p].hasTrustDialogAccepted = true' \
             "$CLAUDE_JSON" > "${CLAUDE_JSON}.new"; then
-            # Redirections are processed left to right, so the group is what
-            # silences this: `> "$CLAUDE_JSON" 2>/dev/null` would fail on the
-            # first redirect and print before stderr was ever reassigned.
-            { cat "${CLAUDE_JSON}.new" > "$CLAUDE_JSON"; } 2>/dev/null \
-                || echo "network-init: $CLAUDE_JSON not writable, skipping trust pre-seed" >&2
+            as_target sh -c 'cat "$1" > "$2"' _ "${CLAUDE_JSON}.new" "$CLAUDE_JSON" \
+                || echo "network-init: $CLAUDE_JSON write failed, skipping trust pre-seed" >&2
         fi
         rm -f "${CLAUDE_JSON}.new"
     else
-        { jq -n --arg p "$PWD" \
+        { /usr/bin/jq -n --arg p "$PWD" \
             '{projects: {($p): {hasTrustDialogAccepted: true}}}' > "$CLAUDE_JSON"; } \
             2>/dev/null \
             || echo "network-init: could not create $CLAUDE_JSON, skipping trust pre-seed" >&2
@@ -356,6 +368,46 @@ fi
 NO_PROXY="$no_proxy"
 export no_proxy NO_PROXY
 
+# Local relay in front of the workmux CONNECT proxy. That proxy answers a
+# credential-less CONNECT with a bare 407 and no Proxy-Authenticate header.
+# curl sends the userinfo from HTTPS_PROXY up front and gets through, but .NET
+# 10 only sends proxy credentials in reply to a challenge (preAuthenticate is
+# hardcoded false for proxies in release/10.0), so `dotnet restore` dies on
+# `407 (Proxy Authentication Required)`. tinyproxy sends them on every request.
+# Claude's settings point every proxy variable at 127.0.0.1:3128 (see
+# managed-settings.json below); the allowlist is still enforced upstream.
+# Loopback is open in the iptables rules above.
+upstream="${HTTPS_PROXY:-${https_proxy:-}}"
+if [ -n "$upstream" ]; then
+    upstream="${upstream#*://}"
+    upstream="${upstream%/}"
+    cat > /tmp/tinyproxy.conf <<EOF
+Port 3128
+Listen 127.0.0.1
+Timeout 600
+PidFile "/tmp/tinyproxy.pid"
+LogFile "/tmp/tinyproxy.log"
+LogLevel Warning
+DisableViaHeader Yes
+Upstream http ${upstream}
+EOF
+    chown "${WM_TARGET_UID}:${WM_TARGET_GID}" /tmp/tinyproxy.conf
+    chmod 600 /tmp/tinyproxy.conf
+    setpriv --reuid "${WM_TARGET_UID}" --regid "${WM_TARGET_GID}" --clear-groups \
+        /usr/bin/tinyproxy -c /tmp/tinyproxy.conf \
+        || echo "network-init: tinyproxy failed to start, see /tmp/tinyproxy.log" >&2
+fi
+
+# MISE_SHIMS_DIR is /tmp/.local/bin, which starts empty in every container,
+# while the tools themselves persist on /cache. mise only reshims after an
+# install, so a tool some earlier sandbox installed is `already installed` and
+# never gets a shim: `dotnet: command not found` with dotnet sitting in
+# /cache/mise/data. Rebuild the shims once, as the target uid so they are not
+# root-owned. Non-fatal; a failure only costs the runtime-installed shims.
+setpriv --reuid "${WM_TARGET_UID}" --regid "${WM_TARGET_GID}" --clear-groups \
+    env HOME=/tmp /usr/local/bin/mise reshim \
+    || echo "network-init: mise reshim failed, runtime-installed tools not on PATH" >&2
+
 exec setpriv \
     --reuid "${WM_TARGET_UID}" \
     --regid "${WM_TARGET_GID}" \
@@ -381,6 +433,14 @@ RUN chmod +x /usr/local/bin/network-init.sh
 RUN cat <<'SCRIPT' > /usr/local/bin/wm-user
 #!/bin/bash
 set -euo pipefail
+
+# Root until the setpriv below, and the PATH workmux injects starts with
+# /tmp/.workmux-shims/bin and /tmp/.local/bin, both writable by the sandbox
+# user. A `chown` or `setpriv` planted there would run as root. Resolve the
+# root-side tools from system dirs only and hand the caller's PATH back to the
+# demoted command.
+caller_path="$PATH"
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
 # Docker allocates the exec'd PTY as root:tty 0620, so once privileges are
 # dropped the process cannot write to its own terminal and an interactive
@@ -420,7 +480,7 @@ exec setpriv \
     --regid "${WM_TARGET_GID}" \
     --groups "${GROUPS_ARG}" \
     --inh-caps=-all \
-    env HOME=/tmp WM_SANDBOX_USER=1 \
+    env HOME=/tmp WM_SANDBOX_USER=1 PATH="$caller_path" \
         no_proxy="$no_proxy" NO_PROXY="$NO_PROXY" "$@"
 SCRIPT
 RUN chmod +x /usr/local/bin/wm-user
@@ -712,44 +772,38 @@ RUN curl -fsSL https://claude.ai/install.sh | bash -s 2.1.289 && \
     # Container sets HOME=/tmp, so place a symlink to suppress the warning.
     mkdir -p /tmp/.local/bin && \
     ln -s /usr/local/bin/claude /tmp/.local/bin/claude && \
-    chmod 777 /tmp/.local
+    chmod 777 /tmp/.local /tmp/.local/bin
 
-# 0777 rather than a chown: the agent runs as a non-root uid workmux picks, so
-# there is no single owner to hand this to. Without it every runtime
-# `mise install` wrote its binary into /cache and then failed to place the shim,
-# leaving a tool that mise reported as installed and the shell reported as not
-# found.
-#
-# Not 1777. The sticky bit only lets you replace entries you own, and a reshim
-# renames a fresh copy of *every* shim over the existing one -- all of which
-# root created at build time. mise then died on the first of them:
-#
-#   failed to publish shim /usr/local/bin/.mise-shims-stage-XXXX/yq
-#   to /usr/local/bin/yq: Operation not permitted (os error 1)
-#
-# and never reached the tool being installed. The isolation the sticky bit buys
-# is worth little here anyway: one container, one agent, and the directory is
-# reachable only from inside it.
-RUN chmod 0777 /usr/local/bin
+# Managed settings outrank project settings, so a repo's .claude/settings.json
+# defaultMode can't drop the sandboxed agent back to manual. A policy-level
+# defaultMode also suppresses the 2.1.285 "make auto mode your default" dialog.
+# DISABLE_AUTOUPDATER because the image pins the version and the deny-network
+# rules make every update attempt fail with a startup banner.
+# The proxy variables route every command the agent runs through the tinyproxy
+# relay network-init.sh starts, both cases because NuGet reads only lowercase
+# http_proxy.
+# Below the Claude install, because the installer applies this env itself and
+# the relay only exists at runtime: the build died on
+# `connect ECONNREFUSED 127.0.0.1:3128`.
+RUN mkdir -p /etc/claude-code && \
+    printf '%s\n' '{"permissions":{"defaultMode":"bypassPermissions"},"env":{"DISABLE_AUTOUPDATER":"1","HTTP_PROXY":"http://127.0.0.1:3128","HTTPS_PROXY":"http://127.0.0.1:3128","http_proxy":"http://127.0.0.1:3128","https_proxy":"http://127.0.0.1:3128"}}' \
+        > /etc/claude-code/managed-settings.json
 
 # Runtime installs go to MISE_DATA_DIR=/cache/mise/data, so their shims land in
 # /cache/mise/data/shims, which is on neither the injected PATH nor any link
 # farm. The agent's bash is non-interactive with no rc file (HOME=/tmp, SHELL
 # unset), so no profile or shell hook can fix it. Point the shim output at
-# /usr/local/bin instead, the one writable directory already on PATH.
-#
-# It has to be a directory on the PATH *workmux injects*, not the image's. The
-# runtime replaces ENV PATH wholesale with
-#
-#   /tmp/.workmux-shims/bin:/tmp/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-#
-# so an `ENV PATH=...` here reaches `docker exec` and nothing else. Of those
-# entries /tmp/.workmux-shims/bin is a read-only mount and the rest are root
-# owned, which leaves /usr/local/bin once it is made writable below.
+# /tmp/.local/bin instead, which is on the injected PATH ahead of
+# /usr/local/bin and writable by the sandbox user. /usr/local/bin was the
+# earlier choice and is root-owned, so every runtime install died on
+# `Permission denied (os error 13) at path "/usr/local/bin/.mise-shims-stage-..."`
+# and the tool never reached PATH. Making /usr/local/bin writable instead would
+# let the agent replace wm-user, which docker exec runs as root. Reshim leaves
+# the claude symlink in /tmp/.local/bin alone; it only touches its own shims.
 #
 # Last line of the file, and it must stay last. Set any earlier and the claude
-# installer layer above triggers a mise reshim into /usr/local/bin while
+# installer layer above triggers a mise reshim into the shim dir while
 # MISE_DATA_DIR and RUSTUP_HOME still point at the empty runtime /cache paths.
 # mise then reads rust as uninstalled and prunes all 14 rust shims from the link
 # farm, leaving `cargo: not found` under the PATH workmux injects.
-ENV MISE_SHIMS_DIR=/usr/local/bin
+ENV MISE_SHIMS_DIR=/tmp/.local/bin

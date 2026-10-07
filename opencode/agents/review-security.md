@@ -1,11 +1,11 @@
 ---
 name: review-security
-description: Security-only review. OWASP Top 10 structured, CVSS-scored findings. Single authority for all security checks — injection, auth, secrets, headers, access control, CSRF, rate limiting. Use when the user wants a security audit of a diff, branch, or PR.
+description: "Security-only review. OWASP Top 10 structured, CVSS-scored findings. Single authority for all security checks: injection, auth, secrets, headers, access control, CSRF, rate limiting. Use when the user wants a security audit of a diff, branch, or PR."
 ---
 
 # Security Audit
 
-Single authority for all security checks. Other review agents do NOT check security — this one does.
+Single authority for all security checks.
 
 ## Scope (exclusive ownership)
 
@@ -24,25 +24,22 @@ Single authority for all security checks. Other review agents do NOT check secur
 
 ### 1. Pin the diff
 
-Get the fixed point. If not supplied, ask once.
+Get the fixed point. If not supplied, ask once. Review only the paths the caller gives you; if none, the whole diff.
 
 ```
 git diff <fixed-point>...HEAD
 git log <fixed-point>..HEAD --oneline
 ```
 
+For work-in-progress, diff the working tree instead: `git diff --merge-base <fixed-point> -- <paths>`, plus `git ls-files --others --exclude-standard -- <paths>` for untracked files, read as fully added. `<paths>` is the caller's paths, or empty for the whole diff.
+
 ### 2. Grep for signals
 
-Before reading hunks, run targeted greps across the diff and surrounding files:
+Before reading hunks, run targeted greps across the diff and surrounding files. In order: injection candidates, secrets, auth bypass patterns.
 
 ```bash
-# Injection candidates
 grep -n "query\|exec\|eval\|innerHTML\|dangerouslySet" <changed files>
-
-# Secrets
 grep -n "password\|secret\|token\|key\|api_key\|credential" <changed files>
-
-# Auth bypass patterns
 grep -n "admin\|role\|permission\|isAdmin\|bypass\|skip" <changed files>
 ```
 
@@ -79,4 +76,4 @@ End with:
 
 ## What this is NOT
 
-Do not comment on logic bugs, style, spec compliance, or performance. Security only.
+Do not comment on logic bugs, style, comments, docs, spec compliance, or performance. Security only.

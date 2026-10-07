@@ -57,13 +57,14 @@ zoxide = "0.10.0"
 # single list beats two lists that have to be bumped in lockstep.
 go       = "1.27.0"
 usage    = "6.4.0"     # powers mise shell completions
-jq       = "1.8.2"
+jq       = "latest"
 yq       = "4.53.6"
 fd       = "10.4.2"
 bat      = "0.26.1"
 eza      = "0.23.5"
 act      = "0.2.89"
 gitleaks = "8.30.1"
+aspire = "13.6.0"
 
 [settings]
 # Most of these tools resolve version lists by asking the GitHub releases API.

@@ -1,6 +1,6 @@
 # Style and Smells
 
-Sources: [The Rust Book](https://doc.rust-lang.org/book/), [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/checklist.html), [Rust Design Patterns — anti-patterns](https://rust-unofficial.github.io/patterns/anti_patterns/index.html), [Clippy lint index](https://rust-lang.github.io/rust-clippy/master/index.html).
+Sources: [The Rust Book](https://doc.rust-lang.org/book/), [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/checklist.html), [Rust Design Patterns: anti-patterns](https://rust-unofficial.github.io/patterns/anti_patterns/index.html), [Clippy lint index](https://rust-lang.github.io/rust-clippy/master/index.html).
 
 ## Naming (API Guidelines C-CASE, C-CONV, C-GETTER)
 
@@ -19,11 +19,12 @@ Iterator triple: `iter()`, `iter_mut()`, `into_iter()` (C-ITER).
 
 ## Signatures
 
+**Smell:**
 ```rust
-// smell
 fn load(path: String, names: &Vec<String>) -> Result<String, String>
-
-// idiomatic
+```
+**Idiomatic:**
+```rust
 fn load(path: impl AsRef<Path>, names: &[String]) -> Result<Config, LoadError>
 ```
 
@@ -46,28 +47,30 @@ fn load(path: impl AsRef<Path>, names: &[String]) -> Result<Config, LoadError>
 
 ## Control flow
 
+**Smell:** `match` on `Option` to unwrap it.
 ```rust
-// smell: match on Option to unwrap
 let cfg = match maybe_cfg { Some(c) => c, None => return Err(E::Missing) };
-// idiomatic
+```
+**Idiomatic:**
+```rust
 let Some(cfg) = maybe_cfg else { return Err(E::Missing) };
 ```
 
 - `if let` / `let else` over single-arm `match`.
 - Iterator adapters over index loops; but a `for` loop beats a 5-adapter chain nobody can read.
 - `?` everywhere; `.map_err(...)` only where context is added.
-- Avoid `impl Deref` for inheritance-flavoured reuse — documented anti-pattern (`Deref` polymorphism).
+- Avoid `impl Deref` for inheritance-flavoured reuse; it is a documented anti-pattern (`Deref` polymorphism).
 
 ## Documented anti-patterns
 
-- **`clone()` to satisfy the borrow checker** — hides a design problem, costs allocations.
-- **`#[deny(warnings)]` in source** — breaks downstream builds on new compiler releases. Put denials in CI flags instead.
-- **`Deref` polymorphism** — `Deref` is for smart pointers, not inheritance.
-- **Stringly-typed APIs** — no compile-time checking, no exhaustiveness.
-- **Premature `async`** — async in a CPU-bound or single-shot CLI buys complexity, not throughput.
+- **`clone()` to satisfy the borrow checker**: hides a design problem, costs allocations.
+- **`#[deny(warnings)]` in source**: breaks downstream builds on new compiler releases. Put denials in CI flags instead.
+- **`Deref` polymorphism**: `Deref` is for smart pointers, not inheritance.
+- **Stringly-typed APIs**: no compile-time checking, no exhaustiveness.
+- **Premature `async`**: async in a CPU-bound or single-shot CLI buys complexity, not throughput.
 
 ## Alternatives worth choosing between
 
-1. **Newtype vs raw primitives.** `struct UserId(u64)` costs nothing at runtime, blocks arg-order bugs. Pick raw primitives only for genuinely local scratch values. [Newtype pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/newtype.html)
+1. **Newtype vs raw primitives.** `struct UserId(u64)` costs nothing at runtime, blocks arg-order bugs. Pick raw primitives only for local scratch values. [Newtype pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/newtype.html)
 2. **Builder vs typestate builder.** Plain builder = runtime error on missing field; typestate builder = compile error, at the cost of generic noise. Use typestate only for constructors with hard required-field invariants. [greyblake: builder with typestate](https://www.greyblake.com/blog/builder-with-typestate-in-rust/)
-3. **Hand-written impls vs a `macro_rules!` of your own.** Newtype and builder boilerplate is repetitive enough to justify a local declarative macro (see `architecture.md` for the `impl_from!` pattern). Derive crates — `derive_more`, `bon`, `strum` — are not allowed; a `macro_rules!` in the crate does the same job with no dependency and no proc-macro compile cost.
+3. **Hand-written impls vs a `macro_rules!` of your own.** Newtype and builder boilerplate is repetitive enough to justify a local declarative macro (see `architecture.md` for the `impl_from!` pattern). Derive crates (`derive_more`, `bon`, `strum`) need permission; a `macro_rules!` in the crate does the same job with no dependency and no proc-macro compile cost.

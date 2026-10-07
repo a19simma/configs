@@ -18,15 +18,7 @@ $env.config = {
         osc7: true
         osc8: true
         osc9_9: false
-        # Semantic prompt marks (133;A/B/C/D). Nushell defaults this to true.
-        # It was off here to dodge a WezTerm buffer-scroll-on-keypress bug, but
-        # that one is Windows/conpty-only (wezterm#5859, nushell#5585) and this
-        # config runs on macOS. Off also disabled click-to-cursor, which
-        # reedline gates on the same flag.
-        #
-        # tmux consumes the marks itself to power copy-mode next-prompt /
-        # previous-prompt; see tmux/tmux.conf.
-        osc133: true
+        osc133: ("TMUX" in $env)
         osc633: true
         reset_application_mode: true
     }

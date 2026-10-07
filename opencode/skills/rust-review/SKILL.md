@@ -6,7 +6,7 @@ description: Review a Rust diff against the rust skill: dependency allowlist, er
 
 # Rust Review
 
-Reviews Rust against the conventions in the `rust` skill. **That skill is the rule source — this one is the procedure.** Supersedes the generic `code-review` skill for Rust changes; do not run both. Do not invent rules here; if a rule is missing there, say so and propose it as a rule change rather than flagging it as a violation.
+Reviews Rust against the conventions in the `rust` skill. **That skill is the rule source; this one is the procedure.** Supersedes the generic `code-review` skill for Rust changes; do not run both. Do not invent rules here; if a rule is missing there, say so and propose it as a rule change rather than flagging it as a violation.
 
 ## Procedure
 
@@ -21,20 +21,21 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --doc
 cargo machete
-cargo deny check          # fails on any banned crate; deny.toml must exist
+cargo deny check
 ```
-Run tests via the `test` subagent, not directly. Anything a tool found is not a human finding — report the tool output and move on. Human attention goes only to what tools cannot see.
+`cargo deny check` fails on any crate in the `deny` list, and `deny.toml` must exist.
+Run tests via the `test` subagent, not directly. Anything a tool found is not a human finding: report the tool output and move on. Human attention goes only to what tools cannot see.
 
-### 2. Dependency gate — blocking
+### 2. Dependency gate (blocking)
 
 Diff `Cargo.toml` / `Cargo.lock`. For each added dependency, check `rust/references/crates.md`.
 
 - `anyhow`, `thiserror`, `eyre`, `color-eyre`, `miette`, `snafu` → **BLOCKER**, unconditionally. Not approvable.
-- No `deny.toml` at the workspace root, or a banned crate missing from its `deny` list → finding.
-- `log`, `env_logger`, `once_cell` or `lazy_static` as a **direct** dependency → **BLOCKER**. These cannot be caught by `deny.toml` (they arrive transitively throughout the ecosystem), so this check is the only enforcement. Transitive occurrences are fine and expected.
+- No `deny.toml` at the workspace root, or a crate named in **Never allowed** (other than `log`, `once_cell` and `lazy_static`) or **Rejected, with reasons** missing from its `deny` list → finding.
+- `log`, `once_cell` or `lazy_static` as a **direct** dependency → **BLOCKER**. `deny.toml` cannot catch these (they arrive transitively throughout the ecosystem), so this check is the only enforcement. Transitive occurrences are fine.
 - `tracing-subscriber` with `default-features = false` and no explicit `tracing-log` feature → finding. Drops the `LogTracer` bridge, so every dependency's `log` output disappears silently.
 - `tracing` with the `log` or `log-always` feature enabled → finding.
-- Not on the allowlist and no express permission in this conversation → **BLOCKER**, no exceptions, no "it's small". Check both **Core** and **Core — std gaps** (`rand`, `regex`, `uuid`, `jiff`/`chrono`) before flagging.
+- Not on the allowlist and no express permission in this conversation → **BLOCKER**, no exceptions, no "it's small". Check both **Core** and **Core: std gaps** (`rand`, `regex`, `uuid`, `jiff`/`chrono`) before flagging.
 - Two date crates, or two of `regex`/`regex-lite`, in one workspace → finding. One per job.
 - Any web framework other than `axum` → **BLOCKER**.
 - On the allowlist but with `features = ["full"]` or missing `default-features = false` → finding.
@@ -47,18 +48,18 @@ Load one reference file per pass.
 
 | Pass | Reference | Looking for |
 | --- | --- | --- |
-| Errors | `rust/references/errors.md` | untyped returns (`String`, `Box<dyn Error>`) where the set is closed; `BoxError` outside an open-set boundary or without a comment justifying it; missing `#[non_exhaustive]` on a public error enum; `Display` that also prints its `source` (duplicated chain); uppercase or trailing-punctuation messages; `From` impls that skip a layer; a fat variant unboxed in a crate-wide enum; public fallible fn with no `# Errors` doc; callers writing `_ => unreachable!()` (split signal) |
+| Errors | `rust/references/errors.md` | untyped returns (`String`, `Box<dyn Error>`) where the set is closed; `BoxError` outside an open-set boundary; missing `#[non_exhaustive]` on a public error enum; `Display` that also prints its `source` (duplicated chain); uppercase or trailing-punctuation messages; `From` impls that skip a layer; a fat variant unboxed in a crate-wide enum; callers writing `_ => unreachable!()` (split signal) |
 | Style | `rust/references/style-and-smells.md` | naming/conversion prefixes, `&String`/`&Vec`, `Result<_, String>`, clone-to-appease-borrowck, stringly-typed fields, bool params, `unwrap` in libs |
-| Architecture | `rust/references/architecture.md` | inward-pointing deps, privacy/re-exports, errors in `src/error.rs` re-exported from the root; error enum granularity — one per crate by default, split only on a stated trigger, sub-enums composing upward via `From`; a split that narrows a public signature is a semver break, newtypes at boundaries, async leaking into the domain, `dyn` vs generics |
-| Testing | `rust/references/testing.md` | new behaviour without a test, tests asserting on privates or `Display` strings, integration tests that mock the thing under test, missing `// SAFETY:`/panic docs |
-| Lints | `rust/references/linting.md` | new `#![allow]` without a reason, lint config drift, `#[deny(warnings)]` in source |
+| Architecture | `rust/references/architecture.md` | inward-pointing deps, privacy/re-exports, errors in `src/error.rs` re-exported from the root; error enum granularity (one per crate by default, split only on a stated trigger, sub-enums composing upward via `From`); a split that narrows a public signature is a semver break, newtypes at boundaries, async leaking into the domain, `dyn` vs generics |
+| Testing | `rust/references/testing.md` | new behaviour without a test, tests asserting on privates or `Display` strings, integration tests that mock the thing under test |
+| Lints | `rust/references/linting.md` | lint config drift, `#[deny(warnings)]` in source |
 
 ### 4. Verify before reporting
 
 Every finding must survive:
 1. **Cite the rule.** File + rule name from the `rust` skill. No citation → not a finding.
 2. **Concrete failure.** Name inputs or a change that makes it break, or state plainly that it is a convention violation with no runtime consequence.
-3. **Read the surrounding code.** A `clone()` next to a comment explaining the borrow is not a finding.
+3. **Read the surrounding code.** A `clone()` whose borrow reason the types make evident is not a finding.
 
 Drop anything that fails these. A false positive costs more trust than a missed nit.
 
@@ -79,13 +80,14 @@ Findings only, most severe first, `file.rs:line` for each:
 BLOCKER  src/store.rs:42  Unapproved dependency `dashmap` added in Cargo.toml:18
   Rule:    crates.md, allowlist; dashmap listed under "not allowed without permission"
   Failure: no approval in this conversation
-  Fix:     std HashMap behind a Mutex, or request approval with the stated justification form
+  Fix:     std HashMap owned by one task behind an mpsc channel, or request approval with the stated justification form
 ```
 
 End with a one-line verdict: `PASS`, `PASS WITH MINORS`, or `BLOCKED (n blockers)`.
 
 ## Constraints
 
+- **Docs belong to `review-docs`.** Comments, doc comments, `# Errors`/`# Panics`/`# Safety` sections and lint suppressions (`#[allow]`, `#[expect]`) go there. Do not report them here.
 - **Read only.** Suggested changes are minimal snippets with locations.
 - Do not restate what clippy already printed.
 - No praise section. Silence is the pass signal.

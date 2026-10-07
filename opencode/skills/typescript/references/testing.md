@@ -1,6 +1,6 @@
 # Testing
 
-Sources: [Vitest](https://vitest.dev/guide/), [Playwright](https://playwright.dev/docs/intro), [Testing Library — guiding principles](https://testing-library.com/docs/guiding-principles/).
+Sources: [Vitest](https://vitest.dev/guide/), [Playwright](https://playwright.dev/docs/intro), [Testing Library: guiding principles](https://testing-library.com/docs/guiding-principles/).
 
 ## What to test
 
@@ -32,7 +32,7 @@ describe("orderTotal", () => {
 ```
 
 - The name states the behaviour and the condition. `it("works")` is not a test name.
-- Arrange, act, assert — with the blank lines. One act per test.
+- Arrange, act, assert, with the blank lines. One act per test.
 - No branching in a test. An `if` in a test means two tests, or a test that sometimes asserts nothing.
 - No `beforeEach` that builds shared mutable state. A builder function (`anOrder`) called per test is clearer and cannot leak between cases.
 
@@ -50,8 +50,8 @@ The test then names only what matters to it, and adding a required field to `Ord
 
 - `toEqual` for structural equality, `toBe` for identity and primitives. `toStrictEqual` where `undefined` properties and class identity matter.
 - Assert the whole value where you can. Six `expect(x.a)` lines miss the seventh field going wrong.
-- `await expect(p).rejects.toThrow(ConfigError)` for throws — never a bare `try`/`catch` with `expect(true)`.
-- Snapshots only for output that is genuinely large and genuinely stable, and reviewed like code when they change. An auto-updated snapshot nobody reads asserts nothing.
+- `await expect(p).rejects.toThrow(ConfigError)` for throws, never a bare `try`/`catch` with `expect(true)`.
+- Snapshots only for output that is large and stable, and reviewed like code when they change. An auto-updated snapshot nobody reads asserts nothing.
 
 ## Mocking
 
@@ -71,7 +71,7 @@ Sparingly, and at the boundary. A mock is a claim about how a collaborator behav
 
 ## End-to-end
 
-- Locate by user-visible semantics: `getByRole`, `getByLabel`, `getByText`. Fall back to `data-testid` only for genuinely unnamed elements — never CSS class selectors, which change with every restyle.
+- Locate by user-visible semantics: `getByRole`, `getByLabel`, `getByText`. Fall back to `data-testid` only for unnamed elements, never CSS class selectors, which change with every restyle.
 - Playwright's auto-waiting replaces retry loops. If a test needs an explicit wait, the app is missing a state the user could also not see.
 - Each spec sets up its own data and is independent of the others. Tests that must run in order are one test wearing a costume.
 - End-to-end covers the critical paths only: sign-in, checkout, the destructive action. Everything else is cheaper and more precise one layer down.

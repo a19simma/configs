@@ -19,6 +19,7 @@ Grounded in the [TypeScript Handbook](https://www.typescriptlang.org/docs/handbo
 | Which package for X? Is this one allowed? | `references/packages.md` |
 | Which package manager, and how do I harden installs against a compromised dependency? | `references/supply-chain.md` |
 | What compiler options and lints do I turn on? | `references/linting.md` |
+| How do I document this? What comments are allowed? | `references/docs.md` |
 
 Read only the file that answers the question. Do not preload them.
 
@@ -26,15 +27,15 @@ Writing Svelte components: read `svelte/SKILL.md` as well. It owns runes, reacti
 
 ## Non-negotiables
 
-1. **`strict: true` plus the four checks it does not include.** `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `verbatimModuleSyntax`. `strict` is a moving target by design — the Handbook says "Future versions of TypeScript may introduce additional stricter checking under this flag" — so take the upgrades rather than pinning around them. Config in `references/linting.md`.
-2. **`any` never ships.** `unknown` at every boundary, narrowed by a predicate or a schema parse. `@typescript-eslint/no-explicit-any` is an error, and an `// eslint-disable` needs a reason comment naming what makes the type genuinely unknowable.
-3. **No type assertions to paper over a mismatch.** `as` is allowed for a genuine narrowing the compiler cannot see, with a comment stating the invariant. `as any`, `as unknown as T`, and non-null `!` are banned outside tests. If the type is wrong, fix the type.
+1. **`strict: true` plus the four checks it does not include.** `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `verbatimModuleSyntax`. `strict` is a moving target by design. The Handbook says "Future versions of TypeScript may introduce additional stricter checking under this flag", so take the upgrades rather than pinning around them. Config in `references/linting.md`.
+2. **`any` never ships.** `unknown` at every boundary, narrowed by a predicate or a schema parse. `@typescript-eslint/no-explicit-any` is an error. It is never disabled inline.
+3. **No type assertions to paper over a mismatch.** `as` lives only inside a named type predicate or parser whose TSDoc states the invariant. `as any`, `as unknown as T`, and non-null `!` are banned outside tests. If the type is wrong, fix the type.
 4. **Make illegal states unrepresentable.** Discriminated unions and branded types over optional-field soups and stringly-typed fields. Four optional properties describe sixteen states; you meant three.
 5. **External data is parsed, never asserted.** Every HTTP response, `JSON.parse`, `process.env` read, and file load crosses the boundary through a schema. A typed fetch wrapper that lies is worse than an untyped one.
-6. **Errors are values in the domain layer.** Typed result unions for expected failure; `throw` reserved for bugs and truly exceptional conditions. Never `catch (e)` and continue without narrowing `e` — it is `unknown`, not `Error`. See `references/errors.md`.
-7. **Exported symbol without a doc comment is a bug** in any package consumed outside its own directory. Internal helpers need a comment only where the *why* is not obvious.
+6. **Errors are values in the domain layer.** Typed result unions for expected failure; `throw` reserved for bugs and truly exceptional conditions. Never `catch (e)` and continue without narrowing `e`: it is `unknown`, not `Error`. See `references/errors.md`.
+7. **Exported symbol without a doc comment is a bug** in any package consumed outside its own directory. Conventions in `references/docs.md`.
 8. **No new dependency without approval.** Only packages listed in `references/packages.md`, or expressly permitted by the user. Everything else: use the platform, write the twenty lines, or ask. Every project pins an allowlist gate in CI so the ban list is enforced by a check, not by a reviewer's memory.
-9. **`tsc --noEmit` + `eslint` + format check gate CI.** No exceptions merged without an `eslint-disable` carrying a reason comment. `@ts-ignore` is banned outright; `@ts-expect-error` with a reason is the only escape hatch, because it fails loudly once the underlying bug is fixed.
+9. **`tsc --noEmit` + `eslint` + format check gate CI.** Directive comments are banned: `@ts-ignore`, `@ts-expect-error`, `eslint-disable*`. Obey the rule, or scope it off in `eslint.config.*` with a `files` override.
 
 ## Reviewing
 

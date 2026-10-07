@@ -27,8 +27,11 @@ worktree_naming: basename
 # the two lists in sync; drift means the sandbox quietly has tools the host
 # session does not.
 #
-# --dangerously-skip-permissions is deliberately absent: the sandbox gets
-# permissions.defaultMode: bypassPermissions from its settings.json instead.
+# --dangerously-skip-permissions is absent because workmux adds it to the
+# `<agent>` pane itself. Keep defaultMode out of the sandbox settings.json:
+# since 2.1.285 a user-settings defaultMode triggers a blocking one-time
+# "make auto mode your default" dialog at startup. The image sets bypass in
+# /etc/claude-code/managed-settings.json instead (see Dockerfile.sandbox).
 agent: cc-sandbox
 
 agents:
@@ -59,14 +62,17 @@ windows:
   # after nushell/config.nu:87 and the `agents:` block above. All three have to
   # move together.
   #
-  # wm-user because a bare exec lands as root; see the box window below.
+  # wm-user because a bare exec lands as root; see the box window below. By
+  # absolute path: docker exec resolves it as root through a PATH that starts
+  # with sandbox-user-writable dirs, so a bare name can be hijacked.
   #
   # Via wm-sandbox-shell.sh, not `workmux sandbox shell -e` directly: workmux
   # starts every window at once, and `shell -e` fails if the agent window has
   # not created the container yet. Losing that race drops the pane to a host
   # shell that looks nearly identical, so it goes unnoticed. The wrapper polls
-  # for wm-<worktree>-* first. Absolute path because tmux runs pane commands
-  # through nushell and the wrapper is POSIX.
+  # for wm-<worktree>-* first. Full path because tmux runs pane commands
+  # through nushell and the wrapper is POSIX. `~` so the same path works on
+  # macOS and Linux; nushell expands it.
   #
   # Both agents run with HOME=/tmp and so share one /tmp/.claude.json. Last
   # writer wins on anything claude persists there, sessions and history
@@ -77,7 +83,7 @@ windows:
   - name: agent2
     panes:
       - command: >-
-          /Users/simon/repos/configs/scripts/wm-sandbox-shell.sh wm-user /opt/wm-bin/claude-pinned --tools
+          ~/repos/configs/scripts/wm-sandbox-shell.sh /usr/local/bin/wm-user /opt/wm-bin/claude-pinned --tools
           Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch
   # Host windows. sandbox.target below is 'agent', so of the windows above only
   # `agent` is containerised by workmux itself; `agent2` gets into the same
@@ -96,14 +102,15 @@ windows:
   # into the running container instead of starting a second one, so it shares
   # the agent's mounts, network rules and /cache.
   #
-  # No wm-user in the command: sandbox-env.nu demotes nu itself, so the wrapper
-  # would be redundant here. Any non-nu command given to `shell -e` still needs
-  # it spelled out, as agent2 above does.
+  # wm-user even though sandbox-env.nu demotes nu itself: nu is a mise shim, so
+  # mise runs as root before nu ever reads env.nu, and leaves a root-owned
+  # /tmp/.local/state/mise that fails every later `mise install` by the agent
+  # with `failed create_dir_all: ~/.local/state/mise/trusted-configs`.
   #
   # wm-sandbox-shell.sh for the startup race, same as agent2.
   - name: box
     panes:
-      - command: /Users/simon/repos/configs/scripts/wm-sandbox-shell.sh nu
+      - command: ~/repos/configs/scripts/wm-sandbox-shell.sh /usr/local/bin/wm-user nu
 
 sandbox:
   enabled: true
@@ -181,37 +188,11 @@ sandbox:
     # Read-only for the same reason: an agent definition is a prompt the model
     # executes, and these files are shared with the host agent.
     #
-    # Points at the repo, not ~/.claude/agents, because every entry in that
-    # directory is a stow symlink to an absolute /Users/simon/repos/configs
-    # path that is not mounted here. The links resolved on the host and dangled
-    # in the container, so `ls` showed nine agents and every read failed with
-    # ENOENT -- the agent reported only the built-in types and no researcher,
-    # runner or architect. Same failure the statusline script hit below.
+    # The repo dir, not ~/.claude/agents: that one holds stow symlinks to
+    # absolute ~/repos/configs paths, which dangle in the container,
+    # so claude silently loaded zero agents.
     - host_path: ~/repos/configs/opencode/agents
       guest_path: /tmp/.claude/agents
-      writable: false
-
-    # Status line script, mounted via its parent DIRECTORY rather than as a
-    # single file. The host's ~/.claude/statusline-command.sh is a stow symlink
-    # into ~/repos/configs, which cannot be mounted as-is: the link target is
-    # not in the container, so it would dangle. Mount the repo instead.
-    #
-    # Without this, agent_config_dir just holds a copy that was seeded once and
-    # then silently went stale, so the sandbox kept rendering an old status line
-    # after the real one changed.
-    #
-    # Was a direct file mount at /tmp/.claude/statusline-command.sh, which
-    # Docker accepts and Lima does not. `workmux add --config <lima overlay>`
-    # died before VM creation with
-    #   field `mounts[9].location` refers to a non-directory path
-    # Lima mounts directories only. A directory mount satisfies both backends,
-    # so this is not conditional on the backend in use.
-    #
-    # Its own guest path, not nested under /tmp/.claude: the directory also
-    # holds the host's settings.json, which must not shadow the sandbox's own.
-    # settings.json in agent_config_dir points statusLine.command here.
-    - host_path: ~/repos/configs/shell/.claude
-      guest_path: /opt/claude-host
       writable: false
 
     - host_path: ~/repos/configs/workmux-sandbox/bin
@@ -294,6 +275,10 @@ sandbox:
       - raw.githubusercontent.com
       # package registries
       - registry.npmjs.org
+      # node runtimes for mise, which fetches them from here. The image bakes no
+      # node, so without it every `node` pin fails on
+      # `tunnel error: unsuccessful`.
+      - nodejs.org
       # Playwright browser binaries. `npm i -D @playwright/test` needs neither
       # of these (1.63.0 ships no install/postinstall script, so the npm step
       # only touches registry.npmjs.org); `npx playwright install` needs them.
@@ -316,6 +301,17 @@ sandbox:
       - files.pythonhosted.org
       - proxy.golang.org
       - sum.golang.org
+      # .NET SDK for `mise install dotnet`, which fetches release metadata and
+      # tarballs from here. Without it the install dies on
+      # `tunnel error: unsuccessful` and the proxy logs
+      # `rejected: domain not in allowlist hostname="builds.dotnet.microsoft.com"`.
+      - builds.dotnet.microsoft.com
+      # dotnet-install.sh itself, fetched from dot.net before the redirect to
+      # builds.dotnet.microsoft.com.
+      - dot.net
+      # NuGet restore. doneai-mono's nuget.config clears every source but this
+      # one, so `dotnet restore` has nothing else to fall back to.
+      - api.nuget.org
       # rustup's dist server, for a toolchain a project pins but the image does
       # not bake. Without it `mise install` reports
       # `error sending request: tunnel error: unsuccessful`.
@@ -393,6 +389,14 @@ sandbox:
       # by a paas worktree on 2026-09-29.
       - dl.k8s.io
       - get.helm.sh
+
+      # Microsoft's container registry, for `FROM mcr.microsoft.com/...` base
+      # images in the nested dockerd. mcr.microsoft.com answers the manifest and
+      # redirects layer blobs to a regional host, westeurope.data.mcr.microsoft.com
+      # from here, rejected 14 times on 2026-10-07. The wildcard covers every
+      # region; it skips the base host, so both entries are needed.
+      - mcr.microsoft.com
+      - "*.data.mcr.microsoft.com"
 
       # shadcn-svelte's component registry. `npx shadcn-svelte@latest add <x>`
       # fetches the component JSON from https://shadcn-svelte.com/registry/...

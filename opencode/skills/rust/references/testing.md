@@ -2,7 +2,7 @@
 
 Sources: [The Rust Book ch.11](https://doc.rust-lang.org/book/ch11-00-testing.html), [ch.11.3 test organization](https://doc.rust-lang.org/book/ch11-03-test-organization.html).
 
-Crate choices live in `crates.md` § Profile: testing — that file is authoritative. This one covers how to test, not what to depend on.
+Crate choices live in `crates.md` § Profile: testing, and that file is authoritative. This one covers how to test, not what to depend on.
 
 ## Layout (Book ch.11.3)
 
@@ -12,7 +12,7 @@ Crate choices live in `crates.md` § Profile: testing — that file is authorita
 | Integration | `tests/*.rs`, each file = own crate | only `pub` API | contracts, wiring |
 | Doc | `///` examples | public API | docs that cannot rot; run by `cargo test` |
 
-Shared integration helpers go in `tests/common/mod.rs` (a directory module — not `tests/common.rs`, which would compile as its own test binary).
+Shared integration helpers go in `tests/common/mod.rs` (a directory module, not `tests/common.rs`, which would compile as its own test binary).
 
 Binary crates: put logic in `src/lib.rs`, keep `src/main.rs` a shell. Integration tests cannot import a binary crate.
 
@@ -31,12 +31,13 @@ mod tests {
 
     #[test]
     fn parse_config_reports_missing_key() -> Result<(), Box<dyn std::error::Error>> {
-        let cfg = Config::parse("port = 8080")?;   // `?` in tests instead of unwrap
+        let cfg = Config::parse("port = 8080")?;
         assert_eq!(cfg.port, 8080);
         Ok(())
     }
 }
 ```
+- A test that returns `Result` uses `?` instead of `unwrap`.
 - One behaviour per test; name = the assertion (`rejects_empty_username`), not `test_1`.
 - `assert!(matches!(..))` for enum errors; never assert on `Display` strings unless the string *is* the contract.
 - `#[should_panic(expected = "...")]` only for real panic contracts.
@@ -44,19 +45,19 @@ mod tests {
 
 ## Integration test shape
 
+**`tests/api.rs`:**
 ```rust
-// tests/api.rs
 mod common;
 
 #[tokio::test]
 async fn create_then_fetch_user() {
-    let app = common::spawn_app().await;      // real router, ephemeral port, throwaway DB
+    let app = common::spawn_app().await;
     let created = app.post_user("ada").await;
     let fetched = app.get_user(created.id).await;
     assert_eq!(fetched.name, "ada");
 }
 ```
-Real dependencies (containerised DB) over mocks at this level. Mocks at the integration layer test your mock.
+`spawn_app` starts the real router on an ephemeral port against a throwaway DB. Real dependencies (containerised DB) over mocks at this level. Mocks at the integration layer test your mock.
 
 ## Crates
 
@@ -119,8 +120,9 @@ cargo fmt --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo nextest run --all-features
 cargo test --doc
-cargo llvm-cov --workspace --fail-under-lines 70   # optional
+cargo llvm-cov --workspace --fail-under-lines 70
 ```
+The coverage gate is optional.
 
 ## Alternatives worth choosing between
 

@@ -5,6 +5,9 @@ skills:
   - researcher
 mcpServers:
   - context7
+permission:
+  webfetch: allow
+  websearch: allow
 ---
 
 # Researcher

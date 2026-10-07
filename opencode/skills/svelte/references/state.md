@@ -1,6 +1,6 @@
 # State Placement
 
-Sources: [SvelteKit — state management](https://svelte.dev/docs/kit/state-management), [Svelte — context](https://svelte.dev/docs/svelte/context), [`$state`](https://svelte.dev/docs/svelte/$state).
+Sources: [SvelteKit: state management](https://svelte.dev/docs/kit/state-management), [Svelte: context](https://svelte.dev/docs/svelte/context), [`$state`](https://svelte.dev/docs/svelte/$state).
 
 ## The ladder
 
@@ -22,19 +22,21 @@ Rung 5 is underused. Filters, tabs, pagination, and search terms belong in the q
 This is the one that causes incidents.
 
 > "Browsers are _stateful_ — state is stored in memory as the user interacts with the application. Servers, on the other hand, are _stateless_"
-> — [SvelteKit docs](https://svelte.dev/docs/kit/state-management)
+> Source: [SvelteKit docs](https://svelte.dev/docs/kit/state-management)
 
 A module-level variable on the server is shared by every concurrent request in that process. The docs' own example: if Alice submits sensitive information and Bob requests the page afterwards, Bob gets Alice's data.
 
+**Banned** (`user.svelte.ts`): one `user` for the whole server process.
+
 ```ts
-// BANNED: user.svelte.ts — one `user` for the whole server process
 export const user = $state<{ current: User | undefined }>({ current: undefined });
 ```
 
-**Rule:** no module-scope mutable state that is reachable during SSR. Two safe shapes:
+**Rule:** no module-scope mutable state that is reachable during SSR. Two safe shapes.
+
+**1. A factory**, instantiated per component tree and put in context:
 
 ```ts
-// 1. A factory, instantiated per component tree and put in context
 export function createCartState() {
   let items = $state<Item[]>([]);
   return {
@@ -45,17 +47,19 @@ export function createCartState() {
 }
 ```
 
+**2. Client-only state**, guarded, for things that cannot exist on a server:
+
 ```ts
-// 2. Genuinely client-only state, guarded, for things that cannot exist on a server
 import { browser } from "$app/environment";
 ```
 
-Note the getter in shape 1. Runes are not values, so you cannot return `items` and keep it reactive — you return an object whose getters read it at access time.
+Note the getter in shape 1. Runes are not values, so you cannot return `items` and keep it reactive; you return an object whose getters read it at access time.
 
 ## Context is the safe global
 
+**`cart.svelte.ts`:**
+
 ```ts
-// cart.svelte.ts
 import { getContext, setContext } from "svelte";
 const KEY = Symbol("cart");
 
@@ -63,7 +67,7 @@ export function provideCart() { return setContext(KEY, createCartState()); }
 export function useCart(): ReturnType<typeof createCartState> { return getContext(KEY); }
 ```
 
-Called in `+layout.svelte`, consumed anywhere below. State is created per component tree, which means per request on the server — that is the whole point, and why context exists rather than a module singleton.
+Called in `+layout.svelte`, consumed anywhere below. State is created per component tree, which means per request on the server.
 
 - The key is a `Symbol`, not a string, so it cannot collide.
 - `setContext` only during component initialisation, never in a handler or an effect.
@@ -73,13 +77,17 @@ Called in `+layout.svelte`, consumed anywhere below. State is created per compon
 
 The docs are direct: do not write to stores or global state inside `load`, even when it seems convenient. Return the data.
 
-```ts
-// smell: on the server this writes into shared state; on the client it races navigation
-export const load: PageLoad = async ({ fetch }) => {
-  currentUser.set(await getUser(fetch));   // no
-};
+**Smell:** on the server this writes into shared state; on the client it races navigation.
 
-// idiomatic
+```ts
+export const load: PageLoad = async ({ fetch }) => {
+  currentUser.set(await getUser(fetch));
+};
+```
+
+**Idiomatic:**
+
+```ts
 export const load: PageLoad = async ({ fetch }) => ({ user: await getUser(fetch) });
 ```
 

@@ -17,6 +17,7 @@ Grounded in the [Svelte docs](https://svelte.dev/docs/svelte/overview), [SvelteK
 | Routing, loading data, forms, server vs client | `references/sveltekit.md` |
 | How do I style this? | `references/styling.md` |
 | How do I test this? | `references/testing.md` |
+| How do I document this? What comments are allowed? | `references/docs.md` |
 
 Read only the file that answers the question. Do not preload them.
 
@@ -29,15 +30,15 @@ This skill sits on top of `typescript/SKILL.md`, which owns types, module layout
 1. **Svelte 5 runes only.** No `export let`, no `$:` reactive statements, no `on:click`, no `svelte/store` in new code. Runes are compiler symbols, not functions:
 
    > "They're not values — you can't assign them to a variable or pass them as arguments to a function"
-   > — [svelte.dev](https://svelte.dev/docs/svelte/what-are-runes)
+   > Source: [svelte.dev](https://svelte.dev/docs/svelte/what-are-runes)
 
-2. **`$derived` for anything computed. `$effect` only for leaving Svelte.** An effect that sets state is almost always a `$derived` written wrong. Effects exist "for things like calling third-party libraries, drawing on `<canvas>` elements, or making network requests" — synchronising one piece of state to another is not on that list. See `references/runes.md`.
+2. **`$derived` for anything computed. `$effect` only for leaving Svelte.** An effect that sets state is a `$derived` written wrong until proven otherwise. Effects exist "for things like calling third-party libraries, drawing on `<canvas>` elements, or making network requests". Synchronising one piece of state to another is not on that list. See `references/runes.md`.
 3. **No shared mutable state at module scope on the server.** A `let` in a `.svelte.ts` module is one variable for every concurrent user of the process. Alice's data reaches Bob. Request-scoped state goes through `load` return values or `setContext`. See `references/state.md`.
 4. **`load` functions are pure.** They return data. They do not write to stores, mutate globals, or perform side effects.
 5. **The server/client boundary is explicit and deliberate.** `+page.server.ts` "always run[s] on the server"; `+page.ts` runs "both on the server and in the browser". Secrets, database access, and `$env/static/private` exist only on the server side of that line, enforced by the compiler.
 6. **Mutations go through form actions or remote functions, not `fetch` in an event handler.** Progressive enhancement is the default, not a retrofit.
 7. **Props are typed and read-only.** `let { x }: Props = $props()` with an explicit `interface Props`. A child never mutates a prop; it calls a callback, or the parent uses `$bindable` deliberately.
-8. **Styles are scoped `<style>` or Tailwind utilities.** No global CSS outside the one app-level stylesheet, no `:global` without a comment saying why.
+8. **Styles are scoped `<style>` or Tailwind utilities.** Global CSS lives only in the app-level stylesheet. `:global` appears only inside a boundary component (e.g. one wrapping `{@html}` output) whose `@component` doc states the boundary.
 9. **`svelte-check --fail-on-warnings` gates CI**, beside `tsc --noEmit`. `tsc` cannot see inside `.svelte` files.
 
 ## Reviewing
