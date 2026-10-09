@@ -198,6 +198,9 @@ stow -t ~/.config/sesh      sesh      --adopt
 # with a warning. The file is named global.toml so that never happens, and is
 # linked to the global path by hand.
 ln -sfn ../../repos/configs/mise/global.toml ~/.config/mise/config.toml
+mkdir -p "$HOME/Library/Application Support/vale"
+ln -sfn "$HOME/repos/configs/vale/global.ini" "$HOME/Library/Application Support/vale/.vale.ini"
+if command -v vale >/dev/null; then vale sync --config "$HOME/Library/Application Support/vale/.vale.ini"; fi
 stow -t ~/.config/workmux   workmux   --adopt
 
 echo "Linking Claude Code configs to OpenCode configs..."

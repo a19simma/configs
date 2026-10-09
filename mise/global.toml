@@ -38,6 +38,7 @@ gh = "2.98.0"
 "github:joshmedeski/sesh" = "2.30.1"
 "github:raine/workmux" = "0.1.262"
 "github:rtk-ai/rtk" = "0.45.0"
+"github:vale-cli/vale" = "3.24.0"
 # Pinned for the same reason, plus one of its own: the container sandbox loads
 # this file as a project config, and resolving "latest" there needs a GitHub
 # releases lookup that the sandbox proxy refuses. Every sandbox command printed

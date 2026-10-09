@@ -31,6 +31,9 @@ export PATH=$BUN_INSTALL/bin:$PATH
 # webinstalls
 export PATH=/root/.local/bin:$PATH
 
+# mise shims
+export PATH="$HOME/.local/share/mise/shims:$PATH"
+
 bind 'set bell-style none'
 
 export NVM_DIR="$HOME/.config/nvm"

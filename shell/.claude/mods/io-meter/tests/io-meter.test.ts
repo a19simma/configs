@@ -42,6 +42,8 @@ test('band shows context, api split and slowest tools', async ($, on) => {
   await run($.tool.call({ tool: 'Bash', command: 'sleep 3' } as never))
   await run($.tool.call({ tool: 'Read', file_path: '/etc/hosts' } as never))
   await run($.tool.call({ tool: 'Agent', description: 'x', prompt: 'y' } as never))
+  await run($.tool.call({ tool: 'mcp__plane__issue_create', title: 'a' } as never))
+  await run($.tool.call({ tool: 'mcp__plane__issue_list', query: 'b' } as never))
 
   const drain = async (s: AsyncIterable<unknown>) => {
     for await (const _ of s) void _
@@ -71,6 +73,8 @@ test('band shows context, api split and slowest tools', async ($, on) => {
     expect(shown).toMatch(/Bash 6\.0s \(3\.0s\)/)
     expect(shown).toMatch(/Read 0\.2s \(0\.2s\)/)
     expect(shown).not.toMatch(/Agent/)
+    expect(shown).toMatch(/│ plane 0\.4s \(0\.2s\)/)
+    expect(shown).not.toMatch(/mcp__/)
     await ui.unmount()
   }
 })

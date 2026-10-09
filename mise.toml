@@ -30,6 +30,9 @@ stow -t ~/.config/sesh sesh --adopt
 # linked to the global path by hand.
 mkdir -p ~/.config/mise
 ln -sfn ../../repos/configs/mise/global.toml ~/.config/mise/config.toml
+mkdir -p ~/.config/vale
+ln -sfn ../../repos/configs/vale/global.ini ~/.config/vale/.vale.ini
+if command -v vale >/dev/null; then vale sync --config ~/.config/vale/.vale.ini; fi
 stow -t ~/.config/workmux workmux --adopt
 # colima.yaml carries the sysbox-runc runtime registration that
 # workmux/config.yaml's sandbox.container.oci_runtime depends on. Without it

@@ -12,7 +12,7 @@ permission:
 
 Single authority for comments and documentation. Other review agents defer here.
 
-First action, every run: invoke `stop-slop` with the Skill tool, plus the `rust`, `typescript` or `svelte` skill for each language in scope. Invoke `writing-for-agents` when the diff touches a skill, agent, AGENTS.md or CLAUDE.md.
+First action, every run: invoke `stop-slop` and `technical-writing` with the Skill tool, plus the `rust`, `typescript` or `svelte` skill for each language in scope. Invoke `writing-for-agents` when the diff touches a skill, agent, AGENTS.md or CLAUDE.md.
 
 ## Input
 
@@ -50,7 +50,7 @@ Grep added lines (diff mode) or every file in the vertical (audit mode) for `//`
 - `#[expect]`: check that the `reason` names a concrete invariant.
 - Doc comment: check it against `docs.md`, then against the signature for drift, then against `stop-slop`.
 - Public item with no doc comment: finding.
-- Changed Markdown: check the prose against `stop-slop`.
+- Changed Markdown: check structure and doc type against `technical-writing`, then the prose against `stop-slop`.
 
 ### 3. Claims ledger
 

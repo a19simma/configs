@@ -195,6 +195,14 @@ sandbox:
       guest_path: /tmp/.claude/agents
       writable: false
 
+    # Local plugins, loaded through CLAUDE_CODE_PLUGIN_DIRS in the sandbox's own
+    # settings.json. The host points that variable at ~/repos/configs, which is
+    # not mounted here, so the sandbox needs its own path. Read-only: a hooks
+    # module is code the agent runs.
+    - host_path: ~/repos/configs/shell/.claude/mods
+      guest_path: /opt/claude-mods
+      writable: false
+
     - host_path: ~/repos/configs/workmux-sandbox/bin
       guest_path: /opt/wm-bin
       writable: false
@@ -397,6 +405,16 @@ sandbox:
       # region; it skips the base host, so both entries are needed.
       - mcr.microsoft.com
       - "*.data.mcr.microsoft.com"
+
+      # Red Hat's Quay registry, for keycloak's `FROM quay.io/keycloak/keycloak`
+      # in the nested dockerd. The pull died on `Forbidden (403)` and the proxy
+      # logged `rejected: domain not in allowlist hostname="quay.io"` 5 times on
+      # 2026-10-07. quay.io answers the token and manifest, then redirects every
+      # blob to cdn01.quay.io. Red Hat lists cdn and cdn01 through cdn06 and
+      # allows the wildcard in their place; it skips the base host, so both
+      # entries are needed.
+      - quay.io
+      - "*.quay.io"
 
       # shadcn-svelte's component registry. `npx shadcn-svelte@latest add <x>`
       # fetches the component JSON from https://shadcn-svelte.com/registry/...

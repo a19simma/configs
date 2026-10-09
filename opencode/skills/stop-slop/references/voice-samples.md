@@ -4,11 +4,11 @@ Empty by design. Fill this in.
 
 Ban lists remove the AI tells but produce flat, anonymous prose. Matching a real sample is the only
 technique that makes output sound like a specific person. When this file has content, it overrides
-the general rules in `SKILL.md` wherever the two conflict — except the Preserve-verbatim list.
+the general rules in `SKILL.md` wherever the two conflict, except the Preserve-verbatim list.
 
 ## How to use it
 
-Paste 300-1000 words of your own writing per genre below. Unedited. Include the awkward bits — the
+Paste 300-1000 words of your own writing per genre below. Unedited. Include the awkward bits: the
 tics are the signal. Then, when drafting, match:
 
 - sentence length spread (where the shortest and longest sits)

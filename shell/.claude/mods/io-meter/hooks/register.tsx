@@ -37,6 +37,11 @@ function short(n: number): string {
   return String(n)
 }
 
+function bucket(tool: string): string {
+  const m = /^mcp__(.+?)__/.exec(tool)
+  return m ? m[1] : tool
+}
+
 function add(t: Timing, ms: number): Timing {
   return { ms: t.ms + ms, samples: [...t.samples, ms].slice(-SAMPLES) }
 }
@@ -95,7 +100,8 @@ export const register: Register = on => {
     const result = await next(e)
     if (!SKIP.has(e.tool)) {
       const ms = (await $.clock.now()) - t0
-      await update($, tools, all => ({ ...all, [e.tool]: add(all[e.tool] ?? EMPTY, ms) }))
+      const key = bucket(e.tool)
+      await update($, tools, all => ({ ...all, [key]: add(all[key] ?? EMPTY, ms) }))
     }
     return result
   })
