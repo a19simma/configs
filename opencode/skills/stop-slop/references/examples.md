@@ -1,9 +1,6 @@
 # Before/After Examples
 
-Local expansion of the upstream file. Read during the check pass.
-
-Each pair shows one dominant tell. Real slop stacks several. Fix them in the order structure,
-lexicon, concreteness, rhythm.
+Each pair shows one dominant tell. Real slop stacks several.
 
 Numbers and names in the After lines stand for facts the writer already has. In a real rewrite,
 take them from the source or ask. Pairs marked (humanizer) come from blader/humanizer v3.1.0, MIT.
@@ -302,7 +299,7 @@ Four same-length sentences became one long and one short.
 > "Session tokens are rotated every 24 hours. A tempting approach would be to rotate them by restarting the auth service on a cron job, but that would drop every active session. Rotation happens in place, and clients refresh transparently."
 
 **After:**
-> "Session tokens are rotated every 24 hours, in place, and clients refresh transparently."
+> "The auth service rotates session tokens in place every 24 hours. Clients pick up the new token on their next request."
 
 ### 33. -ing rider
 
@@ -328,7 +325,7 @@ The source gave timing, not cause, so the After states the timing and no more.
 > "Industry experts agree that Rust is the future of systems programming."
 
 **After:**
-> "The Linux kernel has accepted Rust code since 6.1."
+> "Linux 6.1 merged the kernel's first Rust support code; the first Rust driver shipped in 6.8."
 
 Or cut the sentence if the piece has no source to name.
 
@@ -378,7 +375,7 @@ Or cut the sentence if the piece has no source to name.
 **After:**
 > "## Performance
 >
-> When users hit a slow page, they leave."
+> Users leave a slow page."
 
 ### 41. Code comment about history (humanizer)
 
@@ -406,7 +403,7 @@ Or cut the sentence if the piece has no source to name.
 **After:**
 > "Agreed, this is a workaround. Fixing it properly in `MergeService` would widen this ticket well past its scope: it is shared code, so it means checking the merge flow for every account, plus a backfill for the rows that are already wrong.
 >
-> I'd rather keep this PR account specific and open a separate ticket for the `MergeService` fix and the backfill. Let me know if that works."
+> I'd rather keep this PR account specific and open a separate ticket for the `MergeService` fix and the backfill."
 
 The reviewer knows the bug. The After leads with the decision and keeps the one fact they lack: the fix touches shared code.
 
@@ -426,7 +423,7 @@ The reviewer knows the bug. The After leads with the decision and keeps the one 
 > "The report is high-quality, the process is well-documented, and the plan is long-term."
 
 **After:**
-> "The report is high quality, the process is well documented, and the plan is long term."
+> "The report is high quality and the plan is long term."
 
 ## Full passages
 
@@ -465,5 +462,4 @@ humanizer README (MIT). The Before text keeps its dashes and emoji as quoted sou
 >
 > I'd go back, in spring next time, and with better shoes.
 
-The After keeps the writer's voice and opinions. Removing tells is half the job; the result still
-sounds like a person.
+The After keeps the writer's voice and opinions.

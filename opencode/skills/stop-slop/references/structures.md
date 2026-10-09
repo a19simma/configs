@@ -9,7 +9,7 @@ These create false drama. State the point directly.
 | "Not because X. Because Y." / "Not because X, but because Y." | Telegraphed reversal |
 | "[X] isn't the problem. [Y] is." | Formulaic reframe |
 | "The answer isn't X. It's Y." | Predictable pivot |
-| "It feels like X. It's actually Y." | Setup/reveal cliche |
+| "It feels like X. It's actually Y." | Setup/reveal cliché |
 | "The question isn't X. It's Y." | Rhetorical misdirection |
 | "Not X. But Y." / "not X, it's Y" / "isn't X, it's Y" | Mechanical contrast |
 | "It's not this. It's that." | Same formula, different words |
@@ -102,7 +102,7 @@ text attributes or answers in full, and an option a reader would weigh.
 
 ## Inflated Significance
 
-An ordinary detail is said to mark a change, prove a legacy, or promise a future. It shows up as a
+The text claims an ordinary detail marks a change, proves a legacy, or promises a future. It shows up as a
 phrase, as a stock section, and as a send-off paragraph.
 
 | Pattern | Problem |
@@ -137,7 +137,7 @@ source doesn't say, keep the vague wording rather than invent a role.
 
 ## Borrowed Authority
 
-A name or an unnamed authority stands in for what was said.
+A name or an unnamed authority stands in for what the source said.
 
 | Pattern | Problem |
 |---------|---------|
@@ -202,7 +202,7 @@ Floating above the scene instead of putting the reader in it.
 
 ## Passive Voice
 
-Every sentence needs a subject doing something. Passive voice hides the actor and drains energy.
+Passive voice hides the actor.
 
 | Pattern | Fix |
 |---------|-----|
@@ -240,4 +240,3 @@ Wh- openers become a crutch. "What makes this hard is..." becomes "The constrain
 | Pattern | Problem |
 |---------|---------|
 | Lazy extremes (every, always, never, everyone, everybody, nobody) | False authority. Use specifics instead of sweeping claims. |
-| All adverbs (-ly words, "really," "just," "literally," "genuinely," "honestly," "simply," "actually") | Empty emphasis. See phrases.md for full list. |

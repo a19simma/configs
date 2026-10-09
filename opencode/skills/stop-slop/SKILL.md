@@ -1,8 +1,8 @@
 ---
 name: stop-slop
 description: >
-  Remove AI writing patterns (slop) from prose. Use when drafting, editing, humanizing or
-  reviewing any prose, or when text reads robotic, generic or AI-written.
+  Slop removal: strip AI writing patterns from prose. Use when drafting or revising prose,
+  reviewing it for AI tells, or when asked to humanize text.
 metadata:
   upstream: https://github.com/hardikpandya/stop-slop
   author: Hardik Pandya (https://hvpandya.com)
@@ -20,7 +20,7 @@ and one subject, so their choices come out uneven and specific. Every pattern in
 one form of that default choice. Keep a sentence only when it gives the reader something they did
 not already have.
 
-The tells are mostly **shape**. Swapping `delve` for `explore` keeps the structure, and the
+The tells are mostly shape. Swapping `delve` for `explore` keeps the structure, and the
 structure still reads as AI. Fix structure first, words second.
 
 ## Reference files
@@ -60,13 +60,13 @@ structure still reads as AI. Fix structure first, words second.
 
 A tell counts in proportion to how rarely a careful writer makes it on purpose.
 
-- **Act on one sighting:** contrasts, closers and fragments, deep-sounding sayings, staged
-  run-ups, arguments with no one, chat residue.
-- **Act only with company:** a single dash, stacked qualifiers, a hyphenated pair after its noun,
+- **Act on one sighting:** contrasts, closers and fragments, deep-sounding sayings, rhetorical
+  setups, arguments with no one, chat residue.
+- **Act only with company:** stacked qualifiers, a hyphenated pair after its noun,
   one passive sentence, curly quotes, one line describing the document itself.
 
 Leave a watched phrase alone inside a quotation, a title, a proper name, or text that discusses
-the phrase. Text written before 30 November 2022 is human. Keep what carries a writer's voice: an
+the phrase. Treat text dated before 30 November 2022 (ChatGPT's release) as human-written. Keep what carries a writer's voice: an
 odd specific detail, mixed feelings, a dated reference, a real aside.
 
 ## Workflow
@@ -80,11 +80,11 @@ ceiling. Draft to the core rules, then run step 3 below.
 
 1. **Mark.** Read the whole text once and write down the claim it makes. Mark every tell,
    strongest first. Read paragraph shape as well as sentences: a contrast split across two
-   sentences, three parallel examples, the same closer after each section. Done when every
-   paragraph has been read and its tells marked.
+   sentences, three parallel examples, the same closer after each section. Done when you
+   have read every paragraph and marked its tells.
 2. **Rewrite.** Structure pass, then lexical pass, then concreteness pass, then rhythm pass. Keep
    every supported claim. When a sentence stays awkward, rewrite its paragraph around the main
-   point. Done when every marked tell is gone or listed under the exception clause.
+   point. Done when you have removed every marked tell or listed it under the exception clause.
 3. **Check.** Ask what still sounds AI-generated, fix it, and check again. Done when every line
    below holds:
    - Every fact, name, number, date, quote and citation in the result comes from the source or
@@ -97,7 +97,7 @@ ceiling. Draft to the core rules, then run step 3 below.
 
 ## Quick checks
 
-- An adverb?
+- An intensifier or hedge adverb?
 - A passive sentence, or an inanimate thing doing a human verb ("the decision emerges")?
 - A sentence opening with a Wh- word, or three in a row opening with the same subject?
 - A "here's what/this/that" opener?
@@ -143,7 +143,7 @@ accuracy for style silently.
 ## Silence
 
 Apply all of this silently. The delivered prose names no rule, list or score. When the skill runs
-inside another task (a PR, a commit message, a doc, a file), return only the final text. When the
+inside another task (a PR, a commit message, a doc, a file), return only the final text; put any exception list in your reply, outside the file. When the
 user asked for a review, return the rewrite plus a short list of tells that remain, kept apart
 from the text.
 

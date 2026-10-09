@@ -61,7 +61,7 @@ Replace with plain language.
 
 ## Adverbs
 
-Kill all adverbs. No -ly words. No softeners, no intensifiers, no hedges.
+Cut intensifier and hedge adverbs: the list below and any -ly word doing emphasis.
 
 Specific offenders:
 

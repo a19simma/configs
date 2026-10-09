@@ -1,6 +1,6 @@
 ---
 name: review-docs
-description: Comment and documentation review. Single authority for inline comments, doc comments, lint-suppression directives, prose in changed Markdown, and claims docs make about the codebase and the outside world. Use when the user wants comments or docs reviewed on a diff, branch, or PR, or an audit of docs under a path.
+description: Comment and documentation review. Single authority for inline comments, doc comments, lint-suppression directives, structure and prose in changed Markdown, and claims docs make about the codebase and the outside world. Use when the user wants comments or docs reviewed on a diff, branch, or PR, or an audit of docs under a path.
 permission:
   task:
     "*": deny
@@ -12,7 +12,7 @@ permission:
 
 Single authority for comments and documentation. Other review agents defer here.
 
-First action, every run: invoke `stop-slop` and `technical-writing` with the Skill tool, plus the `rust`, `typescript` or `svelte` skill for each language in scope. Invoke `writing-for-agents` when the diff touches a skill, agent, AGENTS.md or CLAUDE.md.
+First action, every run: invoke `stop-slop` and `technical-writing` with the Skill tool, plus the `rust`, `typescript` or `svelte` skill for each language in scope. Invoke `writing-for-agents` when the scope includes a skill, agent, AGENTS.md or CLAUDE.md.
 
 ## Input
 
@@ -75,7 +75,7 @@ Dispatch them in one message, in parallel, within the caller's agent cap; run th
 
 ```
 ### [FILE:LINE] Short title
-**Category:** Inline comment / Suppression / Missing doc / Doc convention / Doc drift / Prose / Stale claim / Source drift / Unsourced
+**Category:** Inline comment / Suppression / Missing doc / Doc convention / Doc drift / Structure / Prose / Stale claim / Source drift / Unsourced
 **Rule:** skill file and rule, or the evidence
 **Fix:** replacement snippet, or where the intent moves
 ```

@@ -34,20 +34,15 @@ boasts, features, offers, maintains (when `has` fits)
 
 ## Phrases
 
-"In today's [adjective] [noun]", "It's worth noting that", "It's important to note that",
-"Let's dive in", "Let's dive deeper", "Let's delve into", "At its core", "In the realm of",
-"When it comes to", "A testament to", "Not just X, but Y", "It's not just about X, it's about Y",
-"This is where X comes in", "Whether you're a X or a Y", "From X to Y", "At the end of the day",
-"The bottom line is", "Here's the thing", "Here's the deal", "Without further ado",
-"In a nutshell", "Buckle up", "Take it to the next level", "Unlock the power of",
-"Elevate your", "Streamline your", "Supercharge your", "Bridge the gap", "Move the needle",
-"In conclusion", "Overall,", "To sum up", "Firstly... Secondly... Thirdly",
-"I hope this email finds you well", "As per my last email",
-"Please don't hesitate to reach out", "stands as a testament", "marking a pivotal moment in",
-"rich tapestry of", "Despite its X, it faces several challenges", "It is important to remember",
-"setting the stage for", "evolving landscape", "indelible mark", "enduring legacy",
-"reflects a broader", "the future looks bright", "exciting times ahead",
-"a step in the right direction"
+"It's important to note that", "Let's dive in", "Let's dive deeper", "Let's delve into",
+"In the realm of", "A testament to", "This is where X comes in", "Whether you're a X or a Y",
+"From X to Y", "The bottom line is", "Here's the deal", "Without further ado", "In a nutshell",
+"Buckle up", "Take it to the next level", "Unlock the power of", "Elevate your",
+"Streamline your", "Supercharge your", "Bridge the gap", "Move the needle", "In conclusion",
+"Overall,", "To sum up", "Firstly... Secondly... Thirdly", "I hope this email finds you well",
+"As per my last email", "Please don't hesitate to reach out", "stands as a testament",
+"rich tapestry of", "It is important to remember", "evolving landscape", "indelible mark",
+"enduring legacy", "a step in the right direction"
 
 ## Openers
 
@@ -75,15 +70,11 @@ the content.
 - Inline-header vertical lists: `- **Term:** explanation` repeated down a list, where the labels
   carry nothing the sentences don't.
 - Emoji or arrows (→) on headings and list items, unless the user's own samples use them.
-- Three-item anything: lists, clauses, adjective stacks.
 - Horizontal rules between every section.
 - Hyphenated pairs after the noun: "the report is high-quality" reads "high quality". Before the
   noun the hyphen stays: "a high-quality report".
-- Trailing "knowledge cutoff" or "as of my last update" disclaimers.
 - `utm_source=chatgpt.com` or similar tracking params left in citation URLs.
 
 ## Never touch
 
-Code, commands, config, identifiers, paths, log output, error strings, quotations, product names,
-version numbers, API field names, legal and licence text. If a banned word appears inside any of
-these, leave it alone.
+A banned word inside anything SKILL.md lists under Preserve verbatim stays.
