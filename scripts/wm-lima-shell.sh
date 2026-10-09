@@ -19,8 +19,9 @@
 #
 # So the panes have to talk to Lima directly. limactl it is.
 #
-# Called from a workmux config by absolute path: workmux runs pane commands
-# through tmux's default-shell, which is nushell, and this is POSIX.
+# Called from a workmux config by name, from ~/.local/bin where
+# `mise run stow-deploy` links it. workmux runs pane commands through tmux's
+# default-shell, which is nushell, and this is POSIX.
 #
 #   wm-lima-shell.sh nu
 #   wm-lima-shell.sh claude --tools ...

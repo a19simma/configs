@@ -1,8 +1,11 @@
 # workmux global config. Stowed to ~/.config/workmux/config.yaml.
 #
-# Most sandbox keys are GLOBAL-ONLY: workmux ignores them in a project
+# Many sandbox keys are GLOBAL-ONLY: workmux ignores them in a project
 # .workmux.yaml and prints a warning. That is deliberate, a repo must not be
 # able to weaken its own sandbox. So they live here, not per project.
+# Not all of them: `enabled`, `backend`, `target`, `image` and `lima.*` are
+# project-overridable (src/config.rs:3152-3301 at v0.1.271), despite the docs
+# calling `image` global-only. ~/repos/paas/.workmux.yaml relies on that.
 
 # One tmux session per worktree, not one window. sesh then enumerates worktrees
 # natively (prefix+t, ^t filters to tmux sessions), so no second picker.
@@ -70,9 +73,8 @@ windows:
   # starts every window at once, and `shell -e` fails if the agent window has
   # not created the container yet. Losing that race drops the pane to a host
   # shell that looks nearly identical, so it goes unnoticed. The wrapper polls
-  # for wm-<worktree>-* first. Full path because tmux runs pane commands
-  # through nushell and the wrapper is POSIX. `~` so the same path works on
-  # macOS and Linux; nushell expands it.
+  # for wm-<worktree>-* first. Called by name: `mise run stow-deploy` links
+  # scripts/wm-*.sh into ~/.local/bin, which nushell puts on PATH.
   #
   # Both agents run with HOME=/tmp and so share one /tmp/.claude.json. Last
   # writer wins on anything claude persists there, sessions and history
@@ -83,7 +85,7 @@ windows:
   - name: agent2
     panes:
       - command: >-
-          ~/repos/configs/scripts/wm-sandbox-shell.sh /usr/local/bin/wm-user /opt/wm-bin/claude-pinned --tools
+          wm-sandbox-shell.sh wm-user /opt/wm-bin/claude-pinned --tools
           Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch
   # Host windows. sandbox.target below is 'agent', so of the windows above only
   # `agent` is containerised by workmux itself; `agent2` gets into the same
@@ -102,15 +104,10 @@ windows:
   # into the running container instead of starting a second one, so it shares
   # the agent's mounts, network rules and /cache.
   #
-  # wm-user even though sandbox-env.nu demotes nu itself: nu is a mise shim, so
-  # mise runs as root before nu ever reads env.nu, and leaves a root-owned
-  # /tmp/.local/state/mise that fails every later `mise install` by the agent
-  # with `failed create_dir_all: ~/.local/state/mise/trusted-configs`.
-  #
   # wm-sandbox-shell.sh for the startup race, same as agent2.
   - name: box
     panes:
-      - command: ~/repos/configs/scripts/wm-sandbox-shell.sh /usr/local/bin/wm-user nu
+      - command: wm-sandbox-shell.sh nu
 
 sandbox:
   enabled: true

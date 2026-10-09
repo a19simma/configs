@@ -11,7 +11,7 @@
       "WebSearch"
     ]
   },
-  "model": "opus[1m]",
+  "model": "sonnet",
   "disableClaudeAiConnectors": true,
   "disableBundledSkills": true,
   "hooks": {
@@ -100,6 +100,12 @@
   "effortLevel": "low",
   "modelSettings": {
     "claude-opus-5": {
+      "effortLevel": "low"
+    },
+    "claude-opus-5-5": {
+      "effortLevel": "low"
+    },
+    "claude-sonnet-5-5": {
       "effortLevel": "low"
     }
   },

@@ -8,8 +8,9 @@
 # a host shell that looks almost identical to the sandboxed one, so the failure
 # is easy to miss.
 #
-# Called from workmux/config.yaml by absolute path: workmux runs pane commands
-# through tmux's default-shell, which is nushell, and this is POSIX.
+# Called from workmux/config.yaml by name, from ~/.local/bin where
+# `mise run stow-deploy` links it. workmux runs pane commands through tmux's
+# default-shell, which is nushell, and this is POSIX.
 #
 #   wm-sandbox-shell.sh nu
 #   wm-sandbox-shell.sh wm-user claude --tools ...
@@ -48,7 +49,7 @@ i=0
 while [ -z "$(container_name)" ]; do
     if [ -n "$(lima_vm)" ]; then
         [ "${1:-}" = "wm-user" ] && shift
-        exec /Users/simon/repos/configs/scripts/wm-lima-shell.sh "$@"
+        exec "$(dirname "$0")/wm-lima-shell.sh" "$@"
     fi
     i=$((i + 1))
     if [ "$i" -ge "$attempts" ]; then

@@ -202,6 +202,8 @@ mkdir -p "$HOME/Library/Application Support/vale"
 ln -sfn "$HOME/repos/configs/vale/global.ini" "$HOME/Library/Application Support/vale/.vale.ini"
 if command -v vale >/dev/null; then vale sync --config "$HOME/Library/Application Support/vale/.vale.ini"; fi
 stow -t ~/.config/workmux   workmux   --adopt
+mkdir -p ~/.local/bin
+ln -sf ~/repos/configs/scripts/wm-sandbox-shell.sh ~/repos/configs/scripts/wm-lima-shell.sh ~/.local/bin/
 
 echo "Linking Claude Code configs to OpenCode configs..."
 ln -sf ~/repos/configs/opencode/AGENTS.md ~/.config/opencode/AGENTS.md

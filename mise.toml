@@ -34,6 +34,8 @@ mkdir -p ~/.config/vale
 ln -sfn ../../repos/configs/vale/global.ini ~/.config/vale/.vale.ini
 if command -v vale >/dev/null; then vale sync --config ~/.config/vale/.vale.ini; fi
 stow -t ~/.config/workmux workmux --adopt
+mkdir -p ~/.local/bin
+ln -sf ~/repos/configs/scripts/wm-sandbox-shell.sh ~/repos/configs/scripts/wm-lima-shell.sh ~/.local/bin/
 # colima.yaml carries the sysbox-runc runtime registration that
 # workmux/config.yaml's sandbox.container.oci_runtime depends on. Without it
 # every sandbox dies at exec with `unknown or invalid runtime name`, so the two
@@ -68,6 +70,7 @@ stow -t ~/.config/sesh -D sesh
 if [ -L ~/.config/mise/config.toml ]; then rm ~/.config/mise/config.toml; fi
 stow -t ~/.config/workmux -D workmux
 stow -t ~/.config/colima/default -D colima
+rm -f ~/.local/bin/wm-sandbox-shell.sh ~/.local/bin/wm-lima-shell.sh
 echo "Removing Claude Code symlinks..."
 rm -f ~/.claude/CLAUDE.md ~/.claude/agents ~/.claude/commands ~/.claude/skills
 echo "✅ Dotfiles removed successfully"
@@ -255,4 +258,26 @@ fi
 # force a fresh agent install.
 DOCKER_BUILDKIT=1 docker build $SECRET_ARG -f Dockerfile.sandbox -t workmux-sandbox-mise .
 echo "✅ Built workmux-sandbox-mise (referenced by workmux/config.yaml sandbox.image)"
+"""
+
+[tasks.workmux-lima-image]
+description = "Download the Debian 13 generic qcow2 for this host's arch (paas .workmux.yaml sandbox.image)"
+run = """
+set -eu
+case "$(uname -m)" in
+    arm64|aarch64) arch=arm64 ;;
+    x86_64|amd64) arch=amd64 ;;
+    *) echo "unsupported arch: $(uname -m)" >&2; exit 1 ;;
+esac
+base=https://cloud.debian.org/images/cloud/trixie/latest
+name="debian-13-generic-${arch}.qcow2"
+dest="$HOME/.cache/lima-images/debian-13-generic.qcow2"
+mkdir -p "$(dirname "$dest")"
+expected=$(curl -fsSL "$base/SHA512SUMS" | awk -v n="$name" '$2 == n { print $1 }')
+[ -n "$expected" ] || { echo "no checksum for $name" >&2; exit 1; }
+curl -fL --progress-bar -o "$dest.part" "$base/$name"
+actual=$(shasum -a 512 "$dest.part" | awk '{ print $1 }')
+[ "$actual" = "$expected" ] || { echo "checksum mismatch for $name" >&2; rm -f "$dest.part"; exit 1; }
+mv "$dest.part" "$dest"
+echo "✅ $dest ($name)"
 """
