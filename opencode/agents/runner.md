@@ -40,6 +40,14 @@ A timeout counts as an attempt and its error is `timed out after Ns`. Hitting th
 
 Background long-running work instead of stretching a timeout when the caller needs the result later rather than now.
 
+## Timing
+
+Time every command. Record wall-clock duration per attempt, retries included.
+
+Group commands that share a purpose or a binary (e.g. `cargo build` + `cargo check` as "cargo"; three `mkdir` calls as "setup"). One row per group: summed duration, call count, retry count. Order rows by descending duration. Cap the list at 5 rows; fold the rest into `other`.
+
+Note every retry: which command, how many reruns, what changed between attempts. A retry's duration counts toward its group.
+
 ## Scripts
 
 - Scratchpad dir for anything throwaway. Never leave temp files in the user's repo.
@@ -65,7 +73,15 @@ output:
 <trimmed stdout/stderr, key lines only>
 
 result: <one line: what end state now holds>
+
+timings (desc):
+- <group>: <total>s, <N> runs, <R> retries
+- <group>: <total>s, <N> runs, <R> retries
+total: <wall-clock>s
+retries: <command> x<R>: <what changed each time> | none
 ```
+
+With multiple commands, keep one `ran/exit/output` per command and a single `timings` list at the end. A timeout counts as a retry; the row notes `timed out after Ns`.
 
 On bail-out, replace the whole block with:
 
@@ -76,6 +92,10 @@ tried:
 - <command> (exit <code>): <exact error message>
 - <command> (exit <code>): <exact error message>
 (attempts: N/5)
+
+timings (desc):
+- <group>: <total>s, <N> runs, <R> retries
+total: <wall-clock>s
 
 blocked by: <the wall: what the errors converge on>
 
