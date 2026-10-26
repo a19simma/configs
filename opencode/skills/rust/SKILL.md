@@ -35,6 +35,10 @@ Read only the file that answers the question. Do not preload them.
 7. **No new dependency without approval.** Only crates listed in `references/crates.md`, or expressly permitted by the user. Everything else: use `std` or ask. Every project scaffolds a `deny.toml` in its first commit so the ban list is enforced by `cargo deny check` in CI, not by a reviewer's memory.
 8. **Unsafe needs a `// SAFETY:` comment** naming the invariant upheld. Enforced by `clippy::undocumented_unsafe_blocks`. It is the only sanctioned inline comment.
 
+## Lessons
+
+`references/lessons.md` holds rules learned from real defects: polling, `select!`, sandbox probes, test doubles, redaction.
+
 ## Reviewing
 
 The rules live in `references/` and nowhere else. `rust-review` and `rust-setup` are procedure that reads them.
