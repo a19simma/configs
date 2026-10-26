@@ -2,35 +2,18 @@
 
 ## Matt Pocock skills
 
-From [mattpocock/skills](https://github.com/mattpocock/skills). MIT licensed, (c) 2026 Matt Pocock.
-Synced from upstream `main` on 2026-08-31; earlier local modifications were discarded in favour of
-upstream. Two exceptions, marked † below, are deliberately modified: see "Local deviations". Supporting files (`*-FORMAT.md`, `scripts/`, `template.sh`) vendored alongside.
-Upstream `agents/openai.yaml` files are not vendored.
+18 skills are now provided by the plugin `mattpocock-skills@claude-plugins-official` (v1.3.1), namespaced `/mattpocock-skills:<skill>` and updated by the plugin. Their vendored copies were removed: `code-review`, `codebase-design`, `diagnosing-bugs`, `domain-modeling`, `grill-me`, `grill-with-docs`, `grilling`, `handoff`, `improve-codebase-architecture`, `prototype`, `tdd`, `teach`, `to-questionnaire`, `to-spec`, `wait-what`, `wayfinder`, `wizard`, `writing-for-agents`.
 
-| Skill | Upstream path |
-|---|---|
-| `code-review` | `skills/engineering/code-review` |
-| `codebase-design` | `skills/engineering/codebase-design` |
-| `diagnosing-bugs` | `skills/engineering/diagnosing-bugs` |
-| `domain-modeling` | `skills/engineering/domain-modeling` |
-| `git-guardrails-claude-code` | `skills/misc/git-guardrails-claude-code` |
-| `grill-me` | `skills/productivity/grill-me` |
-| `grill-with-docs` | `skills/engineering/grill-with-docs` |
-| `grilling` | `skills/productivity/grilling` |
-| `handoff` | `skills/productivity/handoff` |
-| `improve-codebase-architecture` | `skills/engineering/improve-codebase-architecture` |
-| `prototype` | `skills/engineering/prototype` |
-| `resolving-merge-conflicts` | `skills/engineering/resolving-merge-conflicts` |
-| `tdd` | `skills/engineering/tdd` |
-| `teach` | `skills/productivity/teach` |
-| `to-questionnaire` | `skills/productivity/to-questionnaire` |
-| `to-tickets` † | `skills/engineering/to-tickets` |
-| `implement` † | `skills/engineering/implement` |
-| `to-spec` | `skills/engineering/to-spec` |
-| `wait-what` | `skills/productivity/wait-what` |
-| `wayfinder` | `skills/engineering/wayfinder` |
-| `wizard` | `skills/engineering/wizard` |
-| `writing-for-agents` | `skills/productivity/writing-for-agents` |
+Source: [mattpocock/skills](https://github.com/mattpocock/skills). MIT licensed, (c) 2026 Matt Pocock.
+
+Four skills stay vendored:
+
+| Skill | Upstream path | Why vendored |
+|---|---|---|
+| `git-guardrails-claude-code` | `skills/misc/git-guardrails-claude-code` | Not in the plugin |
+| `resolving-merge-conflicts` | `skills/engineering/resolving-merge-conflicts` | Not in the plugin |
+| `to-tickets` † | `skills/engineering/to-tickets` | Locally modified |
+| `implement` † | `skills/engineering/implement` | Locally modified |
 
 Not vendored, and why: `ask-matt`, `setup-matt-pocock-skills` and `triage` are the rest of the
 issue-tracker workflow, unused here; `research` collides with the local
