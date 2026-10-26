@@ -43,7 +43,7 @@ agents:
     command: /opt/wm-bin/claude-pinned
     args:
       - --tools
-      - Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch
+      - Bash,Read,Agent,Skill,ToolSearch,ListAgents,WebFetch,WebSearch
 
 # Same four windows sesh/sesh.toml:16 gives a plain repo session, so a worktree
 # and a repo read identically. The commands differ though: sesh runs them under
@@ -86,7 +86,7 @@ windows:
     panes:
       - command: >-
           wm-sandbox-shell.sh wm-user /opt/wm-bin/claude-pinned --tools
-          Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch
+          Bash,Read,Agent,Skill,ToolSearch,ListAgents,WebFetch,WebSearch
   # Host windows. sandbox.target below is 'agent', so of the windows above only
   # `agent` is containerised by workmux itself; `agent2` gets into the same
   # container by exec'ing into it. nvim and lazygit run as the host user

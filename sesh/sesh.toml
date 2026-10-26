@@ -41,3 +41,15 @@ name = "run"
 name = "configs"
 path = "~/repos/configs"
 alias = "cfg"
+
+[[session]]
+name = "box-1"
+path = "~"
+startup_command = "ssh -t agent@box-1 tmux new -A -s main"
+preview_command = "ssh -o BatchMode=yes -o ConnectTimeout=3 agent@box-1 'tmux capture-pane -p -t main | tail -40'"
+
+[[session]]
+name = "box-2"
+path = "~"
+startup_command = "ssh -t agent@box-2 tmux new -A -s main"
+preview_command = "ssh -o BatchMode=yes -o ConnectTimeout=3 agent@box-2 'tmux capture-pane -p -t main | tail -40'"

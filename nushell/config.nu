@@ -85,7 +85,7 @@ if $nu.os-info.name == "linux" {
 # nushell. Agents that workmux launches run under the sandbox container's dash
 # and never see it, so the same list is duplicated in workmux/config.yaml under
 # `agents.cc-sandbox.args`. Change one, change the other.
-alias claude = claude --dangerously-skip-permissions --tools "Bash,Read,Edit,Write,Agent,Skill,ToolSearch,ListAgents,NotebookEdit,WebFetch,WebSearch"
+alias claude = claude --dangerously-skip-permissions --tools "Bash,Read,Agent,Skill,ToolSearch,ListAgents,WebFetch,WebSearch"
 
 # Custom Commands
 

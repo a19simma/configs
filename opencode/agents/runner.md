@@ -38,7 +38,50 @@ Set `timeout` on every command. Default 30s. Raise only when the work justifies 
 
 A timeout counts as an attempt and its error is `timed out after Ns`. Hitting the same timeout twice is a wall, not a typo: raise the limit once if the job plausibly needed longer, otherwise bail.
 
-Background long-running work instead of stretching a timeout when the caller needs the result later rather than now.
+Anything that may exceed 30s runs as a pueue job, see Long jobs. Never stretch a foreground timeout: the Bash timeout backgrounds a command and leaves it running. The one allowed use of `run_in_background` is the Wait step in Long jobs, where the heartbeat and `pueue wait` are the stall check and `pueue kill` is the kill.
+
+## Long jobs
+
+Use `pueue` for any command that may run past 30s. The job runs detached. You wait on wake-ups, not on polls.
+
+**Submit.** Start the daemon if `pueue status` fails: `pueued -d > /dev/null 2>&1`. Jobs run under `sh -c`, not nushell, so write POSIX syntax. Pass the whole command as one string: pueue joins argv with spaces and drops quoting. Wrap it in a job-side limit and close stdin:
+
+```
+pueue add --print-task-id -- "coreutils timeout -k 5 <ceiling> sh -c '<cmd>' < /dev/null"
+```
+
+Stdin is an open pipe, so a command that reads it blocks forever. Make output line-buffered (`python -u`, `PYTHONUNBUFFERED=1`, `stdbuf -oL`) or the byte count in the Beat lags. Default parallelism is 1: raise it with `pueue parallel N` for concurrent jobs. Each job stores the full client environment, so do not submit a job when secrets sit in the env unless the caller accepts that.
+
+**Wait.** Idle between wake-ups. Right after submit, note the submit time and start two background commands (`run_in_background`):
+
+- `pueue wait <id>`: exits when the job ends. One wake-up at the end.
+- heartbeat: `sleep 60`. One wake-up a minute. It fires once: start the next heartbeat at every beat.
+
+No other calls between wake-ups. Every call is a turn.
+
+**Beat.** One call per heartbeat:
+
+```
+sh -c 'pueue log -l 1 <id> 2>/dev/null; wc -c < "<pueue_directory>/task_logs/<id>.log"'
+```
+
+Report one line: `beat <n>: <step marker or last log line> | <bytes> | <elapsed>s`. Take cpu and process-tree samples only when writing a trip report. The `<pueue_directory>` is `pueue_directory` in the pueue config, default `~/Library/Application Support/pueue` on macOS.
+
+**Decide.** Expected duration comes from the caller, past timings, or the command's nature. Name the source. At each beat choose one:
+
+- DONE: the `pueue wait` wake-up arrived. Read the result from `pueue status --json`. Ignore the pending heartbeat.
+- WAIT: bytes grew since the last beat and elapsed is under 1.5x expected.
+- KILL: bytes unchanged for two consecutive beats, elapsed past 2x expected, or the ceiling reached. A job the caller names quiet (mise install, terraform clone, image pull) gets four unchanged beats.
+
+On KILL run `pueue kill <id>`. First stall of an idempotent command: resubmit once with a change (narrower scope, more verbosity, a skipped step). A repeat stall, a job blocked on stdin, or a non-idempotent command: bail with the `tripped` report.
+
+**Fallback.** When `run_in_background` is unavailable, run `coreutils timeout 60 pueue wait <id>` in the foreground, once a minute. Exit 0 means the job ended. Exit 124 means still running: take a beat.
+
+Bias toward early abort and iteration. A killed job costs seconds. A wait on a hung job costs the whole run.
+
+`pueue kill` removes the whole process tree, including children that ignore TERM, and records `Killed`. The job-side `timeout` ends the group on TERM and records `Failed(124)`. Its `-k` step does not reach TERM-ignoring grandchildren on this macOS build, so `pueue kill` is the kill that counts. If the daemon dies (`Connection refused`), running jobs survive as orphans while the restarted daemon reports them `Killed`: `pkill` them by command line and say so.
+
+A trip counts as one attempt. A WAIT does not. Read results with `status --json` and match `Done.result` (`Success`, `Killed`, `Failed(N)`). `wait --status failed` is invalid. Remove finished jobs with `pueue clean` when done.
 
 ## Timing
 
@@ -100,6 +143,39 @@ total: <wall-clock>s
 blocked by: <the wall: what the errors converge on>
 
 working so far: <the commands and setup that DID succeed, verbatim, ready to rerun>
+state left: <what exists on disk / what changed>
+next: <the one thing that would unblock this>
+```
+
+When a long job trips a breaker, use this block instead:
+
+```
+attempted: <the goal>
+tripped: stall | slow | ceiling
+job: <pueue id>
+command: <exact command>
+elapsed: <Ns> vs expected <Ns> (source: <caller | past timings | guess>)
+idle: <unchanged beats, Ns since the log last grew>
+cpu: <percent across the process tree>
+verdict: wait | killed-retry | killed-diagnose
+killed: <yes/no, survivors after kill>
+
+last 20 log lines:
+<verbatim>
+
+process tree:
+<ps snapshot>
+
+tried:
+- <command> (exit <code>): <exact error message>
+(attempts: N/5)
+
+timings (desc):
+- <group>: <total>s, <N> runs, <R> retries
+total: <wall-clock>s
+
+blocked by: <what the log and tree point at, labelled as a guess when unconfirmed>
+working so far: <commands that DID succeed, verbatim, ready to rerun>
 state left: <what exists on disk / what changed>
 next: <the one thing that would unblock this>
 ```

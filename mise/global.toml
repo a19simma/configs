@@ -13,7 +13,7 @@ docker-cli = "29.8.1"
 # install path. `mise run docker-buildx-plugin` recreates it after a bump.
 "github:docker/buildx" = "0.37.1"
 docker-compose = "5.5.1"
-"github:grafana/gcx" = "1.1.0"
+"github:grafana/gcx" = "1.6.0"
 "github:kdash-rs/kdash" = "2.1.1"
 "github:netbirdio/netbird" = "0.78.2"
 "github:nushell/nushell" = "0.115.1"
@@ -67,6 +67,19 @@ act      = "0.2.89"
 gitleaks = "8.30.1"
 age = "1.3.2"
 aspire = "13.6.0"
+coreutils = "0.12.0"
+
+[tool_alias]
+pueue = "github:Nukesor/pueue"
+pueued = "github:Nukesor/pueue"
+
+[tools.pueue]
+version = "4.0.4"
+asset_pattern = "pueue-aarch64-apple-darwin"
+
+[tools.pueued]
+version = "4.0.4"
+asset_pattern = "pueued-aarch64-apple-darwin"
 
 [settings]
 # Most of these tools resolve version lists by asking the GitHub releases API.
