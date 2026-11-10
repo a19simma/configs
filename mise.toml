@@ -48,6 +48,11 @@ rm -rf ~/.claude/agents && mkdir -p ~/.claude/agents
 for f in ~/repos/configs/opencode/agents/*.md; do ln -sf "$f" ~/.claude/agents/; done
 ln -sfn ~/.config/opencode/commands ~/.claude/commands
 ln -sfn ~/.config/opencode/skills ~/.claude/skills
+mkdir -p ~/.agents ~/.kimi-code
+ln -sfn ~/.config/opencode/skills ~/.agents/skills
+ln -sfn ~/.config/opencode/agents ~/.agents/agents
+ln -sfn ~/.config/opencode/agents ~/.kimi-code/agents
+ln -sfn ~/.config/opencode/AGENTS.md ~/.kimi-code/AGENTS.md
 echo "✅ Dotfiles deployed successfully"
 """
 
