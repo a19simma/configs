@@ -275,3 +275,4 @@ playwright-cli close
 * **Test generation** [references/test-generation.md](references/test-generation.md)
 * **Tracing** [references/tracing.md](references/tracing.md)
 * **Video recording** [references/video-recording.md](references/video-recording.md)
+* **UI verification (viewports, axe, keyboard)** [references/ui-verification.md](references/ui-verification.md)
