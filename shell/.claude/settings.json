@@ -16,7 +16,7 @@
       "NotebookEdit"
     ]
   },
-  "model": "opus",
+  "model": "sonnet",
   "disableClaudeAiConnectors": true,
   "disableBundledSkills": true,
   "hooks": {
