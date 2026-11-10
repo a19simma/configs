@@ -1,0 +1,26 @@
+{
+  "skipDangerousModePermissionPrompt": true,
+  "autoCompactWindow": 200000,
+  "env": {
+    "CLAUDE_CODE_PLUGIN_DIRS": "/opt/claude-mods/io-meter"
+  },
+  "enabledPlugins": {
+    "document-skills@anthropic-agent-skills": true,
+    "posthog@claude-plugins-official": true,
+    "mattpocock-skills@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    }
+  }
+}

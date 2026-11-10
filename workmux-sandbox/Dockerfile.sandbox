@@ -202,6 +202,35 @@ if [ -d /opt/nushell ]; then
     chown -R "${WM_TARGET_UID}:${WM_TARGET_GID}" /tmp/.config
 fi
 
+# gh and az logins, from the read-only /opt/host-gh and /opt/host-azure
+# mounts. /opt/host-gh holds the hosts.yml that scripts/wm-gh-token.sh writes,
+# not the host's ~/.config/gh. Copied because both CLIs write their config dir at runtime: gh
+# migrates config and az rotates the MSAL refresh token. A copy keeps those
+# writes in the container and off the host. Only the login files come across;
+# az's logs, telemetry, HTTP cache and indexes stay on the host. Each block is
+# skipped when the host has no login, so a host without gh or az still boots.
+if [ -f /opt/host-gh/hosts.yml ]; then
+    mkdir -p /tmp/.config/gh
+    cp /opt/host-gh/hosts.yml /tmp/.config/gh/hosts.yml
+    if [ -f /opt/host-gh/config.yml ]; then
+        cp /opt/host-gh/config.yml /tmp/.config/gh/config.yml
+    fi
+    chmod 700 /tmp/.config/gh
+    chmod 600 /tmp/.config/gh/*
+    chown -R "${WM_TARGET_UID}:${WM_TARGET_GID}" /tmp/.config
+fi
+if [ -f /opt/host-azure/azureProfile.json ]; then
+    mkdir -p /tmp/.azure
+    for f in azureProfile.json msal_token_cache.json config clouds.config; do
+        if [ -f "/opt/host-azure/$f" ]; then
+            cp "/opt/host-azure/$f" "/tmp/.azure/$f"
+        fi
+    done
+    chmod 700 /tmp/.azure
+    chmod 600 /tmp/.azure/*
+    chown -R "${WM_TARGET_UID}:${WM_TARGET_GID}" /tmp/.azure
+fi
+
 # Start the nested dockerd while still root. This only works under the
 # sysbox-runc OCI runtime; under plain runc it fails for lack of SYS_ADMIN, so
 # keep it non-fatal and let the sandbox come up without docker rather than
@@ -278,6 +307,10 @@ if [ -n "${PWD:-}" ]; then
     # update its own config, which is not worth killing the sandbox for.
     chown "${WM_TARGET_UID}:${WM_TARGET_GID}" "$CLAUDE_JSON" || true
 fi
+# Marker for scripts/wm-sandbox-shell.sh, which waits for it before it starts a
+# second claude. Without the wait, agent2 read .claude.json before the trust
+# entry above landed and stopped on "Yes, I trust this folder".
+touch /tmp/.wm-trust-seeded
 
 # Give the target uid a name. WM_TARGET_UID is the host user's uid, which has
 # no entry in the image's /etc/passwd, so every getpwuid() in the sandbox fails
@@ -542,6 +575,38 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
     libpango-1.0-0 libcairo2 libasound2t64 \
     && rm -rf /var/lib/apt/lists/*
+
+# Azure CLI, from Microsoft's apt repo: the only third-party apt source in the
+# image. No mise backend ships az, and pip is not a supported install path
+# (https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt).
+# Baked for the same reason as the Chromium libs: the deny-by-default proxy
+# blocks every apt mirror at runtime. The key stays ASCII-armoured; apt reads a
+# .asc Signed-By directly, so gnupg is not needed.
+#
+# bookworm suite on a trixie image: the repo publishes no trixie suite (404 on
+# dists/trixie/Release), and Microsoft's install page says "For Debian
+# distributions, use the latest bookworm repository".
+RUN mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+        -o /etc/apt/keyrings/microsoft.asc \
+    && printf 'Types: deb\nURIs: https://packages.microsoft.com/repos/azure-cli/\nSuites: %s\nComponents: main\nArchitectures: %s\nSigned-By: /etc/apt/keyrings/microsoft.asc\n' \
+        bookworm "$(dpkg --print-architecture)" \
+        > /etc/apt/sources.list.d/azure-cli.sources \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        azure-cli=2.92.0-1~bookworm \
+    && rm -rf /var/lib/apt/lists/*
+
+# gh and az config dirs under HOME=/tmp, where network-init.sh puts the copied
+# host logins. Update checks and prompts off: the proxy refuses the update
+# hosts, and a prompt hangs a headless agent. az telemetry off for the same
+# reason (https://learn.microsoft.com/en-us/cli/azure/azure-cli-configuration).
+ENV GH_CONFIG_DIR=/tmp/.config/gh \
+    GH_NO_UPDATE_NOTIFIER=1 \
+    GH_NO_EXTENSION_UPDATE_NOTIFIER=1 \
+    GH_PROMPT_DISABLED=1 \
+    AZURE_CONFIG_DIR=/tmp/.azure \
+    AZURE_CORE_COLLECT_TELEMETRY=false
 
 # At RUNTIME the store lives on /cache, the writable host mount declared as
 # sandbox.extra_mounts in workmux/config.yaml. Containers are ephemeral, so an

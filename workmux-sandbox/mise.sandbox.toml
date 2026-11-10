@@ -4,9 +4,6 @@
 # entries that do not exist on Linux, plus host-only tools (tmux, sesh, atuin,
 # lazygit, k9s, neovim) that a headless sandboxed agent never uses.
 #
-# gh is excluded on purpose: it is useless without a token, and the sandbox is
-# not given one.
-#
 # node is excluded too: every repo pins its own version, and a baked global one
 # only hid a missing pin behind the wrong version. Pins install from
 # nodejs.org at runtime into /cache.
@@ -24,6 +21,11 @@ yq       = "4.53.6"
 ripgrep  = "15.2.0"
 fd       = "10.4.2"
 bat      = "0.26.1"
+
+# Matches the host pin in mise/global.toml. The token comes from the
+# post_create hook scripts/wm-gh-token.sh, copied in at startup by
+# network-init.sh; see the /opt/host-gh mount in workmux/config.yaml.
+gh       = "2.98.0"
 
 # Kubernetes CLIs. Baked rather than left to a runtime install because both
 # vendor scripts fetch from hosts the sandbox proxy refuses: on 2026-09-29 a

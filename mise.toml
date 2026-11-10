@@ -35,7 +35,7 @@ ln -sfn ../../repos/configs/vale/global.ini ~/.config/vale/.vale.ini
 if command -v vale >/dev/null; then vale sync --config ~/.config/vale/.vale.ini; fi
 stow -t ~/.config/workmux workmux --adopt
 mkdir -p ~/.local/bin
-ln -sf ~/repos/configs/scripts/wm-sandbox-shell.sh ~/repos/configs/scripts/wm-lima-shell.sh ~/.local/bin/
+ln -sf ~/repos/configs/scripts/wm-sandbox-shell.sh ~/repos/configs/scripts/wm-lima-shell.sh ~/repos/configs/scripts/wm-gh-token.sh ~/.local/bin/
 # colima.yaml carries the sysbox-runc runtime registration that
 # workmux/config.yaml's sandbox.container.oci_runtime depends on. Without it
 # every sandbox dies at exec with `unknown or invalid runtime name`, so the two
@@ -70,7 +70,7 @@ stow -t ~/.config/sesh -D sesh
 if [ -L ~/.config/mise/config.toml ]; then rm ~/.config/mise/config.toml; fi
 stow -t ~/.config/workmux -D workmux
 stow -t ~/.config/colima/default -D colima
-rm -f ~/.local/bin/wm-sandbox-shell.sh ~/.local/bin/wm-lima-shell.sh
+rm -f ~/.local/bin/wm-sandbox-shell.sh ~/.local/bin/wm-lima-shell.sh ~/.local/bin/wm-gh-token.sh
 echo "Removing Claude Code symlinks..."
 rm -f ~/.claude/CLAUDE.md ~/.claude/agents ~/.claude/commands ~/.claude/skills
 echo "✅ Dotfiles removed successfully"

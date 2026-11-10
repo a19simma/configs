@@ -65,4 +65,18 @@ if [ "${1:-}" = "--name" ]; then
     exit 0
 fi
 
+# The container exists before network-init.sh has pre-seeded folder trust in
+# /tmp/.claude.json, so a claude started now hits the trust dialog. Wait for
+# the marker it touches after that step. On timeout, carry on: a trust prompt
+# beats a dead pane.
+container=$(container_name)
+while ! docker exec "$container" test -e /tmp/.wm-trust-seeded 2>/dev/null; do
+    i=$((i + 1))
+    if [ "$i" -ge "$attempts" ]; then
+        echo "wm-sandbox-shell: no /tmp/.wm-trust-seeded in ${container} after ${TIMEOUT_SECONDS}s, starting anyway" >&2
+        break
+    fi
+    sleep "$POLL_INTERVAL"
+done
+
 exec workmux sandbox shell -e -- "$@"

@@ -17,6 +17,14 @@ mode: session
 worktree_dir: ~/.workmux/{project}
 worktree_naming: basename
 
+# Writes the malmDone gh token for the sandbox's /opt/host-gh mount. A hook
+# because nothing else runs on the host per session: env_passthrough reads the
+# tmux server's env, not the `workmux add` caller's. See scripts/wm-gh-token.sh.
+# Runs on `workmux add` only, so an older session keeps the token it started
+# with.
+post_create:
+  - wm-gh-token.sh
+
 # Named agent profile, used by the `<agent>` placeholder below.
 #
 # `type` declares the agent kind explicitly instead of letting workmux sniff the
@@ -200,12 +208,48 @@ sandbox:
       guest_path: /opt/claude-mods
       writable: false
 
+    # Target of the stow symlink at agent_config_dir/settings.json. The link is
+    # relative, ../../../../repos/configs/workmux/agents/claude/settings.json,
+    # so from /tmp/.claude it resolves to /repos/configs/... in the container.
+    # Without this mount it dangles, claude loads no user settings, and every
+    # agent window stops on the bypass-permissions and MCP prompts. Read-only
+    # so a sandboxed agent cannot rewrite its own hooks or permissions.
+    - host_path: ~/repos/configs/workmux/agents
+      guest_path: /repos/configs/workmux/agents
+      writable: false
+
     - host_path: ~/repos/configs/workmux-sandbox/bin
       guest_path: /opt/wm-bin
       writable: false
 
     - host_path: ~/repos/configs/mise
       guest_path: /opt/host-mise
+      writable: false
+
+    # Host gh and az logins, so agents can run `gh` and `az` as the host user.
+    # Full host scope on purpose: every repo malmDone's gh token reaches and
+    # every subscription and role in the az cache. Any sandboxed agent can read both
+    # tokens, and a prompt-injected one can send them out through any allowed
+    # host. That is the accepted cost.
+    #
+    # Read-only so a sandbox cannot write tokens back to the host. Whole
+    # directories because the CLIs want writable config dirs: network-init.sh
+    # copies only the login files into /tmp/.config/gh and /tmp/.azure.
+    # A copied az refresh token does not log the host out; Entra does not
+    # revoke a refresh token when it is used
+    # (https://learn.microsoft.com/en-us/entra/identity-platform/refresh-tokens).
+    #
+    # gh comes from ~/.local/state/wm-gh, which the post_create hook fills from
+    # the host keyring, not from ~/.config/gh: malmDone's token is only in the
+    # keyring, and that hosts.yml holds a19simma's token, which stays out. az
+    # works only while the host cache is the plain msal_token_cache.json, not
+    # the encrypted .bin.
+    - host_path: ~/.local/state/wm-gh
+      guest_path: /opt/host-gh
+      writable: false
+
+    - host_path: ~/.azure
+      guest_path: /opt/host-azure
       writable: false
 
   container:
@@ -327,10 +371,11 @@ sandbox:
       # the seed did not happen. Allowed as a backstop, turning a dead container
       # into a slow first start.
       - sh.rustup.rs
-      # mise resolves every `github:` tool through the releases API, so runtime
-      # installs of those need this. Read-only and unauthenticated in here: no
-      # token is passed into the sandbox, which also means the 60 req/hour
-      # anonymous limit applies.
+      # gh, and mise resolving every `github:` tool through the releases API.
+      # malmDone's gh token is in the sandbox now (/opt/host-gh above), so gh
+      # runs authenticated with full scope. mise reads GITHUB_TOKEN or GH_TOKEN,
+      # neither of which is set, so its lookups likely stay anonymous at 60
+      # req/hour. Unverified.
       - api.github.com
       # Where the API then redirects the actual asset bytes. GitHub moved
       # release downloads off objects.githubusercontent.com onto this host, so
@@ -453,4 +498,22 @@ sandbox:
       # mise's site and download host, used by the install script and by
       # `mise self-update`. Rejected 4 times on 2026-09-15.
       - mise.jdx.dev
+
+      # Azure CLI, using the host login copied in from /opt/host-azure. Hosts
+      # from https://learn.microsoft.com/en-us/cli/azure/azure-cli-endpoints.
+      # Token acquisition and refresh.
+      - login.microsoftonline.com
+      # Azure Resource Manager, behind every `az group`, `az vm` and the like.
+      - management.azure.com
+      # Microsoft Graph, for `az ad`.
+      - graph.microsoft.com
+      # Not listed: azcliprod.blob.core.windows.net (version check) and
+      # dc.services.visualstudio.com (telemetry that ignores
+      # AZURE_CORE_COLLECT_TELEMETRY=false). Both are rejected and no command
+      # broke.
+
+      # MCP server of the posthog plugin, enabled in
+      # workmux/agents/claude/settings.json. Rejected 6 times on 2026-11-10
+      # once the sandbox loaded its settings again.
+      - mcp.posthog.com
 nerdfont: true
