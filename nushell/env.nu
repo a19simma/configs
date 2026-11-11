@@ -16,6 +16,7 @@ if ($mise_shims | path exists) {
 # Basic environment variables
 $env.EDITOR = "nvim"
 $env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY = "1"
+$env.CLAUDE_CODE_DISABLE_INLINE_SHELL_RM_PROMPT = "1"
 
 # Load OS-specific environment variables
 if $nu.os-info.name == "windows" {

@@ -516,4 +516,16 @@ sandbox:
       # workmux/agents/claude/settings.json. Rejected 6 times on 2026-11-10
       # once the sandbox loaded its settings again.
       - mcp.posthog.com
+
+      # Forgejo chart and runner lookups for the forgejo-latest upgrade: the
+      # helm OCI chart on code.forgejo.org, runner images on data.forgejo.org,
+      # release notes on forgejo.org, chart listings on artifacthub.io. All
+      # rejected on 2026-11-10 between 15:03 and 15:04.
+      # TODO: `policy: allow` made the agent lose its API connection (cause
+      # unknown), so this stays an allowlist until we have a better way to
+      # search for information.
+      - code.forgejo.org
+      - data.forgejo.org
+      - forgejo.org
+      - artifacthub.io
 nerdfont: true

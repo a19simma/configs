@@ -87,6 +87,7 @@ if $nu.os-info.name == "linux" {
 # `agents.cc-sandbox.args`. Change one, change the other.
 alias claude = claude --dangerously-skip-permissions --tools "Bash,Read,Agent,Skill,ToolSearch,ListAgents,WebFetch,WebSearch"
 
+
 # Custom Commands
 
 # Run gvisor-isolated dev container
@@ -165,3 +166,7 @@ def wm-rejects [--hours: int] {
 
 
 # mise.nu already sourced above - do not use/source again
+
+if (which pueue | is-not-empty) and ((do { ^pgrep -x pueued } | complete).exit_code == 0) {
+    do { ^pueue parallel 100 } | complete | ignore
+}
