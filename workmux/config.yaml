@@ -200,6 +200,14 @@ sandbox:
       guest_path: /tmp/.claude/agents
       writable: false
 
+    - host_path: ~/repos/configs/opencode/AGENTS.md
+      guest_path: /tmp/.claude/CLAUDE.md
+      writable: false
+
+    - host_path: ~/repos/configs/opencode/RTK.md
+      guest_path: /tmp/.claude/RTK.md
+      writable: false
+
     # Local plugins, loaded through CLAUDE_CODE_PLUGIN_DIRS in the sandbox's own
     # settings.json. The host points that variable at ~/repos/configs, which is
     # not mounted here, so the sandbox needs its own path. Read-only: a hooks
