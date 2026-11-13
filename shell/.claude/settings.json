@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "workmux set-window-status waiting"
+            "command": "PATH=\"$HOME/.local/share/mise/shims:$PATH\" workmux set-window-status waiting"
           }
         ]
       }
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "workmux set-window-status working"
+            "command": "PATH=\"$HOME/.local/share/mise/shims:$PATH\" workmux set-window-status working"
           }
         ]
       }
@@ -67,7 +67,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "workmux register-agent"
+            "command": "PATH=\"$HOME/.local/share/mise/shims:$PATH\" workmux register-agent"
           }
         ]
       }
@@ -77,7 +77,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "workmux set-window-status done"
+            "command": "PATH=\"$HOME/.local/share/mise/shims:$PATH\" workmux set-window-status done"
           }
         ]
       }
@@ -87,7 +87,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "workmux set-window-status working"
+            "command": "PATH=\"$HOME/.local/share/mise/shims:$PATH\" workmux set-window-status working"
           }
         ]
       }
