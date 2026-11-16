@@ -13,7 +13,7 @@ input_box() {
 }
 
 box_is_empty() {
-  ! input_box | sed -e 's/^❯//' | grep -q '[[:alnum:][:punct:]]'
+  ! input_box | sed -e 's/^❯.\{1,2\}Try "[^"]*"[[:space:]]*$//' -e 's/^❯//' | grep -q '[[:alnum:][:punct:]]'
 }
 
 if ! box_is_empty; then
