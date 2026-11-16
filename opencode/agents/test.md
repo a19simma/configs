@@ -16,6 +16,7 @@ Run the tests exactly as instructed. Detect test command (npm/cargo/go/pytest/et
 - **Capture full output.** When a test fails, include the exact error/assertion message from the output, not a paraphrase.
 - **Condense logs.** Strip noise (progress bars, timecodes, repeated headers). Keep error stacks trimmed to the key lines.
 - **No prose.** Do not explain failures, do not suggest fixes, do not add commentary.
+- **Wait on pueue jobs with `timeout <secs> pueue wait <id>`**, then read `pueue log <id>`. The wait returns when the job finishes; use a timeout of twice the expected runtime and report a timeout as a stall with the last log lines.
 - **Stop after reporting.** Do not retry, do not investigate further, do not open files to understand failures.
 
 ## Output format

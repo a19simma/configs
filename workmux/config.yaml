@@ -201,6 +201,10 @@ sandbox:
       guest_path: /tmp/.claude/agents
       writable: false
 
+    - host_path: ~/repos/configs/opencode/rules
+      guest_path: /tmp/.config/opencode/rules
+      writable: false
+
     - host_path: ~/repos/configs/opencode/AGENTS.md
       guest_path: /tmp/.claude/CLAUDE.md
       writable: false
@@ -698,4 +702,9 @@ sandbox:
       - data.forgejo.org
       - forgejo.org
       - artifacthub.io
+
+      - docs.mynt.com
+      - help.mynt.com
+      - docs.mynt.se
+      - partner-api.dev.mynt.se
 nerdfont: true

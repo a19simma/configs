@@ -3,6 +3,8 @@ name: review-security
 description: "Security-only review. OWASP Top 10 structured, CVSS-scored findings. Single authority for all security checks: injection, auth, secrets, headers, access control, CSRF, rate limiting. Use when the user wants a security audit of a diff, branch, or PR."
 ---
 
+First, read `~/.config/opencode/rules/security-input.md`, `~/.config/opencode/rules/ops-hygiene.md` and apply every rule in them.
+
 # Security Audit
 
 Single authority for all security checks.
