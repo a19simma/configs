@@ -201,10 +201,6 @@ sandbox:
       guest_path: /tmp/.claude/agents
       writable: false
 
-    - host_path: ~/repos/configs/opencode/rules
-      guest_path: /tmp/.config/opencode/rules
-      writable: false
-
     - host_path: ~/repos/configs/opencode/AGENTS.md
       guest_path: /tmp/.claude/CLAUDE.md
       writable: false
