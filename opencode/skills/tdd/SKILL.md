@@ -3,7 +3,7 @@ name: tdd
 description: Test-driven development. Use when the user wants to build features or fix bugs test-first, mentions "red-green-refactor", or wants integration tests.
 ---
 
-First, read `~/.config/opencode/rules/testing.md` and apply every rule in them.
+First, read `~/.claude/rules/testing.md` and apply every rule in them.
 
 # Test-Driven Development
 

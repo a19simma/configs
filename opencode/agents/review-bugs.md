@@ -3,7 +3,7 @@ name: review-bugs
 description: "Aggressive defect-hunting review. Investigates every suspicious pattern, errs toward flagging. Focus: logic bugs, race conditions, null derefs, edge cases, error handling. Use when the user wants a thorough bug hunt on a diff, branch, or PR. NOT for style or spec compliance."
 ---
 
-First, read `~/.config/opencode/rules/testing.md`, `~/.config/opencode/rules/ops-hygiene.md`, `~/.config/opencode/rules/security-input.md` and apply every rule in them.
+First, read `~/.claude/rules/testing.md`, `~/.claude/rules/ops-hygiene.md`, `~/.claude/rules/security-input.md` and apply every rule in them.
 
 # Bug Hunt Review
 
