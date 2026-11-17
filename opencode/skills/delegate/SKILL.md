@@ -2,7 +2,6 @@
 name: delegate
 description: Hand the current task to a fresh Claude in a new workmux worktree session, with a handoff doc as its brief.
 argument-hint: "[branch-name] [instruction for the new session]"
-disable-model-invocation: true
 ---
 
 Spin off a task into its own workmux worktree and start a Claude agent there with a handoff brief.
@@ -31,7 +30,7 @@ Spin off a task into its own workmux worktree and start a Claude agent there wit
      - UI changes: for each general UI component fix, the PR description shows a before shot from `main` and an after shot from the branch, at desktop (1440px) and mobile (390px), under a heading that names the work item with its Plane link. Stack the desktop pair vertically; put the mobile pair side by side in a two-column table. Be conservative: one page per fix, the page that shows it best, and skip fixes with no visible change. Take the shots when the work is final, so no later fix leaves them stale. Commit images under `<branch>/` on the shared orphan branch `pr-assets` (fetch it, add a commit, normal push; never force-push it) and link them by commit SHA with `?raw=true`, so later commits never change an old PR's images. Never create a branch per PR.
      - Review fixes: fold them into the work item's commit before the first push, since a pushed branch cannot be rewritten without a force-push.
    - Save it to the session scratchpad as `HANDOFF-<branch>.md`.
-2. **Create the worktree.** `workmux add <branch> --base main -b`. If the branch exists, stop and ask.
+2. **Create the worktree.** `workmux add <branch> --base main -b`. If the branch or worktree exists and its commits serve the same task, reuse it: `workmux open <branch>`, and tell the brief about the existing commits. Ask only when that work conflicts with the new task.
 3. **Place the brief.** `workmux path <branch>`, then copy the handoff to `<worktree>/.workmux/HANDOFF.md`.
 4. **Find the target pane.** Get ids from tmux, never names:
    `tmux list-panes -a -F '#{session_id}|#S|#I|#W|#{pane_id}|#{pane_current_command}' | grep <branch>`
@@ -40,7 +39,7 @@ Spin off a task into its own workmux worktree and start a Claude agent there wit
 6. **Send the prompt once.** `workmux send <branch> 'Read .workmux/HANDOFF.md and carry out the task in it.'`
 7. **Verify pickup.** After about 20 s, check `workmux status <branch> --json`: status must be `working`, or the capture must show a spinner or a context above 0%. Only if both show idle, send the prompt again.
 8. **Report** the branch, worktree path, session id, pane id, and the attach command `tmux attach -t '$N'`.
-9. **Register a progress check.** Load `CronCreate` via `ToolSearch select:CronCreate,CronList,CronDelete` and schedule one recurring check every 10 minutes on the even ten-minute marks (`*/10 * * * *`: :00, :10, :20 and so on) covering every lane started. The prompt stands alone: the lanes and PR numbers, how to read each pane (`tmux capture-pane -p -t %N`) and `gh run list --branch <branch> --json status,conclusion,name,headSha`, the classes working, waiting, stalled and complete, to report only on a change, to pass product and scope questions to the user unanswered while answering a blocker caused by a gap in the orchestrator's own brief and telling the user after, to press Enter once on a prompt the orchestrator pasted but never on text it did not type, and to `CronDelete` itself once every lane reports complete.
+9. **Register a progress check.** Load `CronCreate` via `ToolSearch select:CronCreate,CronList,CronDelete` and schedule one recurring check every 10 minutes on the even ten-minute marks (`*/10 * * * *`: :00, :10, :20 and so on) covering every lane started. The prompt stands alone: the lanes and PR numbers, how to read each pane (`tmux capture-pane -p -t %N`) and `gh run list --branch <branch> --json status,conclusion,name,headSha`, the classes working, waiting, stalled and complete, to report only on a change, to answer a lane question that a decision the user already made covers, or that a blocker caused by a gap in the orchestrator's own brief causes, and tell the user after, and to pass only new product and scope questions to the user unanswered, to press Enter once on a prompt the orchestrator pasted but never on text it did not type, and to `CronDelete` itself once every lane reports complete.
 
 ## Pitfalls
 

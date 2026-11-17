@@ -2,7 +2,7 @@
 # live in a project file.
 [tools]
 argocd = "2.9.22"
-"cargo:forgejo-cli" = "0.6.0"
+"forgejo:simon/forgejo-cli" = { version = "0.7.1-simon.1", api_url = "https://git.simonmalm.com/api/v1" }
 claude = "2.1.289"
 colima = "0.10.3"
 d2 = "0.7.1"
@@ -72,6 +72,7 @@ age = "1.3.2"
 aspire = "13.6.0"
 coreutils = "0.12.0"
 "github:bootandy/dust" = "1.2.7"
+zig = "0.14.1"
 
 [tool_alias]
 pueue = "github:Nukesor/pueue"

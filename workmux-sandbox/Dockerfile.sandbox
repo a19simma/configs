@@ -219,6 +219,21 @@ if [ -f /opt/host-gh/hosts.yml ]; then
     chmod 600 /tmp/.config/gh/*
     chown -R "${WM_TARGET_UID}:${WM_TARGET_GID}" /tmp/.config
 fi
+if [ -f /opt/host-fj/keys.json ]; then
+    mkdir -p /tmp/.local/share/forgejo-cli
+    cp /opt/host-fj/keys.json /tmp/.local/share/forgejo-cli/keys.json
+    chmod 700 /tmp/.local/share/forgejo-cli
+    chmod 600 /tmp/.local/share/forgejo-cli/keys.json
+    chown -R "${WM_TARGET_UID}:${WM_TARGET_GID}" /tmp/.local
+    for fj_host in $(jq -r '.hosts | keys[]' /tmp/.local/share/forgejo-cli/keys.json 2>/dev/null || true); do
+        git config --file /tmp/.gitconfig "credential.https://${fj_host}.helper" fj
+        git config --file /tmp/.gitconfig --add "url.https://${fj_host}/.insteadOf" "git@${fj_host}:"
+        git config --file /tmp/.gitconfig --add "url.https://${fj_host}/.insteadOf" "ssh://git@${fj_host}/"
+    done
+    if [ -f /tmp/.gitconfig ]; then
+        chown "${WM_TARGET_UID}:${WM_TARGET_GID}" /tmp/.gitconfig
+    fi
+fi
 if [ -f /opt/host-azure/azureProfile.json ]; then
     mkdir -p /tmp/.azure
     for f in azureProfile.json msal_token_cache.json config clouds.config; do
@@ -838,6 +853,60 @@ RUN curl -fsSL https://claude.ai/install.sh | bash -s 2.1.289 && \
     mkdir -p /tmp/.local/bin && \
     ln -s /usr/local/bin/claude /tmp/.local/bin/claude && \
     chmod 777 /tmp/.local /tmp/.local/bin
+
+# fj, the Forgejo CLI. Codeberg ships Linux tarballs only, which the mise
+# `github:` backend cannot reach. Upstream publishes no checksums, so the
+# sha256 values are trust-on-first-use: computed from the v0.7.0 release assets
+# and pinned here. A new version needs both hashes recomputed. glibc build,
+# the wiki gives 2.38 as the floor and trixie ships newer.
+RUN set -eu; \
+    version=0.7.0; \
+    case "$(dpkg --print-architecture)" in \
+        amd64) asset=forgejo-cli-x86_64-linux.tar.gz; sha=6803c12eed17bfadb40ba95da2a6ab58f9b4a7dc10eabfe3512fce7e2fe6216f ;; \
+        arm64) asset=forgejo-cli-aarch64-linux.tar.gz; sha=198987908e194704b4a350119596547bc95cd9b6518024d6d02c26f061cfce83 ;; \
+        *) echo "no fj build for $(dpkg --print-architecture)" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL -o "/tmp/$asset" "https://codeberg.org/forgejo-contrib/forgejo-cli/releases/download/v${version}/${asset}"; \
+    echo "${sha}  /tmp/${asset}" | sha256sum -c -; \
+    tar -xzf "/tmp/$asset" -C /usr/local/bin fj; \
+    rm -f "/tmp/$asset"; \
+    fj --help > /dev/null
+
+# pueue and pueued 4.0.4: the mise github backend cannot fetch both binaries
+# without an asset pattern, so they are pinned here with the release digests.
+RUN set -eu; \
+    version=4.0.4; \
+    case "$(dpkg --print-architecture)" in \
+      amd64) arch=x86_64; pc=c1b10d7e4e62211075ddd0e1dc3e8cbfc5a43d662cb3be7402a28504e23fcb51; pd=5afeff6adbafb909e8d54e2caff158e6966c2adffa2c09e60fd631cc51b60390 ;; \
+      arm64) arch=aarch64; pc=759bf5100a51024997111c6913aaf3330a0cdfd893ff552dcf429ae9b5e01e09; pd=332c5ef74270b64aeaf04894c8c04826f3422eb7d50dbd1a8e0706d74a42f653 ;; \
+      *) echo "unsupported architecture" >&2; exit 1 ;; \
+    esac; \
+    base="https://github.com/Nukesor/pueue/releases/download/v${version}"; \
+    curl -fsSL -o /usr/local/bin/pueue "${base}/pueue-${arch}-unknown-linux-musl"; \
+    curl -fsSL -o /usr/local/bin/pueued "${base}/pueued-${arch}-unknown-linux-musl"; \
+    echo "${pc}  /usr/local/bin/pueue" | sha256sum -c -; \
+    echo "${pd}  /usr/local/bin/pueued" | sha256sum -c -; \
+    chmod 755 /usr/local/bin/pueue /usr/local/bin/pueued; \
+    pueue --version > /dev/null
+
+# git credential helper that answers with the fj token of the requested host,
+# so git over HTTPS works against every Forgejo host fj is logged in to. The
+# sandbox allows HTTPS only, so network-init rewrites git@host: remotes to HTTPS.
+RUN cat <<'SCRIPT' > /usr/local/bin/git-credential-fj
+#!/bin/sh
+[ "$1" = get ] || exit 0
+keys="${HOME:-/tmp}/.local/share/forgejo-cli/keys.json"
+[ -f "$keys" ] || exit 0
+host=
+while IFS='=' read -r k v; do
+    [ "$k" = host ] && host=$v
+done
+[ -n "$host" ] || exit 0
+token=$(jq -r --arg h "$host" '.hosts[$h].token // empty' "$keys") || exit 0
+[ -n "$token" ] || exit 0
+printf 'username=oauth2\npassword=%s\n' "$token"
+SCRIPT
+RUN chmod 755 /usr/local/bin/git-credential-fj
 
 # Managed settings outrank project settings, so a repo's .claude/settings.json
 # defaultMode can't drop the sandboxed agent back to manual. A policy-level

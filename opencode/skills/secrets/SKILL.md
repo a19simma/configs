@@ -5,7 +5,7 @@ description: Store, use and verify credentials with fnox, mise exec and premade 
 
 # Secrets
 
-A secret lives encrypted in the repo that uses it. A command that needs one runs through `mise exec`, so fnox injects the value into the process environment. Each recurring command gets a premade `mise` task, and agents run the task.
+A secret lives encrypted in the repo that uses it. A command that needs one runs through `fnox exec --`, so fnox injects the value into that process only. Prefix `mise exec --` to get the repo's pinned fnox. Each recurring command gets a premade `mise` task, and agents run the task.
 
 Facts come from fnox docs ([age provider](https://fnox.jdx.dev/providers/age), [fnox set](https://fnox.jdx.dev/cli/set), [fnox exec](https://fnox.jdx.dev/cli/exec), [mise integration](https://fnox.jdx.dev/guide/mise-integration)) and from the run that proved them (fnox 1.35.2). Recheck a flag with `fnox <cmd> --help` before relying on it.
 
@@ -47,6 +47,8 @@ Done when `mise exec -- fnox list` loads the file and `fnox.toml` names one reci
 printf '%s' "$VALUE" | mise exec -- fnox set NAME
 ```
 
+After any `fnox set`, check that the new entry in `fnox.toml` carries `value =`. With fnox 1.35.2, `printf v | mise exec -- fnox set NAME -d desc` stored an entry with only a description. A non-secret value, such as a URL, goes in as an argument: `fnox set NAME <value>`.
+
 ## Verify
 
 `fnox check --all` exits 0 when decryption fails and prints only warnings. Count it as a pass only when the output has no `failed to resolve` line. The decisive probe prints lengths:
@@ -80,6 +82,14 @@ fnox exec --only API_TOKEN --if-missing error -- sh -c 'curl --fail --silent --s
 Run it as `mise run -q api-status`. Without `-q` mise prints a `[task] $ ...` line to the output stream and breaks a pipe into `jq`.
 
 Build a request body with `jq -n '{data: env.NAME}' | curl --data @-`, so the value stays off the command line.
+
+## Plain `mise exec` exports nothing
+
+`mise exec -- <cmd>` never loads `fnox.toml`. `$NAME` stays unset in `<cmd>`, and the CLI's missing-variable error reads like a wrong token. Wrap the command in `fnox exec --`, in a task or inline.
+
+- **Hook**: `fnox exec` in a task is the documented route. The `_.fnox-env` plugin is "an experiment and doesn't support all fnox features" ([official docs](https://github.com/jdx/fnox/blob/main/docs/guide/mise-integration.md)), its repo shows `archived: true` ([source code](https://api.github.com/repos/jdx/mise-env-fnox), checked 2026-11-10), and no source confirms it under `mise exec`. `fnox activate` hooks interactive shells only.
+- **Public repo**: store non-secret settings the CLI needs, such as a server URL, in `fnox.toml` too, so the ciphertext keeps the host out of tracked files. An untracked `mise.local.toml` `[env]` block is the fallback when fnox cannot decrypt in the agent's session.
+- **Unreadable identity** (`Failed to read age identity file: <path>`): every secret resolves to "not found", for the user's shell and the agent's alike. Compare the `recipients` public key in `fnox.toml` with `~/.ssh/*.pub` and list `ls -l` on the `key_file` path. A recipient from another machine and a missing `key_file` mean this machine cannot decrypt the file: add this machine's public key as a recipient and re-set each secret with `! fnox set NAME`. Never read the private key.
 
 ## Lookup
 

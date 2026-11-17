@@ -1,39 +1,106 @@
 {
-  "skipDangerousModePermissionPrompt": true,
-  "autoCompactWindow": 200000,
   "env": {
-    "CLAUDE_CODE_PLUGIN_DIRS": "/opt/claude-mods/io-meter"
+    "DISABLE_AUTOUPDATER": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_PLUGIN_DIRS": "/opt/claude-host/mods/io-meter"
   },
-  "enabledPlugins": {
-    "document-skills@anthropic-agent-skills": true,
-    "posthog@claude-plugins-official": true,
-    "mattpocock-skills@claude-plugins-official": true
+  "permissions": {
+    "defaultMode": "bypassPermissions"
   },
-  "extraKnownMarketplaces": {
-    "anthropic-agent-skills": {
-      "source": {
-        "source": "github",
-        "repo": "anthropics/skills"
-      }
-    },
-    "caveman": {
-      "source": {
-        "source": "github",
-        "repo": "JuliusBrussee/caveman"
-      }
-    }
-  },
+  "model": "opus",
+  "disableClaudeAiConnectors": true,
+  "disableBundledSkills": true,
   "hooks": {
-    "PreToolUse": [
+    "Notification": [
       {
-        "matcher": "Edit|Write|NotebookEdit",
+        "matcher": "permission_prompt|elicitation_dialog",
         "hooks": [
           {
             "type": "command",
-            "command": "printf '%s\\n' '{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"deny\", \"permissionDecisionReason\": \"Edit, Write and NotebookEdit are denied. Change files through Bash with a quoted python heredoc (python3 - <<PY with the delimiter quoted): resolve the path with os.path.realpath, read the file, assert the old text occurs exactly once, write a temp file beside the target, shutil.copymode(target, tmp), then os.replace(tmp, target). Create new files with cat > path and a quoted unique heredoc delimiter.\"}}'"
+            "command": "workmux set-window-status waiting"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "workmux set-window-status working"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "workmux register-agent"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "workmux set-window-status done"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "workmux set-window-status working"
           }
         ]
       }
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "/opt/claude-host/statusline-command.sh"
+  },
+  "enabledPlugins": {},
+  "effortLevel": "low",
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "low"
+    },
+    "claude-opus-5-5": {
+      "effortLevel": "low"
+    }
+  },
+  "autoCompactWindow": 200000,
+  "showClearContextOnPlanAccept": true,
+  "tui": "fullscreen",
+  "voice": {
+    "enabled": true,
+    "mode": "tap"
+  },
+  "autoMemoryEnabled": false,
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
+  "remoteControlAtStartup": false,
+  "agentPushNotifEnabled": true,
+  "voiceEnabled": true
 }

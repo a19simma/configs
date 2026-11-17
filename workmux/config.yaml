@@ -17,7 +17,8 @@ mode: session
 worktree_dir: ~/.workmux/{project}
 worktree_naming: basename
 
-# Writes the malmDone gh token for the sandbox's /opt/host-gh mount. A hook
+# Writes the gh token and the fj login for the sandbox's /opt/host-gh and
+# /opt/host-fj mounts. The gh account is $WM_GH_USER or ~/.config/wm-gh/user. A hook
 # because nothing else runs on the host per session: env_passthrough reads the
 # tmux server's env, not the `workmux add` caller's. See scripts/wm-gh-token.sh.
 # Runs on `workmux add` only, so an older session keeps the token it started
@@ -235,7 +236,7 @@ sandbox:
       writable: false
 
     # Host gh and az logins, so agents can run `gh` and `az` as the host user.
-    # Full host scope on purpose: every repo malmDone's gh token reaches and
+    # Full host scope on purpose: every repo the configured gh account reaches and
     # every subscription and role in the az cache. Any sandboxed agent can read both
     # tokens, and a prompt-injected one can send them out through any allowed
     # host. That is the accepted cost.
@@ -248,12 +249,18 @@ sandbox:
     # (https://learn.microsoft.com/en-us/entra/identity-platform/refresh-tokens).
     #
     # gh comes from ~/.local/state/wm-gh, which the post_create hook fills from
-    # the host keyring, not from ~/.config/gh: malmDone's token is only in the
-    # keyring, and that hosts.yml holds a19simma's token, which stays out. az
+    # the host keyring, not from ~/.config/gh, and holds only the configured
+    # account (WM_GH_USER or ~/.config/wm-gh/user). fj comes from
+    # ~/.local/state/wm-fj, a copy of the host's keys.json with a token for
+    # every Forgejo host fj is logged in to. az
     # works only while the host cache is the plain msal_token_cache.json, not
     # the encrypted .bin.
     - host_path: ~/.local/state/wm-gh
       guest_path: /opt/host-gh
+      writable: false
+
+    - host_path: ~/.local/state/wm-fj
+      guest_path: /opt/host-fj
       writable: false
 
     - host_path: ~/.azure
@@ -327,6 +334,8 @@ sandbox:
       - code.claude.com
       # git over https
       - github.com
+      - host: git.simonmalm.com
+        allow_private_ips: true
       - codeload.github.com
       - objects.githubusercontent.com
       - raw.githubusercontent.com
@@ -380,7 +389,7 @@ sandbox:
       # into a slow first start.
       - sh.rustup.rs
       # gh, and mise resolving every `github:` tool through the releases API.
-      # malmDone's gh token is in the sandbox now (/opt/host-gh above), so gh
+      # The configured account's gh token is in the sandbox now (/opt/host-gh above), so gh
       # runs authenticated with full scope. mise reads GITHUB_TOKEN or GH_TOKEN,
       # neither of which is set, so its lookups likely stay anonymous at 60
       # req/hour. Unverified.
