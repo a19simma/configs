@@ -218,6 +218,8 @@ if [ -f /opt/host-gh/hosts.yml ]; then
     chmod 700 /tmp/.config/gh
     chmod 600 /tmp/.config/gh/*
     chown -R "${WM_TARGET_UID}:${WM_TARGET_GID}" /tmp/.config
+    git config --file /tmp/.gitconfig credential.https://github.com.helper '!gh auth git-credential'
+    chown "${WM_TARGET_UID}:${WM_TARGET_GID}" /tmp/.gitconfig
 fi
 if [ -f /opt/host-fj/keys.json ]; then
     mkdir -p /tmp/.local/share/forgejo-cli
@@ -620,6 +622,7 @@ ENV GH_CONFIG_DIR=/tmp/.config/gh \
     GH_NO_UPDATE_NOTIFIER=1 \
     GH_NO_EXTENSION_UPDATE_NOTIFIER=1 \
     GH_PROMPT_DISABLED=1 \
+    NODE_USE_ENV_PROXY=1 \
     AZURE_CONFIG_DIR=/tmp/.azure \
     AZURE_CORE_COLLECT_TELEMETRY=false
 

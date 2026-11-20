@@ -73,6 +73,7 @@ aspire = "13.6.0"
 coreutils = "0.12.0"
 "github:bootandy/dust" = "1.2.7"
 zig = "0.14.1"
+pandoc = "latest"
 
 [tool_alias]
 pueue = "github:Nukesor/pueue"

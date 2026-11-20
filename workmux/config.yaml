@@ -51,6 +51,8 @@ agents:
     type: claude
     command: /opt/wm-bin/claude-pinned
     args:
+      - --model
+      - claude-sonnet-5-5
       - --tools
       - Bash,Read,Agent,Skill,ToolSearch,ListAgents,WebFetch,WebSearch,CronCreate,CronList,CronDelete
 
@@ -345,6 +347,9 @@ sandbox:
       - raw.githubusercontent.com
       # package registries
       - registry.npmjs.org
+      # paraglide loads the inlang plugins listed in Arthur's project.inlang/settings.json from
+      # here; without it message keys are not compiled and every page spec crashes.
+      - cdn.jsdelivr.net
       # node runtimes for mise, which fetches them from here. The image bakes no
       # node, so without it every `node` pin fails on
       # `tunnel error: unsuccessful`.

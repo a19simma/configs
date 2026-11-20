@@ -80,7 +80,9 @@
     "type": "command",
     "command": "/opt/claude-host/statusline-command.sh"
   },
-  "enabledPlugins": {},
+  "enabledPlugins": {
+    "ponytail@ponytail": true
+  },
   "effortLevel": "low",
   "modelSettings": {
     "claude-opus-5": {
